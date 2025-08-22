@@ -98,7 +98,7 @@
   --color-link-external: #22d3ee;
   
   --color-selection: rgba(124, 58, 237, 0.1);
-  --color-highlight: #fef3c7;
+  --color-highlight: #b08d00;
 }
 
 /* Dark Theme */
@@ -276,6 +276,14 @@ body {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
   margin-top: var(--space-xs);
+}
+
+/* Search highlighting */
+mark {
+  color: var(--color-bg-primary);
+  background-color: var(--color-highlight);
+  border-radius: 2px;
+  padding: 0;
 }
 
 /* Sidebar content */
@@ -630,8 +638,8 @@ body {
 }
 
 .backlink-mention-highlight {
-  background-color: #ffeaa7;
-  color: #2d3436;
+  background-color: var(--color-highlight);
+  color: var(--color-bg-primary);
   padding: 1px 2px;
   border-radius: 2px;
   font-weight: 500;

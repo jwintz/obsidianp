@@ -447,8 +447,10 @@ class ObsidianSSGApp {
     // Update main content
     const noteContent = document.getElementById('note-content');
     if (noteContent) {
+      const frontMatterHtml = note.frontMatterHtml || '';
       noteContent.innerHTML = `
         <h1 class="note-title">${note.title}</h1>
+        ${frontMatterHtml}
         <div class="note-body">${note.html}</div>
         <aside class="backlinks-panel" id="backlinks-panel">
           <div id="backlinks-content"></div>
@@ -642,5 +644,25 @@ function toggleEmbed(embedId) {
   if (embedElement && contentElement) {
     embedElement.classList.toggle('collapsed');
     contentElement.classList.toggle('collapsed');
+  }
+}
+
+// Global function for properties toggle interaction
+function toggleProperties(propertiesId) {
+  const content = document.getElementById(propertiesId);
+  const header = content && content.previousElementSibling;
+  const chevron = header && header.querySelector('.properties-chevron');
+  
+  if (content) {
+    content.classList.toggle('collapsed');
+    
+    // Update chevron rotation
+    if (chevron) {
+      if (content.classList.contains('collapsed')) {
+        chevron.style.transform = 'rotate(0deg)';
+      } else {
+        chevron.style.transform = 'rotate(90deg)';
+      }
+    }
   }
 }

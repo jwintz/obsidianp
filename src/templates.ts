@@ -121,7 +121,7 @@ export function generateMainTemplate(title: string = "Obsidian Vault"): string {
 </html>`;
 }
 
-export function generateNoteTemplate(title: string, content: string, backlinks: string[] = []): string {
+export function generateNoteTemplate(title: string, content: string, frontMatterHtml: string = '', backlinks: string[] = []): string {
     const backlinksHtml = backlinks.length > 0
         ? `<div class="backlinks">
          <h4>Backlinks</h4>
@@ -132,6 +132,7 @@ export function generateNoteTemplate(title: string, content: string, backlinks: 
         : '';
 
     return `<h1 class="note-title">${title}</h1>
+${frontMatterHtml ? frontMatterHtml : ''}
 <div class="note-body">
   ${content}
 </div>

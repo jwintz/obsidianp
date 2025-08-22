@@ -18,6 +18,7 @@ export interface Note {
   folderPath: string;
   content: string;
   frontMatter: FrontMatter;
+  frontMatterHtml: string;
   html: string;
   links: string[];
   backlinks: string[];

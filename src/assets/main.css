@@ -1293,3 +1293,223 @@ body.menu-open {
 [data-theme="dark"] .MathJax_Display {
   color: var(--color-text-primary) !important;
 }
+
+/* Note Properties (Frontmatter) Styling */
+.note-properties {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  margin: 0 0 var(--space-lg) 0;
+  font-size: var(--font-size-sm);
+}
+
+.properties-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-tertiary);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.properties-header:hover {
+  background-color: var(--color-bg-elevated);
+}
+
+.properties-chevron {
+  opacity: 0.7;
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.properties-title {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.properties-content {
+  padding: var(--space-sm);
+  max-height: 1000px;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.properties-content.collapsed {
+  max-height: 0;
+  padding: 0 var(--space-sm);
+}
+
+.property-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-xs) 0;
+  min-height: 24px;
+}
+
+.property-row:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.property-name {
+  flex-shrink: 0;
+  width: var(--property-name-width, 80px);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-align: right;
+  padding-top: 2px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.property-value {
+  flex: 1;
+  min-width: 0; /* Allow flex item to shrink below content size */
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  line-height: 1.4;
+  overflow-x: auto;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.property-tags {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--space-xs);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.property-tags::-webkit-scrollbar {
+  height: 4px;
+}
+
+.property-tags::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.property-tags::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 2px;
+}
+
+.property-tag {
+  background-color: var(--color-accent);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.property-list {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--space-xs);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.property-list::-webkit-scrollbar {
+  height: 4px;
+}
+
+.property-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.property-list::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 2px;
+}
+
+.property-list-item {
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.property-text {
+  color: var(--color-text-primary);
+  overflow-x: auto;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.property-text::-webkit-scrollbar {
+  height: 4px;
+}
+
+.property-text::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.property-text::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 2px;
+}
+
+.property-date {
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-code);
+  font-size: var(--font-size-xs);
+  overflow-x: auto;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.property-date::-webkit-scrollbar {
+  height: 4px;
+}
+
+.property-date::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.property-date::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 2px;
+}
+
+/* Dark theme adjustments for properties */
+[data-theme="dark"] .property-tag {
+  background-color: var(--color-accent);
+  color: var(--color-bg-primary);
+}
+
+[data-theme="dark"] .property-list-item {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}

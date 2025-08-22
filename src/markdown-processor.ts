@@ -107,6 +107,9 @@ export class MarkdownProcessor {
     // Restore math expressions after markdown processing
     html = this.restoreMathExpressions(html);
 
+    // Generate frontmatter HTML
+    const frontMatterHtml = this.generateFrontMatterHtml(frontMatter as FrontMatter);
+
     return {
       id,
       title,
@@ -115,6 +118,7 @@ export class MarkdownProcessor {
       folderPath: folderPath === '.' ? '' : folderPath,
       content: markdownContent,
       frontMatter: frontMatter as FrontMatter,
+      frontMatterHtml,
       html: html as string,
       links,
       backlinks: []
@@ -338,6 +342,119 @@ export class MarkdownProcessor {
       <line x1="16" y1="17" x2="8" y2="17"></line>
       <polyline points="10,9 9,9 8,9"></polyline>
     </svg>`;
+  }
+
+  /**
+   * Generate HTML for frontmatter properties display
+   */
+  generateFrontMatterHtml(frontMatter: FrontMatter): string {
+    if (!frontMatter || Object.keys(frontMatter).length === 0) {
+      return '';
+    }
+
+    let propertiesHtml = '';
+    
+    // Calculate the maximum property name width for consistent alignment
+    const propertyNames = Object.keys(frontMatter).filter(key => 
+      frontMatter[key] !== undefined && frontMatter[key] !== null
+    );
+    
+    // More accurate width calculation based on character width
+    // Using a character map for more precise width estimation
+    const getTextWidth = (text: string): number => {
+      const charWidths: Record<string, number> = {
+        'i': 3, 'j': 3, 'l': 3, 'r': 4, 't': 4, 'f': 4,
+        'I': 4, 'J': 4, 'T': 6, 'F': 6, 'L': 5, 'P': 6,
+        'm': 8, 'w': 8, 'M': 9, 'W': 10,
+        '_': 5, '-': 4, '.': 3
+      };
+      
+      let width = 0;
+      for (const char of text) {
+        width += charWidths[char] || 6; // default 6px for most characters
+      }
+      return width;
+    };
+    
+    const maxPropertyNameWidth = Math.max(...propertyNames.map(name => getTextWidth(name)));
+    // Add padding and ensure minimum/maximum bounds
+    const propertyNameWidth = Math.min(Math.max(maxPropertyNameWidth + 12, 50), 120);
+
+    // Handle each property type
+    Object.entries(frontMatter).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+
+      let propertyHtml = '';
+
+      if (key === 'tags' && Array.isArray(value)) {
+        // Special handling for tags - escape HTML to prevent overflow
+        const tagsHtml = value.map(tag =>
+          `<span class="property-tag">${this.escapeHtml(String(tag))}</span>`
+        ).join('');
+        propertyHtml = `
+          <div class="property-row">
+            <div class="property-name">${this.escapeHtml(key)}</div>
+            <div class="property-value property-tags">${tagsHtml}</div>
+          </div>
+        `;
+      } else if (Array.isArray(value)) {
+        // Handle other arrays (categories, topics, etc.) - escape HTML
+        const arrayHtml = value.map(item =>
+          `<span class="property-list-item">${this.escapeHtml(String(item))}</span>`
+        ).join('');
+        propertyHtml = `
+          <div class="property-row">
+            <div class="property-name">${this.escapeHtml(key)}</div>
+            <div class="property-value property-list">${arrayHtml}</div>
+          </div>
+        `;
+      } else {
+        // Handle simple values (strings, numbers, dates) - escape HTML and handle overflow
+        const valueStr = this.escapeHtml(String(value));
+        const isDate = key.includes('date') || key === 'created' || key === 'published';
+        const valueClass = isDate ? 'property-date' : 'property-text';
+
+        propertyHtml = `
+          <div class="property-row">
+            <div class="property-name">${this.escapeHtml(key)}</div>
+            <div class="property-value ${valueClass}">${valueStr}</div>
+          </div>
+        `;
+      }
+
+      propertiesHtml += propertyHtml;
+    });
+
+    if (propertiesHtml) {
+      const propertiesId = `properties-${Math.random().toString(36).substr(2, 9)}`;
+      return `
+        <div class="note-properties" style="--property-name-width: ${propertyNameWidth}px;">
+          <div class="properties-header" onclick="toggleProperties('${propertiesId}')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="properties-chevron">
+              <path d="M9 18L15 12L9 6"></path>
+            </svg>
+            <span class="properties-title">Properties</span>
+          </div>
+          <div class="properties-content collapsed" id="${propertiesId}">
+            ${propertiesHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    return '';
+  }
+
+  /**
+   * Escape HTML to prevent XSS and text overflow issues
+   */
+  private escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   /**

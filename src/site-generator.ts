@@ -180,6 +180,7 @@ export class SiteGenerator {
         id: note.id,
         title: note.title,
         html: note.html,
+        frontMatterHtml: note.frontMatterHtml,
         content: note.content.substring(0, 500), // Truncate for search
         links: note.links,
         backlinks: note.backlinks,

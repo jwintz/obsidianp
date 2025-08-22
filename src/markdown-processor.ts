@@ -246,16 +246,13 @@ export class MarkdownProcessor {
         case 'calendar':
           iconSvg = getLucideIcon('Calendar', 16);
           break;
-        case 'gallery':
-          iconSvg = getLucideIcon('Images', 16);
-          break;
         default:
           iconSvg = getLucideIcon('Table', 16);
       }
 
-      return `<button class="view-button ${view === defaultView ? 'active' : ''}" data-view-type="${view.type}" data-view-name="${view.name}">
+      return `<button class="view-button ${view === defaultView ? 'active' : ''}" data-view-type="${view.type}" data-view-name="${view.name}" title="${view.name}">
             ${iconSvg}
-            ${view.name}
+            <span class="view-button-text">${view.name}</span>
         </button>`;
     }).join('') : '';
 
@@ -339,9 +336,6 @@ export class MarkdownProcessor {
           break;
         case 'calendar':
           iconSvg = getLucideIcon('Calendar', 14);
-          break;
-        case 'gallery':
-          iconSvg = getLucideIcon('Images', 14);
           break;
         default:
           iconSvg = getLucideIcon('Table', 14);

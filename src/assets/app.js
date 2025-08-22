@@ -39,10 +39,20 @@ class ObsidianSSGApp {
     const pathname = window.location.pathname;
     if (pathname !== '/' && pathname !== '/index.html') {
       // Remove leading slash and decode URI components
-      noteId = decodeURIComponent(pathname.substring(1));
+      let pathId = decodeURIComponent(pathname.substring(1));
       // Handle .html extension if present
-      if (noteId.endsWith('.html')) {
-        noteId = noteId.substring(0, noteId.length - 5);
+      if (pathId.endsWith('.html')) {
+        pathId = pathId.substring(0, pathId.length - 5);
+      }
+      
+      // Check if it's a base path (starts with "bases/")
+      if (pathId.startsWith('bases/')) {
+        // Extract base ID by removing "bases/" prefix
+        const basePath = pathId.substring(6); // Remove "bases/"
+        // Convert kebab-case back to base ID format (capitalize each word, keep hyphens)
+        noteId = basePath.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('-');
+      } else {
+        noteId = pathId;
       }
     }
     
@@ -359,6 +369,7 @@ class ObsidianSSGApp {
         
         html += `
           <div class="folder-item file ${isBase ? 'base-file' : ''}" data-note-id="${node.noteId}" data-is-base="${isBase}">
+            <span class="file-icon">${iconSvg}</span>
             <span class="file-name">${node.name}</span>
           </div>
         `;
@@ -528,10 +539,11 @@ class ObsidianSSGApp {
     this.currentBase = base;
     this.currentNote = null; // Clear current note
     
-    // Update URL and history - keep base URLs clean without query parameters
+    // Update URL and history - use proper base path
     if (addToHistory) {
-      const cleanUrl = `${window.location.origin}${window.location.pathname}`;
-      window.history.pushState({ baseId }, base.title, cleanUrl);
+      const basePath = `/bases/${baseId.toLowerCase()}`;
+      const baseUrl = `${window.location.origin}${basePath}`;
+      window.history.pushState({ baseId }, base.title, baseUrl);
     }
     
     // Update page title
@@ -564,14 +576,14 @@ class ObsidianSSGApp {
   renderBaseView(base) {
     const defaultView = base.views[0] || { type: 'table', name: 'Default' };
     const viewButtons = base.views.map(view => 
-        `<button class="view-button ${view === defaultView ? 'active' : ''}" data-view-type="${view.type}" data-view-name="${view.name}">
+        `<button class="view-button ${view === defaultView ? 'active' : ''}" data-view-type="${view.type}" data-view-name="${view.name}" title="${view.name}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 ${view.type === 'cards' ? 
                   '<rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>' :
                   '<path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9l7-6z"></path><polyline points="12,3 12,9 19,9"></polyline>'
                 }
             </svg>
-            ${view.name}
+            <span class="view-button-text">${view.name}</span>
         </button>`
     ).join('');
 
@@ -618,8 +630,6 @@ class ObsidianSSGApp {
             return this.renderCardsView(notes, view);
         case 'calendar':
             return this.renderCalendarView(notes, view);
-        case 'gallery':
-            return this.renderGalleryView(notes, view);
         default:
             return this.renderTableView(notes, view);
     }
@@ -762,51 +772,6 @@ class ObsidianSSGApp {
     return calendarHtml;
   }
 
-  renderGalleryView(notes, view) {
-    if (notes.length === 0) return '<div class="empty-state">No notes match the current filters</div>';
-
-    const cardsHtml = notes.map(note => {
-        // Look for image in frontmatter
-        let imageUrl = note.frontMatter?.image || note.frontMatter?.cover;
-        let imageHtml = '';
-        
-        if (imageUrl) {
-            imageHtml = `<div class="gallery-image">
-                <img src="${imageUrl}" alt="${note.title}" loading="lazy" />
-            </div>`;
-        } else {
-            // Fallback placeholder
-            imageHtml = `<div class="gallery-image placeholder">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
-                </svg>
-            </div>`;
-        }
-        
-        return `<div class="gallery-card" data-note-id="${note.id}">
-            ${imageHtml}
-            <div class="gallery-card-content">
-                <h3 class="gallery-card-title">${note.title}</h3>
-                ${note.frontMatter?.description ? 
-                    `<p class="gallery-card-description">${note.frontMatter.description}</p>` : 
-                    ''
-                }
-                <div class="gallery-card-meta">
-                    <span class="gallery-card-date">${new Date(note.frontMatter?.created || '').toLocaleDateString()}</span>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-
-    return `<div class="gallery-view">
-        <div class="gallery-grid">
-            ${cardsHtml}
-        </div>
-    </div>`;
-  }
-  
   getColumnDisplayName(column) {
     const displayNames = {
         'file.name': 'Name',
@@ -933,17 +898,6 @@ class ObsidianSSGApp {
       header.addEventListener('click', (e) => {
         const column = e.currentTarget.dataset.column;
         this.sortBaseByColumn(base, column);
-      });
-    });
-
-    // Gallery card clicks
-    const galleryCards = document.querySelectorAll('.gallery-card');
-    galleryCards.forEach(card => {
-      card.addEventListener('click', (e) => {
-        const noteId = e.currentTarget.dataset.noteId;
-        if (noteId) {
-          window.location.href = `/${noteId}`;
-        }
       });
     });
 

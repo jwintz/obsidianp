@@ -109,7 +109,7 @@ export interface BaseDateFilter {
 }
 
 export interface BaseView {
-  type: 'table' | 'cards' | 'calendar' | 'gallery';
+  type: 'table' | 'cards' | 'calendar';
   name: string;
   order?: string[];
   sort?: Array<{

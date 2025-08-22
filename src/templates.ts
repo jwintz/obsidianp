@@ -182,8 +182,6 @@ function generateBaseViewContent(base: Base, view: BaseView): string {
             return generateCardsView(notes, view);
         case 'calendar':
             return generateCalendarView(notes, view);
-        case 'gallery':
-            return generateGalleryView(notes, view);
         default:
             return generateTableView(notes, view);
     }
@@ -324,47 +322,6 @@ function generateCalendarView(notes: Note[], view: BaseView): string {
 
     calendarHtml += '</div></div></div>';
     return calendarHtml;
-}
-
-function generateGalleryView(notes: Note[], view: BaseView): string {
-    if (notes.length === 0) return '<div class="empty-state">No notes match the current filters</div>';
-
-    const cardsHtml = notes.map(note => {
-        // Look for image in frontmatter or content
-        let imageUrl = note.frontMatter?.image || note.frontMatter?.cover;
-        let imageHtml = '';
-
-        if (imageUrl) {
-            imageHtml = `<div class="gallery-image">
-                <img src="${imageUrl}" alt="${note.title}" loading="lazy" />
-            </div>`;
-        } else {
-            // Fallback placeholder
-            imageHtml = `<div class="gallery-image placeholder">
-                ${getLucideIcon('Image', 48)}
-            </div>`;
-        }
-
-        return `<div class="gallery-card" data-note-path="${note.path}">
-            ${imageHtml}
-            <div class="gallery-card-content">
-                <h3 class="gallery-card-title">${note.title}</h3>
-                ${note.frontMatter?.description ?
-                `<p class="gallery-card-description">${note.frontMatter.description}</p>` :
-                ''
-            }
-                <div class="gallery-card-meta">
-                    <span class="gallery-card-date">${new Date(note.frontMatter?.created || '').toLocaleDateString()}</span>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-
-    return `<div class="gallery-view">
-        <div class="gallery-grid">
-            ${cardsHtml}
-        </div>
-    </div>`;
 }
 
 function getColumnDisplayName(column: string): string {

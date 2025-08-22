@@ -712,11 +712,8 @@ export class BaseProcessor {
         const folderName = path.basename(relativePath.dir);
         const fileName = relativePath.name;
 
-        // Generate ID similar to notes: folder/filename format
-        if (folderName && folderName !== '.') {
-            return `${folderName.toLowerCase()}/${fileName.toLowerCase()}`.replace(/[^a-z0-9\/]/g, '-').replace(/-+/g, '-');
-        }
-
+        // For base files, use only the filename (without the "bases" folder)
+        // This ensures base IDs are simple like "projects", "advanced-projects"
         return fileName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
     }
 

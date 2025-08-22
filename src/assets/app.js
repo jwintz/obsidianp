@@ -49,8 +49,8 @@ class ObsidianSSGApp {
       if (pathId.startsWith('bases/')) {
         // Extract base ID by removing "bases/" prefix
         const basePath = pathId.substring(6); // Remove "bases/"
-        // Convert kebab-case back to base ID format (capitalize each word, keep hyphens)
-        noteId = basePath.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('-');
+        // Keep base ID as lowercase to match the base ID generation
+        noteId = basePath.toLowerCase();
       } else {
         noteId = pathId;
       }
@@ -614,7 +614,12 @@ class ObsidianSSGApp {
   renderBaseViewContent(base, view) {
     // Get matched notes and convert IDs to full note objects
     const matchedNoteIds = base.matchedNotes || [];
-    const notes = matchedNoteIds.map(id => this.notes.get(id)).filter(note => note);
+    let notes = matchedNoteIds.map(id => this.notes.get(id)).filter(note => note);
+    
+    // Apply view-specific filters if they exist
+    if (view.filters) {
+      notes = this.applyViewFilters(notes, view.filters);
+    }
     
     if (notes.length === 0) {
         return '<div class="empty-base">No items found</div>';
@@ -630,6 +635,81 @@ class ObsidianSSGApp {
         default:
             return this.renderTableView(notes, view);
     }
+  }
+  
+  applyViewFilters(notes, filters) {
+    return notes.filter(note => this.evaluateViewFilter(filters, note));
+  }
+  
+  evaluateViewFilter(filter, note) {
+    // Handle logical operators
+    if (filter.and) {
+      return filter.and.every(subFilter => this.evaluateViewFilter(subFilter, note));
+    }
+    
+    if (filter.or) {
+      return filter.or.some(subFilter => this.evaluateViewFilter(subFilter, note));
+    }
+    
+    if (filter.not) {
+      return !this.evaluateViewFilter(filter.not, note);
+    }
+    
+    // Handle string-based filters
+    if (typeof filter === 'string') {
+      return this.evaluateStringFilter(filter, note);
+    }
+    
+    // Handle property-based filters
+    for (const [key, value] of Object.entries(filter)) {
+      if (key === 'and' || key === 'or' || key === 'not') continue;
+      
+      if (!this.evaluatePropertyFilter(key, value, note)) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
+  evaluateStringFilter(filter, note) {
+    // Handle common property comparisons like "status == 'DOING'"
+    const propertyMatch = filter.match(/(\w+)\s*(==|!=)\s*["']([^"']+)["']/);
+    if (propertyMatch) {
+      const property = propertyMatch[1];
+      const operator = propertyMatch[2];
+      const value = propertyMatch[3];
+      const noteValue = note.frontMatter?.[property];
+      
+      if (operator === '==') {
+        return noteValue === value;
+      } else if (operator === '!=') {
+        return noteValue !== value;
+      }
+    }
+    
+    // Handle file.hasTag() filters
+    const hasTagMatch = filter.match(/file\.hasTag\(["']([^"']+)["']\)/);
+    if (hasTagMatch) {
+      const tag = hasTagMatch[1];
+      const tags = note.frontMatter?.tags || [];
+      const tagList = Array.isArray(tags) ? tags : [tags];
+      return tagList.includes(tag);
+    }
+    
+    return false;
+  }
+  
+  evaluatePropertyFilter(property, value, note) {
+    const noteValue = note.frontMatter?.[property];
+    
+    // Handle simple equality
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      return noteValue === value;
+    }
+    
+    // Handle complex filters (could be extended)
+    return false;
   }
   
   renderCardsView(notes, view) {

@@ -41,6 +41,8 @@
   --font-family-code: 'Monaspace Neon', monospace;
   
   /* Font sizes */
+  --font-size-3xs: 7px;
+  --font-size-2xs: 9px;
   --font-size-xs: 11px;
   --font-size-sm: 13px;
   --font-size-md: 14px;
@@ -1940,7 +1942,7 @@ body.menu-open {
 .base-pill {
   background-color: var(--color-bg-tertiary);
   color: var(--color-text-primary);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-2xs);
   font-weight: 400;
   padding: 2px 6px;
   border-radius: 4px;

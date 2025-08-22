@@ -3,7 +3,7 @@ import matter from 'gray-matter';
 import path from 'path';
 import { createHighlighter } from 'shiki';
 import * as katex from 'katex';
-import { Note, FrontMatter } from './types';
+import { Note, FrontMatter, Base } from './types';
 
 export class MarkdownProcessor {
   private linkPattern = /\[\[([^\]]+)\]\]/g;
@@ -190,21 +190,133 @@ export class MarkdownProcessor {
   }
 
   /**
-   * Generate a unique ID for a note based on its file path
-   */
-  private generateNoteId(filePath: string): string {
-    // Use the relative path to ensure uniqueness across folders
-    const relativePath = path.parse(filePath);
-    const folderName = path.basename(relativePath.dir);
-    const fileName = relativePath.name;
+ * Generate a unique ID for a note based on its path
+ */
+  generateNoteId(linkText: string): string {
+    return linkText.toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
 
-    // If file is in a subfolder, include folder name in ID
-    if (folderName && folderName !== '.') {
-      return `${folderName}-${fileName}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  /**
+   * Generate a unique ID for a base based on its path
+   */
+  generateBaseId(linkText: string): string {
+    return 'bases-' + linkText.toLowerCase()
+      .replace(/\.base$/, '')
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  /**
+   * Generate base icon SVG
+   */
+  generateBaseIcon(): string {
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9l7-6z"></path>
+        <polyline points="12,3 12,9 19,9"></polyline>
+        <path d="M12 3v6h7"></path>
+        <path d="M3 10h18"></path>
+        <path d="M3 15h18"></path>
+      </svg>
+    `;
+  }
+
+  /**
+   * Generate embedded base content that matches the actual base page content
+   */
+  generateEmbeddedBaseContent(base: Base): string {
+    const notes = base.matchedNotes || [];
+
+    if (notes.length === 0) {
+      return '<div class="empty-base">No items found matching the filters</div>';
     }
 
-    // For root level files, just use the filename
-    return fileName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    // Use the first view or default to cards
+    const defaultView = base.views && base.views.length > 0 ? base.views[0] : { type: 'cards', name: 'Default' };
+
+    switch (defaultView.type) {
+      case 'cards':
+        return this.generateCardsViewContent(notes);
+      case 'table':
+        return this.generateTableViewContent(notes);
+      default:
+        return this.generateCardsViewContent(notes);
+    }
+  }
+
+  /**
+   * Generate cards view content for embedded bases
+   */
+  generateCardsViewContent(notes: Note[]): string {
+    const cardsHtml = notes.map(note => {
+      const tags = note.frontMatter.tags || [];
+      const tagsHtml = Array.isArray(tags)
+        ? tags.map(tag => `<span class="tag">${tag}</span>`).join('')
+        : tags ? `<span class="tag">${tags}</span>` : '';
+
+      // Format date
+      const dateStr = note.frontMatter.mtime || 'Unknown date';
+
+      return `<div class="card" data-note-id="${note.id}">
+        <div class="card-header">
+          <h3 class="card-title">
+            <a href="${note.id}.html" class="internal-link">${note.title}</a>
+          </h3>
+        </div>
+        <div class="card-content">
+          <div class="card-meta">
+            ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+            <div class="card-date">${dateStr}</div>
+          </div>
+          <div class="card-preview">${note.content.length > 150 ? note.content.substring(0, 150) + '...' : note.content}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="cards-view">
+      <div class="cards-container">
+        ${cardsHtml}
+      </div>
+    </div>`;
+  }
+
+  /**
+   * Generate table view content for embedded bases
+   */
+  generateTableViewContent(notes: Note[]): string {
+    const rowsHtml = notes.map(note => {
+      const tags = note.frontMatter.tags || [];
+      const tagsHtml = Array.isArray(tags)
+        ? tags.map(tag => `<span class="tag">${tag}</span>`).join('')
+        : tags ? `<span class="tag">${tags}</span>` : '';
+
+      return `<tr data-note-id="${note.id}">
+        <td><a href="${note.id}.html" class="internal-link">${note.title}</a></td>
+        <td>${tagsHtml}</td>
+        <td>${note.frontMatter.mtime || 'Unknown'}</td>
+      </tr>`;
+    }).join('');
+
+    return `<div class="table-view">
+      <table class="base-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Tags</th>
+            <th>Modified</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+    </div>`;
   }
 
   /**
@@ -261,14 +373,15 @@ export class MarkdownProcessor {
   }
 
   /**
-   * Resolve embedded notes by replacing placeholders with actual note content
+   * Resolve embedded notes and bases by replacing placeholders with actual content
    */
-  resolveEmbeddedNotes(html: string, allNotes: Map<string, Note>): string {
+  resolveEmbeddedNotes(html: string, allNotes: Map<string, Note>, bases?: Map<string, Base>): string {
     return html.replace(/<div class="embed-placeholder" data-embed-target="([^"]+)"><\/div>/g, (match, linkText) => {
-      // Find the note to embed - try multiple ID generation strategies
+      // First try to find a note to embed
       let targetNote: Note | undefined;
+      let targetBase: Base | undefined;
 
-      // Strategy 1: Direct ID match
+      // Strategy 1: Direct note ID match
       const directId = this.generateNoteId(linkText);
       targetNote = allNotes.get(directId);
 
@@ -293,8 +406,76 @@ export class MarkdownProcessor {
         }
       }
 
+      // Strategy 4: Try to find a base if note not found
+      if (!targetNote && bases) {
+        // Check if it's a .base file reference
+        const baseId = this.generateBaseId(linkText);
+        targetBase = bases.get(baseId);
+
+        // Strategy 5: Search by base title
+        if (!targetBase) {
+          for (const base of bases.values()) {
+            if (base.title === linkText) {
+              targetBase = base;
+              break;
+            }
+          }
+        }
+
+        // Strategy 6: Search by base filename (without .base extension)
+        if (!targetBase) {
+          for (const base of bases.values()) {
+            const baseFileName = path.basename(base.path, '.base');
+            if (baseFileName === linkText) {
+              targetBase = base;
+              break;
+            }
+          }
+        }
+      }
+
+      // Handle base embedding - use same structure as notes with actual base content
+      if (targetBase) {
+        const embedId = `embed-${targetBase.id}-${Math.random().toString(36).substr(2, 9)}`;
+        const baseContent = this.generateEmbeddedBaseContent(targetBase);
+
+        return `<div class="embed-note" data-embed-id="${embedId}">
+          <div class="embed-header">
+            <span class="embed-title" onclick="toggleEmbed('${embedId}')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="embed-icon">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14,2 14,8 20,8"></polyline>
+      <line x1="16" y1="13" x2="8" y2="13"></line>
+      <line x1="16" y1="17" x2="8" y2="17"></line>
+      <polyline points="10,9 9,9 8,9"></polyline>
+    </svg>
+              <span class="embed-title-text">${targetBase.title}</span>
+            </span>
+            <span class="embed-controls">
+              <span class="embed-maximize" onclick="toggleEmbedMaximize('${embedId}')" title="Toggle full height">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon minimize-2">
+                  <polyline points="4,14 10,14 10,20"></polyline>
+                  <polyline points="20,10 14,10 14,4"></polyline>
+                  <line x1="14" y1="10" x2="21" y2="3"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+              </span>
+              <span class="embed-chevron" onclick="toggleEmbed('${embedId}')" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
+                  <path d="M3 8L12 17L21 8"></path>
+                </svg>
+              </span>
+            </span>
+          </div>
+          <div class="embed-content" id="embed-content-${embedId}">
+            ${baseContent}
+          </div>
+        </div>`;
+      }
+
+      // Handle note embedding
       if (!targetNote) {
-        // Note not found, return a placeholder
+        // Neither note nor base found
         return `<div class="embed-note embed-error">❌ Note not found: ${linkText}</div>`;
       }
 
@@ -303,15 +484,25 @@ export class MarkdownProcessor {
 
       return `
         <div class="embed-note" data-embed-id="${embedId}">
-          <div class="embed-header" onclick="toggleEmbed('${embedId}')">
-            <span class="embed-title">
+          <div class="embed-header">
+            <span class="embed-title" onclick="toggleEmbed('${embedId}')">
               ${this.generateEmbeddedIcon()}
               <span class="embed-title-text">${targetNote.title}</span>
             </span>
-            <span class="embed-chevron" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
-                <path d="M3 8L12 17L21 8"></path>
-              </svg>
+            <span class="embed-controls">
+              <span class="embed-maximize" onclick="toggleEmbedMaximize('${embedId}')" title="Toggle full height">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon minimize-2">
+                  <polyline points="4,14 10,14 10,20"></polyline>
+                  <polyline points="20,10 14,10 14,4"></polyline>
+                  <line x1="14" y1="10" x2="21" y2="3"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+              </span>
+              <span class="embed-chevron" onclick="toggleEmbed('${embedId}')" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
+                  <path d="M3 8L12 17L21 8"></path>
+                </svg>
+              </span>
             </span>
           </div>
           <div class="embed-content" id="embed-content-${embedId}">

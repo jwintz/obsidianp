@@ -2,13 +2,16 @@ import fs from 'fs-extra';
 import path from 'path';
 import { glob } from 'glob';
 import { MarkdownProcessor } from './markdown-processor';
-import { Note, VaultStructure, SiteConfig, FolderNode } from './types';
+import { BaseProcessor } from './base-processor';
+import { Note, VaultStructure, SiteConfig, FolderNode, Base } from './types';
 
 export class VaultProcessor {
   private markdownProcessor: MarkdownProcessor;
+  private baseProcessor: BaseProcessor;
 
   constructor() {
     this.markdownProcessor = new MarkdownProcessor();
+    this.baseProcessor = new BaseProcessor();
   }
 
   /**
@@ -19,12 +22,19 @@ export class VaultProcessor {
     await this.markdownProcessor.initialize();
 
     const notes = new Map<string, Note>();
+    const bases = new Map<string, Base>();
     const linkGraph = new Map<string, Set<string>>();
     const categories = new Map<string, string[]>();
     const tags = new Map<string, string[]>();
 
     // Find all markdown files
     const markdownFiles = await glob('**/*.md', {
+      cwd: vaultPath,
+      absolute: true
+    });
+
+    // Find all base files
+    const baseFiles = await glob('**/*.base', {
       cwd: vaultPath,
       absolute: true
     });
@@ -75,19 +85,39 @@ export class VaultProcessor {
       }
     }
 
+    // Process base files
+    console.log('🗄️ Processing base files...');
+    for (const filePath of baseFiles) {
+      try {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const base = this.baseProcessor.processBase(filePath, content, vaultPath);
+
+        // Filter notes for this base
+        const filteredNotes = this.baseProcessor.filterNotes(base, notes);
+
+        // Process formulas if any
+        const processedNotes = this.baseProcessor.processFormulas(base, filteredNotes);
+        base.matchedNotes = processedNotes;
+
+        bases.set(base.id, base);
+      } catch (error) {
+        console.warn(`Failed to process base file ${filePath}:`, error);
+      }
+    }
+
     // Generate backlinks
     this.markdownProcessor.generateBacklinks(notes);
 
     // Resolve embedded notes now that all notes are processed
     console.log('🔗 Resolving embedded notes...');
     notes.forEach(note => {
-      note.html = this.markdownProcessor.resolveEmbeddedNotes(note.html, notes);
+      note.html = this.markdownProcessor.resolveEmbeddedNotes(note.html, notes, bases);
     });
 
     // Build folder structure
-    const folderStructure = this.buildFolderStructure(notes, vaultPath);
+    const folderStructure = this.buildFolderStructure(notes, bases, vaultPath);
 
-    return { notes, linkGraph, categories, tags, folderStructure };
+    return { notes, bases, linkGraph, categories, tags, folderStructure };
   }
 
   /**
@@ -105,9 +135,9 @@ export class VaultProcessor {
   }
 
   /**
-   * Build folder structure tree from notes
+   * Build folder structure tree from notes and bases
    */
-  private buildFolderStructure(notes: Map<string, Note>, vaultPath: string): FolderNode[] {
+  private buildFolderStructure(notes: Map<string, Note>, bases: Map<string, Base>, vaultPath: string): FolderNode[] {
     const folderMap = new Map<string, FolderNode>();
     const rootNodes: FolderNode[] = [];
 
@@ -155,6 +185,53 @@ export class VaultProcessor {
       } else {
         // Note is in root directory
         rootNodes.push(fileNode);
+      }
+    });
+
+    // Add bases to the folder structure
+    bases.forEach(base => {
+      const parts = base.folderPath.split('/').filter(part => part !== '');
+      let currentPath = '';
+      let parentNode: FolderNode | undefined = undefined;
+
+      // Create folder hierarchy for bases (same logic as notes)
+      parts.forEach((part, index) => {
+        currentPath = currentPath ? `${currentPath}/${part}` : part;
+
+        if (!folderMap.has(currentPath)) {
+          const folderNode: FolderNode = {
+            name: part,
+            path: currentPath,
+            type: 'folder',
+            children: []
+          };
+
+          folderMap.set(currentPath, folderNode);
+
+          if (parentNode) {
+            parentNode.children.push(folderNode);
+          } else {
+            rootNodes.push(folderNode);
+          }
+        }
+
+        parentNode = folderMap.get(currentPath);
+      });
+
+      // Add the base as a file node
+      const baseFileNode: FolderNode = {
+        name: base.title,
+        path: base.relativePath,
+        type: 'file',
+        children: [],
+        noteId: base.id
+      };
+
+      if (parentNode !== undefined) {
+        (parentNode as FolderNode).children.push(baseFileNode);
+      } else {
+        // Base is in root directory
+        rootNodes.push(baseFileNode);
       }
     });
 

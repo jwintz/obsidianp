@@ -120,7 +120,7 @@ program
 
       let config: SiteConfig = { ...DEFAULT_CONFIG };
 
-            // Load configuration
+      // Load configuration
       const loadConfig = async () => {
         config = { ...DEFAULT_CONFIG };
 

@@ -1,8 +1,8 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { VaultProcessor } from './vault-processor';
-import { generateMainTemplate, generateNoteTemplate } from './templates';
-import { VaultStructure, SiteConfig, Note } from './types';
+import { generateMainTemplate, generateNoteTemplate, generateBaseTemplate, generateBaseHTML } from './templates';
+import { VaultStructure, SiteConfig, Note, Base } from './types';
 
 export class SiteGenerator {
   private vaultProcessor: VaultProcessor;
@@ -138,7 +138,7 @@ export class SiteGenerator {
     outputPath: string,
     config: SiteConfig
   ): Promise<void> {
-    const { notes } = vaultStructure;
+    const { notes, bases } = vaultStructure;
 
     // Generate index.html (main page)
     const indexHtml = generateMainTemplate(config.title);
@@ -159,6 +159,14 @@ export class SiteGenerator {
       // separate templates for individual notes
       await fs.writeFile(path.join(outputPath, noteFileName), noteHtml);
     }
+
+    // Generate individual base pages
+    for (const base of bases.values()) {
+      const baseHtml = generateBaseHTML(base, config.title);
+      const baseFileName = `${base.id}.html`;
+
+      await fs.writeFile(path.join(outputPath, baseFileName), baseHtml);
+    }
   }
 
   /**
@@ -171,7 +179,7 @@ export class SiteGenerator {
     const dataDir = path.join(outputPath, 'data');
     await fs.ensureDir(dataDir);
 
-    const { notes, linkGraph, categories, tags, folderStructure } = vaultStructure;
+    const { notes, bases, linkGraph, categories, tags, folderStructure } = vaultStructure;
 
     // Convert maps to objects for JSON serialization
     const notesObject: Record<string, any> = {};
@@ -203,11 +211,28 @@ export class SiteGenerator {
       tagsObject[tag] = noteIds;
     });
 
+    // Convert bases map to object
+    const basesObject: Record<string, any> = {};
+    bases.forEach((base, id) => {
+      basesObject[id] = {
+        id: base.id,
+        title: base.title,
+        relativePath: base.relativePath,
+        folderPath: base.folderPath,
+        filters: base.filters,
+        views: base.views,
+        properties: base.properties,
+        formulas: base.formulas,
+        matchedNotes: base.matchedNotes?.map(note => note.id) || []
+      };
+    });
+
     // Write data files
     await fs.writeFile(
       path.join(dataDir, 'notes.json'),
       JSON.stringify({
         notes: notesObject,
+        bases: basesObject,
         linkGraph: linkGraphObject,
         categories: categoriesObject,
         tags: tagsObject,

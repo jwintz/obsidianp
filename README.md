@@ -110,7 +110,7 @@ The generated site is pure HTML/CSS/JS. Deploy to any static host:
 An example Github Actions deployment taks:
 
 ```yaml
-name: Deploy Obsidian Site
+name: Deploy
 
 on:
   push:

@@ -34,6 +34,7 @@ export interface FolderNode {
 
 export interface VaultStructure {
   notes: Map<string, Note>;
+  bases: Map<string, Base>;
   linkGraph: Map<string, Set<string>>;
   categories: Map<string, string[]>;
   tags: Map<string, string[]>;
@@ -55,4 +56,100 @@ export interface SiteConfig {
   // Legacy support - will be deprecated
   cssVariables?: Record<string, string>;
   theme?: 'light' | 'dark' | 'auto';
+}
+
+// Base (database) related types
+export interface BaseFilter {
+  and?: (BaseFilter | string)[];
+  or?: (BaseFilter | string)[];
+  not?: BaseFilter | string;
+  // File properties
+  'file.name'?: string | BaseStringFilter;
+  'file.path'?: string | BaseStringFilter;
+  'file.size'?: number | BaseNumberFilter;
+  'file.mtime'?: string | Date | BaseDateFilter;
+  'file.ctime'?: string | Date | BaseDateFilter;
+  'file.tag'?: string | string[];
+  'file.tags'?: string | string[];
+  'file.hasTag'?: string | string[];
+  'file.inFolder'?: string;
+  'file.starred'?: boolean;
+  // Custom properties (dynamic)
+  [key: string]: any;
+}
+
+export interface BaseStringFilter {
+  contains?: string;
+  startsWith?: string;
+  endsWith?: string;
+  matches?: string; // regex
+  '='?: string;
+  '!='?: string;
+}
+
+export interface BaseNumberFilter {
+  '='?: number;
+  '!='?: number;
+  '>'?: number;
+  '>='?: number;
+  '<'?: number;
+  '<='?: number;
+}
+
+export interface BaseDateFilter {
+  before?: string | Date;
+  after?: string | Date;
+  on?: string | Date;
+  '='?: string | Date;
+  '!='?: string | Date;
+  '>'?: string | Date;
+  '>='?: string | Date;
+  '<'?: string | Date;
+  '<='?: string | Date;
+}
+
+export interface BaseView {
+  type: 'table' | 'cards' | 'calendar' | 'gallery';
+  name: string;
+  order?: string[];
+  sort?: Array<{
+    property: string;
+    direction: 'ASC' | 'DESC';
+  }>;
+  columnSize?: Record<string, number>;
+  limit?: number;
+  filter?: BaseFilter; // View-specific filters
+  group?: string; // Group by property
+}
+
+export interface BaseProperty {
+  name: string;
+  type: 'text' | 'number' | 'date' | 'datetime' | 'checkbox' | 'select' | 'multiselect' | 'url' | 'email' | 'file' | 'person';
+  options?: string[];
+  default?: any;
+  required?: boolean;
+  format?: string; // For dates, numbers, etc.
+}
+
+export interface BaseFormula {
+  name: string;
+  formula: string;
+  type?: 'text' | 'number' | 'date' | 'boolean';
+  format?: string;
+}
+
+export interface Base {
+  id: string;
+  title: string;
+  source: string;
+  path: string;
+  relativePath: string;
+  folderPath: string;
+  description?: string;
+  views: BaseView[];
+  filters?: BaseFilter[];
+  properties?: BaseProperty[];
+  formulas?: BaseFormula[];
+  matchedNotes?: Note[];
+  items?: any[];
 }

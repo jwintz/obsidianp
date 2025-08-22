@@ -30,12 +30,18 @@ node dist/cli.js generate ./vault ./site
 node dist/cli.js serve ./vault -p 8000
 ```
 
-Or, to fallback to the dedicated usage with the binary, while in development mode:
+Or, to fallback to the dedicated usage with the binary, while in redaction mode:
 
 ```bash
 npm link
 obsidianp generate ./vault ./site
 obsidianp serve ./vault -p 8000
+```
+
+Or, in development mode:
+
+```bash
+npm run dev serve ./vault -- --port 8000
 ```
 
 ## Usage

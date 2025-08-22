@@ -21,6 +21,7 @@
   "author": "Julien Wintz",
   "license": "MIT",
   "devDependencies": {
+    "@types/chokidar": "^1.7.5",
     "@types/fs-extra": "^11.0.4",
     "@types/glob": "^8.1.0",
     "@types/node": "^24.3.0",
@@ -33,6 +34,7 @@
     "@fontsource/mona-sans": "^5.2.6",
     "@fontsource/monaspace-neon": "^5.2.5",
     "@types/katex": "^0.16.7",
+    "chokidar": "^4.0.3",
     "commander": "^14.0.0",
     "fs-extra": "^11.3.1",
     "glob": "^11.0.3",

@@ -78,6 +78,12 @@ export class VaultProcessor {
     // Generate backlinks
     this.markdownProcessor.generateBacklinks(notes);
 
+    // Resolve embedded notes now that all notes are processed
+    console.log('🔗 Resolving embedded notes...');
+    notes.forEach(note => {
+      note.html = this.markdownProcessor.resolveEmbeddedNotes(note.html, notes);
+    });
+
     // Build folder structure
     const folderStructure = this.buildFolderStructure(notes, vaultPath);
 

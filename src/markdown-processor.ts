@@ -237,7 +237,8 @@ export class MarkdownProcessor {
       if (this.isImageFile(link)) {
         return `![${link}](attachments/${link})`;
       } else {
-        return `<div class="embed-note" data-note="${link}">📄 ${link}</div>`;
+        // Create placeholder that will be resolved later with actual content
+        return `<div class="embed-placeholder" data-embed-target="${link}"></div>`;
       }
     });
 
@@ -253,6 +254,61 @@ export class MarkdownProcessor {
     });
 
     return processed;
+  }
+
+  /**
+   * Resolve embedded notes by replacing placeholders with actual note content
+   */
+  resolveEmbeddedNotes(html: string, allNotes: Map<string, Note>): string {
+    return html.replace(/<div class="embed-placeholder" data-embed-target="([^"]+)"><\/div>/g, (match, linkText) => {
+      // Find the note to embed - try multiple ID generation strategies
+      let targetNote: Note | undefined;
+      
+      // Strategy 1: Direct ID match
+      const directId = this.generateNoteId(linkText);
+      targetNote = allNotes.get(directId);
+      
+      // Strategy 2: Search by title across all notes
+      if (!targetNote) {
+        for (const note of allNotes.values()) {
+          if (note.title === linkText) {
+            targetNote = note;
+            break;
+          }
+        }
+      }
+      
+      // Strategy 3: Search by filename (without extension)
+      if (!targetNote) {
+        for (const note of allNotes.values()) {
+          const fileName = path.basename(note.path, '.md');
+          if (fileName === linkText) {
+            targetNote = note;
+            break;
+          }
+        }
+      }
+
+      if (!targetNote) {
+        // Note not found, return a placeholder
+        return `<div class="embed-note embed-error">❌ Note not found: ${linkText}</div>`;
+      }
+
+      // Create collapsible embed cartridge
+      const embedId = `embed-${targetNote.id}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      return `
+        <div class="embed-note" data-embed-id="${embedId}">
+          <div class="embed-header" onclick="toggleEmbed('${embedId}')">
+            <span class="embed-title">${targetNote.title}</span>
+            <span class="embed-chevron">▼</span>
+          </div>
+          <div class="embed-content" id="embed-content-${embedId}">
+            ${targetNote.html}
+          </div>
+        </div>
+      `.trim();
+    });
   }
 
   /**

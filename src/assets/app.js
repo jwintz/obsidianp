@@ -580,3 +580,14 @@ function navigateToNote(noteId) {
     app.loadNote(noteId);
   }
 }
+
+// Global function for embed toggle interaction
+function toggleEmbed(embedId) {
+  const embedElement = document.querySelector(`[data-embed-id="${embedId}"]`);
+  const contentElement = document.getElementById(`embed-content-${embedId}`);
+  
+  if (embedElement && contentElement) {
+    embedElement.classList.toggle('collapsed');
+    contentElement.classList.toggle('collapsed');
+  }
+}

@@ -616,6 +616,11 @@ export class BaseProcessor {
      * Get file modification time
      */
     private getFileMtime(note: Note): Date | null {
+        if (note.fileStats) {
+            return new Date(note.fileStats.mtime);
+        }
+
+        // Fallback to file system call
         try {
             const fs = require('fs');
             const stats = fs.statSync(note.path);
@@ -629,6 +634,11 @@ export class BaseProcessor {
      * Get file creation time
      */
     private getFileCtime(note: Note): Date | null {
+        if (note.fileStats) {
+            return new Date(note.fileStats.ctime);
+        }
+
+        // Fallback to file system call
         try {
             const fs = require('fs');
             const stats = fs.statSync(note.path);

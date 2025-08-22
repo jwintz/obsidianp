@@ -3,8 +3,9 @@ import matter from 'gray-matter';
 import path from 'path';
 import { createHighlighter } from 'shiki';
 import * as katex from 'katex';
-import { Note, FrontMatter, Base } from './types';
+import { Note, FrontMatter, Base, BaseView } from './types';
 import { getLucideIcon } from './templates';
+import { BaseProcessor } from './base-processor';
 
 export class MarkdownProcessor {
   private linkPattern = /\[\[([^\]]+)\]\]/g;
@@ -12,6 +13,7 @@ export class MarkdownProcessor {
   private highlighter: any = null;
   private mathPlaceholders: Map<string, string> = new Map();
   private mathCounter = 0;
+  private baseProcessor: BaseProcessor;
 
   constructor() {
     // Configure marked with basic settings first
@@ -19,6 +21,8 @@ export class MarkdownProcessor {
       breaks: true,
       gfm: true,
     });
+
+    this.baseProcessor = new BaseProcessor();
   }
 
   async initialize() {
@@ -112,6 +116,20 @@ export class MarkdownProcessor {
     // Generate frontmatter HTML
     const frontMatterHtml = this.generateFrontMatterHtml(frontMatter as FrontMatter);
 
+    // Get file statistics
+    let fileStats;
+    try {
+      const fs = require('fs');
+      const stats = fs.statSync(filePath);
+      fileStats = {
+        size: stats.size,
+        mtime: stats.mtime,
+        ctime: stats.ctime
+      };
+    } catch (error) {
+      console.warn(`Could not get file stats for ${filePath}:`, error);
+    }
+
     return {
       id,
       title,
@@ -123,7 +141,8 @@ export class MarkdownProcessor {
       frontMatterHtml,
       html: html as string,
       links,
-      backlinks: []
+      backlinks: [],
+      fileStats
     };
   }
 
@@ -283,14 +302,19 @@ export class MarkdownProcessor {
    * Generate base view content (used in both standalone and embedded contexts)
    */
   generateBaseViewContent(base: Base): string {
-    const notes = base.matchedNotes || [];
+    let notes = base.matchedNotes || [];
 
     if (notes.length === 0) {
       return '<div class="empty-base">No items found matching the filters</div>';
     }
 
     // Use the first view or default to cards
-    const defaultView = base.views && base.views.length > 0 ? base.views[0] : { type: 'cards', name: 'Default' };
+    const defaultView: BaseView = base.views && base.views.length > 0 ? base.views[0] : { type: 'cards', name: 'Default' };
+
+    // Apply sorting if defined in the view
+    if (defaultView.sort && Array.isArray(defaultView.sort)) {
+      notes = this.baseProcessor.sortNotes(notes, defaultView);
+    }
 
     switch (defaultView.type) {
       case 'cards':
@@ -324,7 +348,18 @@ export class MarkdownProcessor {
    * Generate base controls for embedded header
    */
   generateEmbedHeaderControls(base: Base): string {
-    const defaultView = base.views && base.views.length > 0 ? base.views[0] : { type: 'cards', name: 'Default' };
+    const defaultView = (base.views && base.views.length > 0 ? base.views[0] : { type: 'cards', name: 'Default' }) as BaseView;
+
+    // Check if base has sort or filter rules
+    const hasSortRules = defaultView.sort && defaultView.sort.length > 0;
+    const hasFilterRules = (base.filters && (
+      (typeof base.filters === 'string') ||
+      (typeof base.filters === 'object' && base.filters !== null && Object.keys(base.filters).length > 0)
+    )) || (defaultView.filter && (
+      (typeof defaultView.filter === 'string') ||
+      (typeof defaultView.filter === 'object' && defaultView.filter !== null && Object.keys(defaultView.filter).length > 0)
+    ));
+
     const viewButtons = base.views && base.views.length > 0 ? base.views.map(view => {
       let iconSvg = '';
       switch (view.type) {
@@ -348,10 +383,10 @@ export class MarkdownProcessor {
 
     return `<span class="embed-base-controls">
         ${viewButtons}
-        <button class="embed-action-button" onclick="event.stopPropagation();" title="Sort">
+        <button class="embed-action-button ${hasSortRules ? 'has-rules' : ''}" data-action="sort" data-base-id="${base.id}" onclick="event.stopPropagation();" title="Sort">
             ${getLucideIcon('ArrowUpDown', 14)}
         </button>
-        <button class="embed-action-button" onclick="event.stopPropagation();" title="Filter">
+        <button class="embed-action-button ${hasFilterRules ? 'has-rules' : ''}" data-action="filter" data-base-id="${base.id}" onclick="event.stopPropagation();" title="Filter">
             ${getLucideIcon('Filter', 14)}
         </button>
     </span>`;
@@ -656,7 +691,7 @@ export class MarkdownProcessor {
             </span>
             <span class="embed-controls">
               ${headerControls}
-              <span class="embed-maximize" onclick="event.stopPropagation(); toggleEmbedMaximize('${embedId}')" title="Toggle full height">
+              <span class="embed-maximize" onclick="event.stopPropagation(); toggleEmbedMaximize('${embedId}')" title="Limit height">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon minimize-2">
                   <polyline points="4,14 10,14 10,20"></polyline>
                   <polyline points="20,10 14,10 14,4"></polyline>
@@ -698,7 +733,7 @@ export class MarkdownProcessor {
               </a>
             </span>
             <span class="embed-controls">
-              <span class="embed-maximize" onclick="event.stopPropagation(); toggleEmbedMaximize('${embedId}')" title="Toggle full height">
+              <span class="embed-maximize" onclick="event.stopPropagation(); toggleEmbedMaximize('${embedId}')" title="Limit height">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon minimize-2">
                   <polyline points="4,14 10,14 10,20"></polyline>
                   <polyline points="20,10 14,10 14,4"></polyline>

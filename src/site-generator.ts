@@ -220,7 +220,8 @@ export class SiteGenerator {
         content: note.content.substring(0, 500), // Truncate for search
         links: note.links,
         backlinks: note.backlinks,
-        frontMatter: note.frontMatter
+        frontMatter: note.frontMatter,
+        fileStats: note.fileStats // Include file statistics
       };
     });
 

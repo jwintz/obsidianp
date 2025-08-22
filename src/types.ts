@@ -22,6 +22,12 @@ export interface Note {
   html: string;
   links: string[];
   backlinks: string[];
+  // File statistics
+  fileStats?: {
+    size: number;
+    mtime: Date;
+    ctime: Date;
+  };
 }
 
 export interface FolderNode {

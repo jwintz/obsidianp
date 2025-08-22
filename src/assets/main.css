@@ -1391,20 +1391,22 @@ body.menu-open {
 
 .embed-content {
   padding: var(--space-md);
-  /* Default to maximized (full height) */
-  transition: max-height 0.3s ease, padding 0.3s ease;
-}
-
-/* When embed is in fixed-height mode (not maximized) */
-.embed-note.fixed-height .embed-content {
-  max-height: 500px;
+  /* Default maximized state (no height limit) */
+  max-height: none;
   overflow-y: auto;
+  transition: max-height 0.3s ease, padding 0.3s ease;
 }
 
 .embed-content.collapsed {
   max-height: 0;
   padding: 0 var(--space-md);
   overflow: hidden;
+}
+
+/* When embed is explicitly set to limited height */
+.embed-note.limited-height .embed-content:not(.collapsed) {
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .embed-error {
@@ -2072,6 +2074,182 @@ body.menu-open {
 .base-controls .action-button svg {
   width: 14px;
   height: 14px;
+}
+
+/* Sort/Filter Button Active States */
+.base-controls .action-button.has-rules {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.base-controls .action-button.has-rules:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-hover);
+}
+
+/* Embedded button active states */
+.embed-action-button.has-rules {
+  background: var(--color-bg-tertiary) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Sort/Filter Popup Styles */
+.base-popup {
+  position: fixed;
+  min-width: 320px;
+  max-width: 400px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  padding: var(--space-md);
+  font-size: var(--font-size-sm);
+}
+
+.base-popup::before {
+  display: none;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.popup-title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.popup-close {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: var(--space-xs);
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-close:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.popup-section {
+  margin-bottom: var(--space-md);
+}
+
+.popup-section:last-child {
+  margin-bottom: 0;
+}
+
+.popup-section-title {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-sm) 0;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Sort Rules Display */
+.sort-rule {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.sort-rule:last-child {
+  margin-bottom: 0;
+}
+
+.sort-rule-property {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  flex-grow: 1;
+}
+
+.sort-rule-direction {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.sort-rule-arrow {
+  display: flex;
+  align-items: center;
+}
+
+/* Filter Rules Display */
+.filter-rule {
+  padding: var(--space-sm);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.filter-rule:last-child {
+  margin-bottom: 0;
+}
+
+.filter-rule-operator {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-bottom: var(--space-xs);
+}
+
+.filter-rule-condition {
+  font-family: var(--font-family-code);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-primary);
+  background: var(--color-bg-tertiary);
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+.filter-rule-nested {
+  margin-left: var(--space-md);
+  border-left: 2px solid var(--color-border);
+  padding-left: var(--space-sm);
+}
+
+.empty-rules {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding: var(--space-lg);
+}
+
+/* Popup overlay for closing on outside click */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+  background: transparent;
 }
 
 /* Legacy: embedded-base-controls for standalone contexts removed - controls now context-aware */

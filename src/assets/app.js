@@ -572,6 +572,17 @@ class ObsidianSSGApp {
   
   renderBaseView(base) {
     const defaultView = base.views[0] || { type: 'table', name: 'Default' };
+    
+    // Check if base has sort or filter rules
+    const hasSortRules = defaultView.sort && defaultView.sort.length > 0;
+    const hasFilterRules = (base.filters && (
+      (typeof base.filters === 'string') ||
+      (typeof base.filters === 'object' && base.filters !== null && Object.keys(base.filters).length > 0)
+    )) || (defaultView.filters && (
+      (typeof defaultView.filters === 'string') ||
+      (typeof defaultView.filters === 'object' && defaultView.filters !== null && Object.keys(defaultView.filters).length > 0)
+    ));
+    
     const viewButtons = base.views.map(view => 
         `<button class="view-button ${view === defaultView ? 'active' : ''}" data-view-type="${view.type}" data-view-name="${view.name}" title="${view.name}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -590,14 +601,14 @@ class ObsidianSSGApp {
             <div class="view-switcher">
                 ${viewButtons}
             </div>
-            <div class="base-actions">
-                <button class="action-button" id="sort-button">
+            <div class="base-actions" style="position: relative;">
+                <button class="action-button ${hasSortRules ? 'has-rules' : ''}" id="sort-button" data-base-id="${base.id}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="m3 16 4 4 4-4"></path><path d="M7 20V4"></path><path d="m21 8-4-4-4 4"></path><path d="M17 4v16"></path>
                     </svg>
                     Sort
                 </button>
-                <button class="action-button" id="filter-button">
+                <button class="action-button ${hasFilterRules ? 'has-rules' : ''}" id="filter-button" data-base-id="${base.id}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"></polygon>
                     </svg>
@@ -621,6 +632,11 @@ class ObsidianSSGApp {
       notes = this.applyViewFilters(notes, view.filters);
     }
     
+    // Apply view-specific sorting if it exists
+    if (view.sort && Array.isArray(view.sort)) {
+      notes = this.sortNotes(notes, view.sort);
+    }
+    
     if (notes.length === 0) {
         return '<div class="empty-base">No items found</div>';
     }
@@ -639,6 +655,98 @@ class ObsidianSSGApp {
   
   applyViewFilters(notes, filters) {
     return notes.filter(note => this.evaluateViewFilter(filters, note));
+  }
+  
+  sortNotes(notes, sortRules) {
+    return notes.sort((a, b) => {
+      for (const sortRule of sortRules) {
+        const comparison = this.compareNotes(a, b, sortRule.property);
+        if (comparison !== 0) {
+          return sortRule.direction === 'DESC' ? -comparison : comparison;
+        }
+      }
+      return 0;
+    });
+  }
+  
+  compareNotes(a, b, property) {
+    let valueA, valueB;
+    
+    switch (property) {
+      case 'file.name':
+        valueA = a.title;
+        valueB = b.title;
+        break;
+      case 'file.path':
+        valueA = a.relativePath;
+        valueB = b.relativePath;
+        break;
+      case 'file.mtime':
+        valueA = this.getFileMtime(a);
+        valueB = this.getFileMtime(b);
+        break;
+      case 'file.ctime':
+        valueA = this.getFileCtime(a);
+        valueB = this.getFileCtime(b);
+        break;
+      case 'file.tags':
+        valueA = (a.frontMatter.tags || []).join(',');
+        valueB = (b.frontMatter.tags || []).join(',');
+        break;
+      default:
+        valueA = a.frontMatter[property];
+        valueB = b.frontMatter[property];
+    }
+    
+    // Handle null values - treat null as oldest (smallest) value
+    if (valueA === null && valueB === null) return 0;
+    if (valueA === null) return 1;  // null is "greater" (older)
+    if (valueB === null) return -1; // non-null is "lesser" (newer)
+    
+    // Handle different data types
+    if (valueA instanceof Date && valueB instanceof Date) {
+      return valueA.getTime() - valueB.getTime();
+    }
+    
+    if (typeof valueA === 'number' && typeof valueB === 'number') {
+      return valueA - valueB;
+    }
+    
+    // Default to string comparison
+    const strA = String(valueA || '');
+    const strB = String(valueB || '');
+    return strA.localeCompare(strB);
+  }
+  
+  getFileMtime(note) {
+    if (note.fileStats) {
+      return new Date(note.fileStats.mtime);
+    }
+    return null;
+  }
+  
+  getFileCtime(note) {
+    if (note.fileStats) {
+      return new Date(note.fileStats.ctime);
+    }
+    return null;
+  }
+  
+  getPropertyValue(note, property) {
+    switch (property) {
+      case 'file.name':
+        return note.title;
+      case 'file.path':
+        return note.relativePath;
+      case 'file.mtime':
+        return this.getFileMtime(note);
+      case 'file.ctime':
+        return this.getFileCtime(note);
+      case 'file.tags':
+        return (note.frontMatter.tags || []).join(',');
+      default:
+        return note.frontMatter[property];
+    }
   }
   
   evaluateViewFilter(filter, note) {
@@ -869,15 +977,32 @@ class ObsidianSSGApp {
         case 'file.path':
             return note.relativePath || '';
         
+        case 'file.size':
+            if (note.fileStats && note.fileStats.size) {
+                const size = note.fileStats.size;
+                if (size < 1024) return `${size} B`;
+                if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+                return `${Math.round(size / (1024 * 1024))} MB`;
+            }
+            return '';
+        
         case 'file.tags':
             const tags = note.frontMatter?.tags || [];
             const tagList = Array.isArray(tags) ? tags : [tags];
             return tagList.map(tag => `<span class="tag">${tag}</span>`).join('');
         
         case 'file.mtime':
+            if (note.fileStats && note.fileStats.mtime) {
+                const mtime = new Date(note.fileStats.mtime);
+                return this.formatDate(mtime);
+            }
+            return '';
+            
         case 'file.ctime':
-            // For client-side, we don't have direct file stats
-            // Could be added to note data if needed
+            if (note.fileStats && note.fileStats.ctime) {
+                const ctime = new Date(note.fileStats.ctime);
+                return this.formatDate(ctime);
+            }
             return '';
         
         default:
@@ -887,6 +1012,16 @@ class ObsidianSSGApp {
             if (Array.isArray(value)) return value.join(', ');
             return String(value);
     }
+  }
+  
+  formatDate(date) {
+    return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(date);
   }
   
   initializeBaseInteractions(base) {
@@ -950,6 +1085,7 @@ class ObsidianSSGApp {
                 
                 // Re-initialize interactions for the new content
                 this.initializeBaseInteractions(base);
+                this.initializeEmbeddedBaseInteractions();
                 console.log('Re-initialized base interactions');
               }
             }
@@ -978,6 +1114,43 @@ class ObsidianSSGApp {
       });
     });
 
+    // Sort and Filter button event handlers
+    const sortButton = document.getElementById('sort-button');
+    const filterButton = document.getElementById('filter-button');
+    
+    if (sortButton) {
+      sortButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.showSortPopup(base, e.currentTarget);
+      });
+    }
+    
+    if (filterButton) {
+      filterButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.showFilterPopup(base, e.currentTarget);
+      });
+    }
+
+    // Embedded sort and filter button event handlers
+    const embedActionButtons = document.querySelectorAll('.embed-action-button');
+    embedActionButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = e.currentTarget.dataset.action;
+        const baseId = e.currentTarget.dataset.baseId;
+        
+        if (baseId && this.bases.has(baseId)) {
+          const targetBase = this.bases.get(baseId);
+          if (action === 'sort') {
+            this.showSortPopup(targetBase, e.currentTarget);
+          } else if (action === 'filter') {
+            this.showFilterPopup(targetBase, e.currentTarget);
+          }
+        }
+      });
+    });
+
     // Calendar note clicks
     const calendarNotes = document.querySelectorAll('.calendar-note');
     calendarNotes.forEach(note => {
@@ -991,11 +1164,60 @@ class ObsidianSSGApp {
     });
   }
   
+  initializeEmbeddedBaseInteractions() {
+    // Re-initialize embedded action buttons (sort/filter buttons in embedded bases)
+    const embeddedActionButtons = document.querySelectorAll('.embed-action-button');
+    embeddedActionButtons.forEach(button => {
+      // Remove any existing listeners to avoid duplicates
+      const newButton = button.cloneNode(true);
+      button.parentNode.replaceChild(newButton, button);
+      
+      newButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = e.currentTarget.dataset.action;
+        const baseId = e.currentTarget.dataset.baseId;
+        
+        if (baseId && this.bases.has(baseId)) {
+          const base = this.bases.get(baseId);
+          if (action === 'sort') {
+            this.showSortPopup(base, e.currentTarget);
+          } else if (action === 'filter') {
+            this.showFilterPopup(base, e.currentTarget);
+          }
+        }
+      });
+    });
+  }
+  
   switchBaseView(base, view) {
     const baseContent = document.getElementById('base-content');
     if (baseContent) {
       baseContent.innerHTML = this.renderBaseViewContent(base, view);
       this.initializeBaseInteractions(base);
+      
+      // Update sort and filter button indicators for the new view
+      this.updateActionButtonIndicators(base, view);
+    }
+  }
+  
+  updateActionButtonIndicators(base, view) {
+    const sortButton = document.getElementById('sort-button');
+    const filterButton = document.getElementById('filter-button');
+    
+    if (sortButton) {
+      const hasSortRules = view.sort && view.sort.length > 0;
+      sortButton.classList.toggle('has-rules', hasSortRules);
+    }
+    
+    if (filterButton) {
+      const hasFilterRules = (base.filters && (
+        (typeof base.filters === 'string') ||
+        (typeof base.filters === 'object' && base.filters !== null && Object.keys(base.filters).length > 0)
+      )) || (view.filters && (
+        (typeof view.filters === 'string') ||
+        (typeof view.filters === 'object' && view.filters !== null && Object.keys(view.filters).length > 0)
+      ));
+      filterButton.classList.toggle('has-rules', hasFilterRules);
     }
   }
   
@@ -1004,6 +1226,242 @@ class ObsidianSSGApp {
     // you'd maintain sort state and update the backend data
     console.log(`Sorting base by column: ${column}`);
     // For now, just log the action
+  }
+  
+  showSortPopup(base, button) {
+    // Close any existing popups
+    this.closePopups();
+    
+    const currentView = this.getCurrentView(base);
+    const sortRules = currentView.sort || [];
+    
+    const popup = this.createSortPopup(sortRules);
+    
+    // Position popup relative to the button
+    this.positionPopup(popup, button);
+    
+    // Add event listeners
+    this.setupPopupEventListeners(popup);
+  }
+  
+  showFilterPopup(base, button) {
+    // Close any existing popups
+    this.closePopups();
+    
+    const currentView = this.getCurrentView(base);
+    const baseFilters = base.filters;
+    const viewFilters = currentView.filter || currentView.filters; // Handle both property names
+    
+    const popup = this.createFilterPopup(baseFilters, viewFilters);
+    
+    // Position popup relative to the button
+    this.positionPopup(popup, button);
+    
+    // Add event listeners
+    this.setupPopupEventListeners(popup);
+  }
+  
+  positionPopup(popup, button) {
+    // Add to document body first to calculate dimensions
+    document.body.appendChild(popup);
+    
+    const buttonRect = button.getBoundingClientRect();
+    const popupRect = popup.getBoundingClientRect();
+    
+    // Default positioning: below and to the right of button
+    let top = buttonRect.bottom + 8;
+    let left = buttonRect.right - popupRect.width;
+    
+    // Ensure popup stays within viewport
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Adjust horizontal position if needed
+    if (left < 8) {
+      left = 8;
+    } else if (left + popupRect.width > viewportWidth - 8) {
+      left = viewportWidth - popupRect.width - 8;
+    }
+    
+    // Adjust vertical position if needed
+    if (top + popupRect.height > viewportHeight - 8) {
+      top = buttonRect.top - popupRect.height - 8;
+    }
+    
+    // Apply positioning
+    popup.style.position = 'fixed';
+    popup.style.top = `${top}px`;
+    popup.style.left = `${left}px`;
+    popup.style.right = 'auto';
+  }
+  
+  getCurrentView(base) {
+    // Try to find the currently active view - first check for standalone base view buttons
+    let activeButton = document.querySelector('.view-button.active');
+    
+    // If not found, check for embedded base view buttons
+    if (!activeButton) {
+      activeButton = document.querySelector('.embed-view-button.active');
+    }
+    
+    if (activeButton) {
+      const viewType = activeButton.dataset.viewType;
+      const viewName = activeButton.dataset.viewName;
+      return base.views.find(v => v.type === viewType && v.name === viewName) || base.views[0];
+    }
+    return base.views[0] || { type: 'table', name: 'Default' };
+  }
+  
+  createSortPopup(sortRules) {
+    const sortRulesHtml = sortRules.length > 0 
+      ? sortRules.map(rule => this.createSortRuleHtml(rule)).join('')
+      : '<div class="empty-rules">No sort rules defined</div>';
+      
+    const popup = document.createElement('div');
+    popup.className = 'base-popup';
+    popup.innerHTML = `
+      <div class="popup-header">
+        <h3 class="popup-title">Sort</h3>
+        <button class="popup-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="popup-section">
+        <h4 class="popup-section-title">Current Sort Rules</h4>
+        ${sortRulesHtml}
+      </div>
+    `;
+    
+    return popup;
+  }
+  
+  createFilterPopup(baseFilters, viewFilters) {
+    const baseFiltersHtml = baseFilters 
+      ? this.createFilterRuleHtml(baseFilters, 'Base Filters')
+      : '';
+      
+    const viewFiltersHtml = viewFilters 
+      ? this.createFilterRuleHtml(viewFilters, 'View Filters')
+      : '';
+      
+    const hasAnyFilters = baseFilters || viewFilters;
+    
+    const popup = document.createElement('div');
+    popup.className = 'base-popup';
+    popup.innerHTML = `
+      <div class="popup-header">
+        <h3 class="popup-title">Filter</h3>
+        <button class="popup-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      ${hasAnyFilters ? baseFiltersHtml + viewFiltersHtml : '<div class="empty-rules">No filter rules defined</div>'}
+    `;
+    
+    return popup;
+  }
+  
+  createSortRuleHtml(rule) {
+    const propertyName = this.getColumnDisplayName(rule.property);
+    const direction = rule.direction === 'DESC' ? 'Descending' : 'Ascending';
+    const arrowIcon = rule.direction === 'DESC' 
+      ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 13l3 3 3-3m-6-8l3-3 3 3"></path></svg>'
+      : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m17 11-3-3-3 3m6 8-3 3-3-3"></path></svg>';
+    
+    return `
+      <div class="sort-rule">
+        <div class="sort-rule-property">${propertyName}</div>
+        <div class="sort-rule-direction">
+          <span>${direction}</span>
+          <div class="sort-rule-arrow">${arrowIcon}</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  createFilterRuleHtml(filters, sectionTitle) {
+    return `
+      <div class="popup-section">
+        <h4 class="popup-section-title">${sectionTitle}</h4>
+        ${this.renderFilterRule(filters)}
+      </div>
+    `;
+  }
+  
+  renderFilterRule(filter, depth = 0) {
+    if (typeof filter === 'string') {
+      return `<div class="filter-rule ${depth > 0 ? 'filter-rule-nested' : ''}">
+        <div class="filter-rule-condition">${filter}</div>
+      </div>`;
+    }
+    
+    if (filter.and) {
+      return `<div class="filter-rule ${depth > 0 ? 'filter-rule-nested' : ''}">
+        <div class="filter-rule-operator">All of the following</div>
+        ${filter.and.map(subFilter => this.renderFilterRule(subFilter, depth + 1)).join('')}
+      </div>`;
+    }
+    
+    if (filter.or) {
+      return `<div class="filter-rule ${depth > 0 ? 'filter-rule-nested' : ''}">
+        <div class="filter-rule-operator">Any of the following</div>
+        ${filter.or.map(subFilter => this.renderFilterRule(subFilter, depth + 1)).join('')}
+      </div>`;
+    }
+    
+    if (filter.not) {
+      return `<div class="filter-rule ${depth > 0 ? 'filter-rule-nested' : ''}">
+        <div class="filter-rule-operator">Not</div>
+        ${this.renderFilterRule(filter.not, depth + 1)}
+      </div>`;
+    }
+    
+    // Handle object-based filters
+    const conditions = Object.entries(filter)
+      .filter(([key]) => !['and', 'or', 'not'].includes(key))
+      .map(([key, value]) => `${key} = ${JSON.stringify(value)}`);
+      
+    return conditions.map(condition => `
+      <div class="filter-rule ${depth > 0 ? 'filter-rule-nested' : ''}">
+        <div class="filter-rule-condition">${condition}</div>
+      </div>
+    `).join('');
+  }
+  
+  setupPopupEventListeners(popup) {
+    // Close button
+    const closeButton = popup.querySelector('.popup-close');
+    if (closeButton) {
+      closeButton.addEventListener('click', () => {
+        this.closePopups();
+      });
+    }
+    
+    // Create overlay for clicking outside to close
+    const overlay = document.createElement('div');
+    overlay.className = 'popup-overlay';
+    document.body.appendChild(overlay);
+    
+    overlay.addEventListener('click', () => {
+      this.closePopups();
+    });
+    
+    // Prevent popup clicks from closing the popup
+    popup.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+  
+  closePopups() {
+    // Remove all popups and overlays
+    document.querySelectorAll('.base-popup').forEach(popup => popup.remove());
+    document.querySelectorAll('.popup-overlay').forEach(overlay => overlay.remove());
   }
   
   renderBacklinks(note) {
@@ -1188,7 +1646,6 @@ function navigateToNote(noteId) {
 
 // Global function for embed toggle interaction
 function toggleEmbed(embedId) {
-  console.log('toggleEmbed called with:', embedId); // Debug log
   const embedElement = document.querySelector(`[data-embed-id="${embedId}"]`);
   const contentElement = document.getElementById(`embed-content-${embedId}`);
   const maximizeButton = embedElement?.querySelector('.embed-maximize');
@@ -1223,27 +1680,30 @@ function toggleEmbedMaximize(embedId) {
   }
   
   if (embedElement && maximizeButtonSvg) {
-    const isCurrentlyFixedHeight = embedElement.classList.contains('fixed-height');
+    const isCurrentlyLimited = embedElement.classList.contains('limited-height');
     
-    embedElement.classList.toggle('fixed-height');
+    // Toggle between maximized (default) and limited height
+    embedElement.classList.toggle('limited-height');
     
     // Update the icon based on new state
-    if (isCurrentlyFixedHeight) {
-      // Now maximized, show minimize icon (minimize-2)
+    if (isCurrentlyLimited) {
+      // Now maximized (no height limit), show minimize icon to indicate you can limit height
       maximizeButtonSvg.innerHTML = `
         <polyline points="4,14 10,14 10,20"></polyline>
         <polyline points="20,10 14,10 14,4"></polyline>
         <line x1="14" y1="10" x2="21" y2="3"></line>
         <line x1="3" y1="21" x2="10" y2="14"></line>
       `;
+      maximizeButton.setAttribute('title', 'Limit height');
     } else {
-      // Now fixed height, show maximize icon (maximize-2)  
+      // Now limited height, show maximize icon to indicate you can remove height limit
       maximizeButtonSvg.innerHTML = `
         <polyline points="15,3 21,3 21,9"></polyline>
         <polyline points="9,21 3,21 3,15"></polyline>
         <line x1="21" y1="3" x2="14" y2="10"></line>
         <line x1="3" y1="21" x2="10" y2="14"></line>
       `;
+      maximizeButton.setAttribute('title', 'Remove height limit');
     }
   }
 }

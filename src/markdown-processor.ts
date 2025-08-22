@@ -353,12 +353,12 @@ export class MarkdownProcessor {
     }
 
     let propertiesHtml = '';
-    
+
     // Calculate the maximum property name width for consistent alignment
-    const propertyNames = Object.keys(frontMatter).filter(key => 
+    const propertyNames = Object.keys(frontMatter).filter(key =>
       frontMatter[key] !== undefined && frontMatter[key] !== null
     );
-    
+
     // More accurate width calculation based on character width
     // Using a character map for more precise width estimation
     const getTextWidth = (text: string): number => {
@@ -368,14 +368,14 @@ export class MarkdownProcessor {
         'm': 8, 'w': 8, 'M': 9, 'W': 10,
         '_': 5, '-': 4, '.': 3
       };
-      
+
       let width = 0;
       for (const char of text) {
         width += charWidths[char] || 6; // default 6px for most characters
       }
       return width;
     };
-    
+
     const maxPropertyNameWidth = Math.max(...propertyNames.map(name => getTextWidth(name)));
     // Add padding and ensure minimum/maximum bounds
     const propertyNameWidth = Math.min(Math.max(maxPropertyNameWidth + 12, 50), 120);

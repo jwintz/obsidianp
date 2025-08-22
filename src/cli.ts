@@ -60,23 +60,6 @@ program
         } else {
           console.warn(`⚠️ Warning: Config file not found: ${configPath}`);
         }
-      } else {
-        // Look for default config files
-        const defaultConfigs = ['obsidianp.config.jsonc', 'obsidianp.config.json'];
-        for (const configFile of defaultConfigs) {
-          if (await fs.pathExists(configFile)) {
-            try {
-              const configContent = await fs.readFile(configFile, 'utf-8');
-              const cleanedContent = stripComments(configContent);
-              const configData = JSON.parse(cleanedContent);
-              config = { ...config, ...configData };
-              console.log(`📝 Found and loaded configuration from ${configFile}`);
-              break;
-            } catch (error) {
-              console.warn(`⚠️ Warning: Could not load config file: ${configFile}`);
-            }
-          }
-        }
       }
 
       // Override config with command line options
@@ -137,7 +120,7 @@ program
 
       let config: SiteConfig = { ...DEFAULT_CONFIG };
 
-      // Load configuration
+            // Load configuration
       const loadConfig = async () => {
         config = { ...DEFAULT_CONFIG };
 
@@ -153,23 +136,6 @@ program
             } catch (error) {
               console.warn(`⚠️ Warning: Could not load config file: ${configPath}`);
               console.warn(`   Error: ${error instanceof Error ? error.message : error}`);
-            }
-          }
-        } else {
-          // Look for default config files
-          const defaultConfigs = ['obsidianp.config.jsonc', 'obsidianp.config.json'];
-          for (const configFile of defaultConfigs) {
-            if (await fs.pathExists(configFile)) {
-              try {
-                const configContent = await fs.readFile(configFile, 'utf-8');
-                const cleanedContent = stripComments(configContent);
-                const configData = JSON.parse(cleanedContent);
-                config = { ...config, ...configData };
-                console.log(`📝 Found and loaded configuration from ${configFile}`);
-                break;
-              } catch (error) {
-                console.warn(`⚠️ Warning: Could not load config file: ${configFile}`);
-              }
             }
           }
         }

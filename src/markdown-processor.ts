@@ -379,7 +379,7 @@ export class MarkdownProcessor {
       return `<div class="card" data-note-id="${note.id}">
         <div class="card-header">
           <h3 class="card-title">
-            <a href="${note.id}.html" class="internal-link">${note.title}</a>
+            <a href="/${note.id}" class="internal-link">${note.title}</a>
           </h3>
         </div>
         <div class="card-content">
@@ -410,7 +410,7 @@ export class MarkdownProcessor {
         : tags ? `<span class="tag">${tags}</span>` : '';
 
       return `<tr data-note-id="${note.id}">
-        <td><a href="${note.id}.html" class="internal-link">${note.title}</a></td>
+        <td><a href="/${note.id}" class="internal-link">${note.title}</a></td>
         <td>${tagsHtml}</td>
         <td>${note.frontMatter.mtime || 'Unknown'}</td>
       </tr>`;
@@ -517,7 +517,7 @@ export class MarkdownProcessor {
       // Generate final link ID
       const linkId = fullPath.includes('/') ? fullPath : this.generateNoteId(actualLink);
 
-      return `<a href="${linkId}.html" class="internal-link" data-note="${actualLink}">${displayText}</a>`;
+      return `<a href="/${linkId}" class="internal-link" data-note="${actualLink}">${displayText}</a>`;
     });
 
     return processed;
@@ -563,7 +563,7 @@ export class MarkdownProcessor {
 
         // If we found the note and the href doesn't match the correct ID, fix it
         if (targetNote && hrefWithoutExt !== targetNote.id) {
-          return `<a href="${targetNote.id}.html" class="internal-link" data-note="${dataNoteValue}">${displayText}</a>`;
+          return `<a href="/${targetNote.id}" class="internal-link" data-note="${dataNoteValue}">${displayText}</a>`;
         }
 
         // If not found, return original link
@@ -650,12 +650,15 @@ export class MarkdownProcessor {
         const embedId = `embed-${safeBaseId}-${Math.random().toString(36).substr(2, 9)}`;
         const baseContent = this.generateEmbeddedBaseContent(targetBase, false); // No controls in content
         const headerControls = this.generateEmbedHeaderControls(targetBase); // Controls in header
+        const baseUrl = `/${targetBase.folderPath.toLowerCase()}/${path.basename(targetBase.relativePath, '.base').toLowerCase()}`;
 
         return `<div class="embed-note embed-base" data-embed-id="${embedId}" data-base-id="${targetBase.id}">
           <div class="embed-header" onclick="toggleEmbed('${embedId}')">
             <span class="embed-title">
-              ${this.generateEmbeddedBaseIcon()}
-              <span class="embed-title-text">${targetBase.title}</span>
+              <a href="${baseUrl}" class="embed-title-link" onclick="event.stopPropagation();">
+                ${this.generateEmbeddedBaseIcon()}
+                <span class="embed-title-text">${targetBase.title}</span>
+              </a>
             </span>
             <span class="embed-controls">
               ${headerControls}
@@ -689,13 +692,16 @@ export class MarkdownProcessor {
       // Create collapsible embed cartridge
       const safeNoteId = targetNote.id.replace(/\//g, '-');
       const embedId = `embed-${safeNoteId}-${Math.random().toString(36).substr(2, 9)}`;
+      const noteUrl = `/${targetNote.id}`;
 
       return `
         <div class="embed-note" data-embed-id="${embedId}">
           <div class="embed-header" onclick="toggleEmbed('${embedId}')">
             <span class="embed-title">
-              ${this.generateEmbeddedIcon()}
-              <span class="embed-title-text">${targetNote.title}</span>
+              <a href="${noteUrl}" class="embed-title-link" onclick="event.stopPropagation();">
+                ${this.generateEmbeddedIcon()}
+                <span class="embed-title-text">${targetNote.title}</span>
+              </a>
             </span>
             <span class="embed-controls">
               <span class="embed-maximize" onclick="event.stopPropagation(); toggleEmbedMaximize('${embedId}')" title="Toggle full height">

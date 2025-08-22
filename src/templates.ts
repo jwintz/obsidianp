@@ -49,8 +49,8 @@ function generateTemplate(title: string, mainContent: string): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title}</title>
-    <link rel="stylesheet" href="assets/main.css">
-    <link rel="stylesheet" href="assets/katex.min.css">
+    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="stylesheet" href="/assets/katex.min.css">
 </head>
 
 <body class="theme-light" data-theme="light">
@@ -130,9 +130,9 @@ function generateTemplate(title: string, mainContent: string): string {
         </div>
     </div>
     
-    <script src="assets/search.js"></script>
-    <script src="assets/graph.js"></script>
-    <script src="assets/app.js"></script>
+    <script src="/assets/search.js"></script>
+    <script src="/assets/graph.js"></script>
+    <script src="/assets/app.js"></script>
 </body>
 </html>`;
 }
@@ -142,7 +142,7 @@ export function generateNoteTemplate(title: string, content: string, frontMatter
         ? `<div class="backlinks">
          <h4>Backlinks</h4>
          <ul>
-           ${backlinks.map(link => `<li><a href="${link}.html" class="internal-link">${link}</a></li>`).join('')}
+           ${backlinks.map(link => `<li><a href="/${link}" class="internal-link">${link}</a></li>`).join('')}
          </ul>
        </div>`
         : '';
@@ -201,7 +201,7 @@ function generateCardsView(notes: Note[], view: BaseView): string {
         return `<div class="card" data-note-id="${note.id}">
             <div class="card-header">
                 <h3 class="card-title">
-                    <a href="${note.id}.html" class="internal-link">${note.title}</a>
+                    <a href="/${note.id}" class="internal-link">${note.title}</a>
                 </h3>
             </div>
             <div class="card-content">
@@ -382,7 +382,7 @@ function getColumnDisplayName(column: string): string {
 function getColumnValue(note: Note, column: string): string {
     switch (column) {
         case 'file.name':
-            return `<a href="${note.id}.html" class="internal-link">${note.title}</a>`;
+            return `<a href="/${note.id}" class="internal-link">${note.title}</a>`;
 
         case 'file.path':
             return note.relativePath;

@@ -33,18 +33,31 @@ class ObsidianSSGApp {
     this.renderSidebar();
     
     // Load default note if available
-    const urlParams = new URLSearchParams(window.location.search);
-    let noteId = urlParams.get('note');
+    let noteId = null;
     
-    // If no note parameter, try to extract from pathname
-    if (!noteId) {
-      const pathname = window.location.pathname;
-      const match = pathname.match(/\/([^\/]+)\.html$/);
-      if (match) {
-        noteId = match[1];
-      } else {
-        noteId = this.getDefaultNote();
+    // Extract note ID from pathname (clean URLs)
+    const pathname = window.location.pathname;
+    if (pathname !== '/' && pathname !== '/index.html') {
+      // Remove leading slash and decode URI components
+      noteId = decodeURIComponent(pathname.substring(1));
+      // Handle .html extension if present
+      if (noteId.endsWith('.html')) {
+        noteId = noteId.substring(0, noteId.length - 5);
       }
+    }
+    
+    // Fall back to query parameter for backwards compatibility
+    if (!noteId) {
+      const urlParams = new URLSearchParams(window.location.search);
+      noteId = urlParams.get('note');
+      if (noteId) {
+        noteId = decodeURIComponent(noteId);
+      }
+    }
+    
+    // If still no noteId, use default
+    if (!noteId) {
+      noteId = this.getDefaultNote();
     }
     
     if (noteId) {
@@ -61,7 +74,7 @@ class ObsidianSSGApp {
     try {
       // In a real implementation, this would load from generated JSON files
       // For now, we'll use placeholder data structure
-      const response = await fetch('data/notes.json');
+      const response = await fetch('/data/notes.json');
       if (response.ok) {
         const data = await response.json();
         this.notes = new Map(Object.entries(data.notes || {}));
@@ -461,11 +474,10 @@ class ObsidianSSGApp {
     
     this.currentNote = note;
     
-    // Update URL and history
+    // Update URL and history with clean URLs
     if (addToHistory) {
-      const url = new URL(window.location);
-      url.searchParams.set('note', noteId);
-      window.history.pushState({ noteId }, note.title, url);
+      const cleanUrl = `${window.location.origin}/${noteId}`;
+      window.history.pushState({ noteId }, note.title, cleanUrl);
     }
     
     // Update page title
@@ -622,7 +634,7 @@ class ObsidianSSGApp {
         return `<div class="card" data-note-id="${note.id}">
             <div class="card-header">
                 <h3 class="card-title">
-                    <a href="${note.id}.html" class="internal-link">${note.title}</a>
+                    <a href="/${note.id}" class="internal-link">${note.title}</a>
                 </h3>
             </div>
             <div class="card-content">
@@ -810,7 +822,7 @@ class ObsidianSSGApp {
   getColumnValue(note, column) {
     switch (column) {
         case 'file.name':
-            return `<a href="${note.id}.html" class="internal-link">${note.title}</a>`;
+            return `<a href="/${note.id}" class="internal-link">${note.title}</a>`;
         
         case 'file.path':
             return note.relativePath || '';
@@ -910,7 +922,7 @@ class ObsidianSSGApp {
       row.addEventListener('click', (e) => {
         const noteId = e.currentTarget.dataset.noteId;
         if (noteId) {
-          window.location.href = `${noteId}.html`;
+          window.location.href = `/${noteId}`;
         }
       });
     });
@@ -930,7 +942,7 @@ class ObsidianSSGApp {
       card.addEventListener('click', (e) => {
         const noteId = e.currentTarget.dataset.noteId;
         if (noteId) {
-          window.location.href = `${noteId}.html`;
+          window.location.href = `/${noteId}`;
         }
       });
     });
@@ -942,7 +954,7 @@ class ObsidianSSGApp {
         e.stopPropagation(); // Prevent day click
         const noteId = e.currentTarget.dataset.noteId;
         if (noteId) {
-          window.location.href = `${noteId}.html`;
+          window.location.href = `/${noteId}`;
         }
       });
     });
@@ -1095,14 +1107,28 @@ class ObsidianSSGApp {
   
   extractNoteIdFromLink(link) {
     const href = link.getAttribute('href');
-    if (href && href.endsWith('.html')) {
-      return href.replace('.html', '');
+    if (href) {
+      // Handle absolute URLs starting with /
+      if (href.startsWith('/')) {
+        return decodeURIComponent(href.substring(1));
+      }
+      // Handle old .html format for backwards compatibility
+      if (href.endsWith('.html')) {
+        return href.replace('.html', '');
+      }
+      return decodeURIComponent(href);
     }
     return link.getAttribute('data-note-id');
   }
   
   getDefaultNote() {
     const notes = Array.from(this.notes.values());
+    // Try to find 'home' note first
+    const homeNote = notes.find(note => note.id.toLowerCase() === 'home');
+    if (homeNote) {
+      return homeNote.id;
+    }
+    // Fall back to first note if no home note exists
     return notes.length > 0 ? notes[0].id : null;
   }
 }

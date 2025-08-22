@@ -18,6 +18,7 @@ node_modules/
 dist/
 site/
 vault/
+tsconfig.tsbuildinfo
 
 ## #############################################################################
 ## Code ends here

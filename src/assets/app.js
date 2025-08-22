@@ -27,6 +27,7 @@ class ObsidianSSGApp {
     this.initializeGraph();
     this.initializeNavigation();
     this.initializeEventListeners();
+    this.initializeEmbeddedBases();
     
     // Render initial content
     this.renderSidebar();
@@ -232,6 +233,19 @@ class ObsidianSSGApp {
       sidebarOverlay.classList.add('visible');
       document.body.classList.add('menu-open');
     }
+  }
+  
+  initializeEmbeddedBases() {
+    // Find all embedded bases and initialize their interactions
+    const embedBases = document.querySelectorAll('.embed-base');
+    embedBases.forEach(embedBase => {
+      // Extract base data from the embedded element
+      const baseId = embedBase.dataset.baseId;
+      if (baseId && this.bases.has(baseId)) {
+        const base = this.bases.get(baseId);
+        this.initializeBaseInteractions(base);
+      }
+    });
   }
   
   initializeEventListeners() {
@@ -479,6 +493,9 @@ class ObsidianSSGApp {
     
     // Update backlinks
     this.renderBacklinks(note);
+    
+    // Initialize embedded bases if any exist
+    this.initializeEmbeddedBases();
     
     // Update active state in sidebar
     this.updateSidebarActiveState(noteId);
@@ -834,6 +851,55 @@ class ObsidianSSGApp {
           // Update active button
           viewButtons.forEach(btn => btn.classList.remove('active'));
           e.currentTarget.classList.add('active');
+        }
+      });
+    });
+    
+    // Embed view buttons for embedded bases
+    const embedViewButtons = document.querySelectorAll('.embed-view-button');
+    console.log(`Found ${embedViewButtons.length} embed view buttons`);
+    embedViewButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        console.log('Embed view button clicked:', e.currentTarget);
+        e.stopPropagation();
+        const viewType = e.currentTarget.dataset.viewType;
+        const viewName = e.currentTarget.dataset.viewName;
+        console.log(`View type: ${viewType}, view name: ${viewName}`);
+        
+        // Find the embed container and get the base ID
+        const embedContainer = e.currentTarget.closest('.embed-base');
+        console.log('Embed container:', embedContainer);
+        if (embedContainer) {
+          const baseId = embedContainer.dataset.baseId;
+          console.log(`Base ID: ${baseId}`);
+          console.log('Available bases:', Array.from(this.bases.keys()));
+          if (baseId && this.bases.has(baseId)) {
+            const base = this.bases.get(baseId);
+            console.log('Found base:', base);
+            
+            // Find the view
+            const view = base.views.find(v => v.type === viewType && v.name === viewName);
+            console.log('Found view:', view);
+            if (view) {
+              const embedContent = embedContainer.querySelector('.embed-content');
+              console.log('Embed content container:', embedContent);
+              if (embedContent) {
+                // Update content
+                embedContent.innerHTML = this.renderBaseViewContent(base, view);
+                console.log('Updated embed content with new view');
+                
+                // Update active button within this embed
+                const embedButtons = embedContainer.querySelectorAll('.embed-view-button');
+                embedButtons.forEach(btn => btn.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                console.log('Updated active button');
+                
+                // Re-initialize interactions for the new content
+                this.initializeBaseInteractions(base);
+                console.log('Re-initialized base interactions');
+              }
+            }
+          }
         }
       });
     });

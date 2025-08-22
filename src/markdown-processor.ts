@@ -260,7 +260,9 @@ export class MarkdownProcessor {
     }).join('') : '';
 
     return `<div class="base-controls">
-            ${viewButtons ? `<div class="view-switcher">${viewButtons}</div>` : ''}
+            <div class="view-switcher">
+                ${viewButtons}
+            </div>
             <div class="base-actions">
                 <button class="action-button" id="sort-button">
                     ${getLucideIcon('ArrowUpDown', 16)}
@@ -649,16 +651,10 @@ export class MarkdownProcessor {
         const baseContent = this.generateEmbeddedBaseContent(targetBase, false); // No controls in content
         const headerControls = this.generateEmbedHeaderControls(targetBase); // Controls in header
 
-        return `<div class="embed-note embed-base" data-embed-id="${embedId}">
+        return `<div class="embed-note embed-base" data-embed-id="${embedId}" data-base-id="${targetBase.id}">
           <div class="embed-header" onclick="toggleEmbed('${embedId}')">
             <span class="embed-title">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="embed-icon">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-      <polyline points="14,2 14,8 20,8"></polyline>
-      <line x1="16" y1="13" x2="8" y2="13"></line>
-      <line x1="16" y1="17" x2="8" y2="17"></line>
-      <polyline points="10,9 9,9 8,9"></polyline>
-    </svg>
+              ${this.generateEmbeddedBaseIcon()}
               <span class="embed-title-text">${targetBase.title}</span>
             </span>
             <span class="embed-controls">
@@ -744,6 +740,18 @@ export class MarkdownProcessor {
       <line x1="16" y1="13" x2="8" y2="13"></line>
       <line x1="16" y1="17" x2="8" y2="17"></line>
       <polyline points="10,9 9,9 8,9"></polyline>
+    </svg>`;
+  }
+
+  /**
+   * Generate embedded base icon SVG (Lucide Database icon)
+   */
+  private generateEmbeddedBaseIcon(): string {
+    // Using static SVG of Lucide Database icon for bases
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="embed-icon">
+      <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+      <path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"></path>
+      <path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"></path>
     </svg>`;
   }
 

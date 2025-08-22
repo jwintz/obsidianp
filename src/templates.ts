@@ -42,14 +42,14 @@ export function generateBaseHTML(base: Base, title: string = "Obsidian Vault", m
 }
 
 function generateTemplate(title: string, mainContent: string): string {
-    const timestamp = Date.now(); // Cache busting for development
+    // const timestamp = Date.now(); // Cache busting disabled for development
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title}</title>
-    <link rel="stylesheet" href="assets/main.css?v=${timestamp}">
+    <link rel="stylesheet" href="assets/main.css">
     <link rel="stylesheet" href="assets/katex.min.css">
 </head>
 

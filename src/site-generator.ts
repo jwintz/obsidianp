@@ -123,7 +123,7 @@ export class SiteGenerator {
       'node_modules/katex/dist/fonts'
     );
     const katexFontsTarget = path.join(outputAssetsDir, 'fonts');
-    
+
     // Ensure fonts directory exists and copy KaTeX fonts
     await fs.ensureDir(katexFontsTarget);
     const katexFontFiles = await fs.readdir(katexFontsSource);

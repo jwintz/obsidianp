@@ -1482,8 +1482,7 @@ body.menu-open {
   padding-top: 2px;
   word-break: break-word;
   overflow-wrap: break-word;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-x: auto;
   white-space: nowrap;
 }
 
@@ -1495,7 +1494,6 @@ body.menu-open {
   line-height: 1.4;
   overflow-x: auto;
   white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .property-tags {
@@ -1571,7 +1569,6 @@ body.menu-open {
   color: var(--color-text-primary);
   overflow-x: auto;
   white-space: nowrap;
-  text-overflow: ellipsis;
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }
@@ -1595,7 +1592,6 @@ body.menu-open {
   font-size: var(--font-size-xs);
   overflow-x: auto;
   white-space: nowrap;
-  text-overflow: ellipsis;
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }

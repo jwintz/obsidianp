@@ -4,6 +4,7 @@ import path from 'path';
 import { createHighlighter } from 'shiki';
 import * as katex from 'katex';
 import { Note, FrontMatter, Base } from './types';
+import { getLucideIcon } from './templates';
 
 export class MarkdownProcessor {
   private linkPattern = /\[\[([^\]]+)\]\]/g;
@@ -78,7 +79,7 @@ export class MarkdownProcessor {
   /**
    * Process a markdown file and extract metadata, content, and links
    */
-  processMarkdown(filePath: string, content: string, vaultPath: string): Note {
+  processMarkdown(filePath: string, content: string, vaultPath: string, allNotes?: Map<string, Note>): Note {
     const { data: frontMatter, content: markdownContent } = matter(content);
 
     // Extract title from frontMatter or filename
@@ -97,7 +98,7 @@ export class MarkdownProcessor {
     const links = this.extractLinks(markdownContent);
 
     // Process Obsidian-specific syntax
-    let processedContent = this.processObsidianSyntax(markdownContent);
+    let processedContent = this.processObsidianSyntax(markdownContent, allNotes);
 
     // Preserve math expressions before markdown processing
     processedContent = this.preserveMathExpressions(processedContent);
@@ -202,13 +203,13 @@ export class MarkdownProcessor {
   }
 
   /**
-   * Generate a unique ID for a base based on its path
+   * Generate a unique ID for a base based on its path (should match base processor)
    */
   generateBaseId(linkText: string): string {
-    return 'bases-' + linkText.toLowerCase()
+    return linkText.toLowerCase()
       .replace(/\.base$/, '')
       .replace(/\s+/g, '-')
-      .replace(/[^\w\-]/g, '')
+      .replace(/[^\w\-\/]/g, '')  // Keep forward slashes for folder structure
       .replace(/-+/g, '-')
       .replace(/^-+|-+$/g, '');
   }
@@ -229,9 +230,60 @@ export class MarkdownProcessor {
   }
 
   /**
-   * Generate embedded base content that matches the actual base page content
+ * Generate base controls (used in both standalone and embedded contexts)
+ */
+  generateBaseControls(base: Base): string {
+    const defaultView = base.views && base.views.length > 0 ? base.views[0] : { type: 'cards', name: 'Default' };
+    const viewButtons = base.views && base.views.length > 0 ? base.views.map(view => {
+      let iconSvg = '';
+      switch (view.type) {
+        case 'cards':
+          iconSvg = getLucideIcon('LayoutGrid', 16);
+          break;
+        case 'table':
+          iconSvg = getLucideIcon('Table', 16);
+          break;
+        case 'calendar':
+          iconSvg = getLucideIcon('Calendar', 16);
+          break;
+        case 'gallery':
+          iconSvg = getLucideIcon('Images', 16);
+          break;
+        default:
+          iconSvg = getLucideIcon('Table', 16);
+      }
+
+      return `<button class="view-button ${view === defaultView ? 'active' : ''}" data-view-type="${view.type}" data-view-name="${view.name}">
+            ${iconSvg}
+            ${view.name}
+        </button>`;
+    }).join('') : '';
+
+    return `<div class="base-controls">
+            ${viewButtons ? `<div class="view-switcher">${viewButtons}</div>` : ''}
+            <div class="base-actions">
+                <button class="action-button" id="sort-button">
+                    ${getLucideIcon('ArrowUpDown', 16)}
+                    Sort
+                </button>
+                <button class="action-button" id="filter-button">
+                    ${getLucideIcon('Filter', 16)}
+                    Filter
+                </button>
+                ${base.properties && base.properties.length > 0 ?
+        `<button class="action-button" id="properties-button">
+                        ${getLucideIcon('Settings', 16)}
+                        Properties
+                    </button>` : ''
+      }
+            </div>
+        </div>`;
+  }
+
+  /**
+   * Generate base view content (used in both standalone and embedded contexts)
    */
-  generateEmbeddedBaseContent(base: Base): string {
+  generateBaseViewContent(base: Base): string {
     const notes = base.matchedNotes || [];
 
     if (notes.length === 0) {
@@ -249,6 +301,64 @@ export class MarkdownProcessor {
       default:
         return this.generateCardsViewContent(notes);
     }
+  }
+
+  /**
+   * Generate embedded base content with controls in context-appropriate locations
+   */
+  generateEmbeddedBaseContent(base: Base, includeControls: boolean = false): string {
+    const baseContent = this.generateBaseViewContent(base);
+
+    if (includeControls) {
+      // For standalone context: controls in separate cartridge
+      const baseControls = this.generateBaseControls(base);
+      return `<div class="embedded-base-controls">
+        ${baseControls}
+    </div>${baseContent}`;
+    } else {
+      // For embedded context: just the content (controls go in header)
+      return baseContent;
+    }
+  }
+
+  /**
+   * Generate base controls for embedded header
+   */
+  generateEmbedHeaderControls(base: Base): string {
+    const defaultView = base.views && base.views.length > 0 ? base.views[0] : { type: 'cards', name: 'Default' };
+    const viewButtons = base.views && base.views.length > 0 ? base.views.map(view => {
+      let iconSvg = '';
+      switch (view.type) {
+        case 'cards':
+          iconSvg = getLucideIcon('LayoutGrid', 14);
+          break;
+        case 'table':
+          iconSvg = getLucideIcon('Table', 14);
+          break;
+        case 'calendar':
+          iconSvg = getLucideIcon('Calendar', 14);
+          break;
+        case 'gallery':
+          iconSvg = getLucideIcon('Images', 14);
+          break;
+        default:
+          iconSvg = getLucideIcon('Table', 14);
+      }
+
+      return `<button class="embed-view-button ${view === defaultView ? 'active' : ''}" data-view-type="${view.type}" data-view-name="${view.name}" onclick="event.stopPropagation();" title="${view.name}">
+            ${iconSvg}
+        </button>`;
+    }).join('') : '';
+
+    return `<span class="embed-base-controls">
+        ${viewButtons}
+        <button class="embed-action-button" onclick="event.stopPropagation();" title="Sort">
+            ${getLucideIcon('ArrowUpDown', 14)}
+        </button>
+        <button class="embed-action-button" onclick="event.stopPropagation();" title="Filter">
+            ${getLucideIcon('Filter', 14)}
+        </button>
+    </span>`;
   }
 
   /**
@@ -347,7 +457,7 @@ export class MarkdownProcessor {
   /**
    * Process Obsidian-specific syntax and convert to HTML-friendly format
    */
-  private processObsidianSyntax(content: string): string {
+  private processObsidianSyntax(content: string, allNotes?: Map<string, Note>): string {
     let processed = content;
 
     // Process embeds first (images, other notes)
@@ -367,11 +477,97 @@ export class MarkdownProcessor {
       const actualLink = parts[0].trim();
       const displayText = parts.length > 1 ? parts[1].trim() : actualLink;
 
-      // Generate ID from the actual link path for consistent resolution
-      const linkId = this.generateNoteId(actualLink);
+      // Try to find the actual note to get the correct path
+      let fullPath = actualLink;
+      if (allNotes) {
+        // Strategy 1: Direct lookup by generated ID
+        const directId = this.generateNoteId(actualLink);
+        let targetNote = allNotes.get(directId);
+
+        // Strategy 2: Search by filename if direct path fails
+        if (!targetNote) {
+          const fileName = actualLink.includes('/') ? actualLink.split('/').pop() || actualLink : actualLink;
+          for (const note of allNotes.values()) {
+            const noteFileName = path.basename(note.path, '.md');
+            if (noteFileName === fileName || note.title === fileName) {
+              targetNote = note;
+              break;
+            }
+          }
+        }
+
+        // Strategy 3: Search by title
+        if (!targetNote) {
+          for (const note of allNotes.values()) {
+            if (note.title === actualLink) {
+              targetNote = note;
+              break;
+            }
+          }
+        }
+
+        // If we found the note, use its ID for the link
+        if (targetNote) {
+          fullPath = targetNote.id;
+        }
+      }
+
+      // Generate final link ID
+      const linkId = fullPath.includes('/') ? fullPath : this.generateNoteId(actualLink);
 
       return `<a href="${linkId}.html" class="internal-link" data-note="${actualLink}">${displayText}</a>`;
-    }); return processed;
+    });
+
+    return processed;
+  }
+
+  /**
+   * Fix wiki link paths to use correct full paths with folders
+   */
+  fixWikiLinks(html: string, allNotes: Map<string, Note>): string {
+    // Match internal links and fix their href paths
+    return html.replace(/<a href="([^"]+)" class="internal-link" data-note="([^"]+)">([^<]+)<\/a>/g,
+      (match, currentHref, dataNoteValue, displayText) => {
+        // Remove .html extension from href for comparison
+        const hrefWithoutExt = currentHref.replace(/\.html$/, '');
+
+        // Find the actual note by searching for the data-note value
+        let targetNote: Note | undefined;
+
+        // Strategy 1: Search by title
+        for (const note of allNotes.values()) {
+          if (note.title === dataNoteValue) {
+            targetNote = note;
+            break;
+          }
+        }
+
+        // Strategy 2: Search by filename (without extension)  
+        if (!targetNote) {
+          for (const note of allNotes.values()) {
+            const noteFileName = path.basename(note.path, '.md');
+            if (noteFileName === dataNoteValue) {
+              targetNote = note;
+              break;
+            }
+          }
+        }
+
+        // Strategy 3: Handle folder/file format like "Drums/Notation"
+        if (!targetNote && dataNoteValue.includes('/')) {
+          const generatedId = this.generateNoteId(dataNoteValue);
+          targetNote = allNotes.get(generatedId);
+        }
+
+        // If we found the note and the href doesn't match the correct ID, fix it
+        if (targetNote && hrefWithoutExt !== targetNote.id) {
+          return `<a href="${targetNote.id}.html" class="internal-link" data-note="${dataNoteValue}">${displayText}</a>`;
+        }
+
+        // If not found, return original link
+        return match;
+      }
+    );
   }
 
   /**
@@ -418,24 +614,27 @@ export class MarkdownProcessor {
       // Strategy 5: Try to find a base if note not found
       if (!targetNote && bases) {
         // Check if it's a .base file reference
+        const baseFileName = linkText.replace(/\.base$/, '');
+
+        // Strategy 5a: Direct base ID lookup (for full path references like "Bases/Projects.base")
         const baseId = this.generateBaseId(linkText);
         targetBase = bases.get(baseId);
 
-        // Strategy 6: Search by base title
+        // Strategy 5b: Search by base filename (for short references like "Projects.base")
         if (!targetBase) {
           for (const base of bases.values()) {
-            if (base.title === linkText) {
+            const fileName = path.basename(base.path, '.base');
+            if (fileName === baseFileName) {
               targetBase = base;
               break;
             }
           }
         }
 
-        // Strategy 6: Search by base filename (without .base extension)
+        // Strategy 5c: Search by base title
         if (!targetBase) {
           for (const base of bases.values()) {
-            const baseFileName = path.basename(base.path, '.base');
-            if (baseFileName === linkText) {
+            if (base.title === linkText || base.title === baseFileName) {
               targetBase = base;
               break;
             }
@@ -445,12 +644,14 @@ export class MarkdownProcessor {
 
       // Handle base embedding - use same structure as notes with actual base content
       if (targetBase) {
-        const embedId = `embed-${targetBase.id}-${Math.random().toString(36).substr(2, 9)}`;
-        const baseContent = this.generateEmbeddedBaseContent(targetBase);
+        const safeBaseId = targetBase.id.replace(/\//g, '-');
+        const embedId = `embed-${safeBaseId}-${Math.random().toString(36).substr(2, 9)}`;
+        const baseContent = this.generateEmbeddedBaseContent(targetBase, false); // No controls in content
+        const headerControls = this.generateEmbedHeaderControls(targetBase); // Controls in header
 
-        return `<div class="embed-note" data-embed-id="${embedId}">
-          <div class="embed-header">
-            <span class="embed-title" onclick="toggleEmbed('${embedId}')">
+        return `<div class="embed-note embed-base" data-embed-id="${embedId}">
+          <div class="embed-header" onclick="toggleEmbed('${embedId}')">
+            <span class="embed-title">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="embed-icon">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
       <polyline points="14,2 14,8 20,8"></polyline>
@@ -461,7 +662,8 @@ export class MarkdownProcessor {
               <span class="embed-title-text">${targetBase.title}</span>
             </span>
             <span class="embed-controls">
-              <span class="embed-maximize" onclick="toggleEmbedMaximize('${embedId}')" title="Toggle full height">
+              ${headerControls}
+              <span class="embed-maximize" onclick="event.stopPropagation(); toggleEmbedMaximize('${embedId}')" title="Toggle full height">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon minimize-2">
                   <polyline points="4,14 10,14 10,20"></polyline>
                   <polyline points="20,10 14,10 14,4"></polyline>
@@ -469,7 +671,7 @@ export class MarkdownProcessor {
                   <line x1="3" y1="21" x2="10" y2="14"></line>
                 </svg>
               </span>
-              <span class="embed-chevron" onclick="toggleEmbed('${embedId}')" aria-hidden="true">
+              <span class="embed-chevron" onclick="event.stopPropagation(); toggleEmbed('${embedId}')" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
                   <path d="M3 8L12 17L21 8"></path>
                 </svg>
@@ -489,17 +691,18 @@ export class MarkdownProcessor {
       }
 
       // Create collapsible embed cartridge
-      const embedId = `embed-${targetNote.id}-${Math.random().toString(36).substr(2, 9)}`;
+      const safeNoteId = targetNote.id.replace(/\//g, '-');
+      const embedId = `embed-${safeNoteId}-${Math.random().toString(36).substr(2, 9)}`;
 
       return `
         <div class="embed-note" data-embed-id="${embedId}">
-          <div class="embed-header">
-            <span class="embed-title" onclick="toggleEmbed('${embedId}')">
+          <div class="embed-header" onclick="toggleEmbed('${embedId}')">
+            <span class="embed-title">
               ${this.generateEmbeddedIcon()}
               <span class="embed-title-text">${targetNote.title}</span>
             </span>
             <span class="embed-controls">
-              <span class="embed-maximize" onclick="toggleEmbedMaximize('${embedId}')" title="Toggle full height">
+              <span class="embed-maximize" onclick="event.stopPropagation(); toggleEmbedMaximize('${embedId}')" title="Toggle full height">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon minimize-2">
                   <polyline points="4,14 10,14 10,20"></polyline>
                   <polyline points="20,10 14,10 14,4"></polyline>
@@ -507,7 +710,7 @@ export class MarkdownProcessor {
                   <line x1="3" y1="21" x2="10" y2="14"></line>
                 </svg>
               </span>
-              <span class="embed-chevron" onclick="toggleEmbed('${embedId}')" aria-hidden="true">
+              <span class="embed-chevron" onclick="event.stopPropagation(); toggleEmbed('${embedId}')" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
                   <path d="M3 8L12 17L21 8"></path>
                 </svg>
@@ -669,11 +872,37 @@ export class MarkdownProcessor {
     // Generate backlinks
     notes.forEach(note => {
       note.links.forEach(linkText => {
-        const linkedNoteId = this.generateNoteId(linkText);
-        const linkedNote = notes.get(linkedNoteId);
+        // Use the same multi-strategy approach as in processObsidianSyntax
+        let targetNote: Note | undefined;
 
-        if (linkedNote) {
-          linkedNote.backlinks.push(note.id);
+        // Strategy 1: Direct lookup by generated ID
+        const directId = this.generateNoteId(linkText);
+        targetNote = notes.get(directId);
+
+        // Strategy 2: Search by filename if direct path fails
+        if (!targetNote) {
+          const fileName = linkText.includes('/') ? linkText.split('/').pop() || linkText : linkText;
+          for (const candidateNote of notes.values()) {
+            const noteFileName = path.basename(candidateNote.path, '.md');
+            if (noteFileName === fileName || candidateNote.title === fileName) {
+              targetNote = candidateNote;
+              break;
+            }
+          }
+        }
+
+        // Strategy 3: Search by title
+        if (!targetNote) {
+          for (const candidateNote of notes.values()) {
+            if (candidateNote.title === linkText) {
+              targetNote = candidateNote;
+              break;
+            }
+          }
+        }
+
+        if (targetNote) {
+          targetNote.backlinks.push(note.id);
         }
       });
     });

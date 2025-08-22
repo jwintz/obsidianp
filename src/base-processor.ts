@@ -712,11 +712,12 @@ export class BaseProcessor {
         const folderName = path.basename(relativePath.dir);
         const fileName = relativePath.name;
 
+        // Generate ID similar to notes: folder/filename format
         if (folderName && folderName !== '.') {
-            return `${folderName}-${fileName}`.toLowerCase().replace(/[^a-z0-9]/g, '-');
+            return `${folderName.toLowerCase()}/${fileName.toLowerCase()}`.replace(/[^a-z0-9\/]/g, '-').replace(/-+/g, '-');
         }
 
-        return fileName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        return fileName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
     }
 
     /**

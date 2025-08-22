@@ -1178,13 +1178,57 @@ body.menu-open {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  cursor: pointer;
 }
 
 .embed-controls {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+}
+
+/* Base-specific embed controls */
+.embed-base-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-right: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--color-bg-secondary);
+  border-radius: 4px;
+  border: 1px solid var(--color-border-secondary);
+}
+
+.embed-view-button,
+.embed-action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.embed-view-button:hover,
+.embed-action-button:hover {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.embed-view-button.active {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.embed-view-button svg,
+.embed-action-button svg {
+  width: 14px;
+  height: 14px;
 }
 
 .embed-maximize {
@@ -1200,6 +1244,17 @@ body.menu-open {
 .embed-maximize:hover {
   background-color: var(--color-bg-secondary);
   color: var(--color-text-primary);
+}
+
+.embed-maximize.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.embed-maximize.disabled:hover {
+  background-color: transparent;
+  color: var(--color-text-secondary);
 }
 
 .embed-maximize svg {
@@ -1224,8 +1279,16 @@ body.menu-open {
   display: flex;
   align-items: center;
   color: var(--color-text-secondary);
-  transition: transform 0.2s ease;
+  cursor: pointer;
+  padding: var(--space-xs);
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
   margin-left: 0.5em;
+}
+
+.embed-chevron:hover {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
 }
 
 .embed-chevron svg {
@@ -1980,8 +2043,9 @@ body.menu-open {
   -webkit-box-orient: vertical;
 }
 
-/* Tags in bases */
-.tag {
+/* Tags in properties and bases */
+.property-tag,
+.card-tags .tag {
   display: inline-flex;
   align-items: center;
   padding: var(--space-xs) var(--space-sm);
@@ -2074,3 +2138,65 @@ body.menu-open {
 [data-theme="dark"] .folder-item.base-file:hover {
   background-color: rgba(139, 92, 246, 0.2);
 }
+
+/* Base Controls Container - for standalone base pages */
+.base-controls-container {
+  margin-bottom: var(--space-md);
+}
+
+.base-controls-container .base-controls {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-sm) var(--space-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.base-controls .view-switcher {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.base-controls .base-actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.base-controls .view-button,
+.base-controls .action-button {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.base-controls .view-button:hover,
+.base-controls .action-button:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-hover);
+}
+
+.base-controls .view-button.active {
+  background: var(--color-accent);
+  color: white;
+  border-color: var(--color-accent);
+}
+
+.base-controls .view-button svg,
+.base-controls .action-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Legacy: embedded-base-controls for standalone contexts removed - controls now context-aware */

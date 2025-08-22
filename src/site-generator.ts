@@ -116,6 +116,23 @@ export class SiteGenerator {
     );
     const katexTarget = path.join(outputAssetsDir, 'katex.min.css');
     await fs.copyFile(katexCSS, katexTarget);
+
+    // Copy KaTeX fonts to the existing fonts directory
+    const katexFontsSource = path.join(
+      process.cwd(),
+      'node_modules/katex/dist/fonts'
+    );
+    const katexFontsTarget = path.join(outputAssetsDir, 'fonts');
+    
+    // Ensure fonts directory exists and copy KaTeX fonts
+    await fs.ensureDir(katexFontsTarget);
+    const katexFontFiles = await fs.readdir(katexFontsSource);
+    for (const fontFile of katexFontFiles) {
+      await fs.copy(
+        path.join(katexFontsSource, fontFile),
+        path.join(katexFontsTarget, fontFile)
+      );
+    }
   }
 
   /**
@@ -167,10 +184,16 @@ export class SiteGenerator {
 
     // Generate individual base pages
     for (const base of bases.values()) {
-      const baseHtml = generateBaseHTML(base, config.title);
-      const baseFileName = `${base.id}.html`;
+      const baseHtml = generateBaseHTML(base, config.title, this.vaultProcessor.getMarkdownProcessor());
 
-      await fs.writeFile(path.join(outputPath, baseFileName), baseHtml);
+      // Create proper folder structure for bases, just like notes
+      const baseDir = path.join(outputPath, base.folderPath.toLowerCase());
+      await fs.ensureDir(baseDir);
+
+      const baseFileName = `${path.basename(base.relativePath, '.base').toLowerCase()}.html`;
+      const baseFilePath = path.join(baseDir, baseFileName);
+
+      await fs.writeFile(baseFilePath, baseHtml);
     }
   }
 

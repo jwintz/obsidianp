@@ -4,7 +4,7 @@ import { Base, BaseView, Note } from './types';
 /**
  * Generate a Lucide icon SVG
  */
-function getLucideIcon(iconName: string, size = 16, className = ''): string {
+export function getLucideIcon(iconName: string, size = 16, className = ''): string {
     const iconSvg = (lucideIcons as any)[iconName];
     if (!iconSvg) {
         console.warn(`Lucide icon '${iconName}' not found`);
@@ -32,8 +32,8 @@ export function generateMainTemplate(title: string = "Obsidian Vault"): string {
     `);
 }
 
-export function generateBaseHTML(base: Base, title: string = "Obsidian Vault"): string {
-    const baseContent = generateBaseTemplate(base);
+export function generateBaseHTML(base: Base, title: string = "Obsidian Vault", markdownProcessor?: any): string {
+    const baseContent = generateBaseTemplate(base, markdownProcessor);
     return generateTemplate(title, `
         <article class="note-content base-page" id="note-content">
             ${baseContent}
@@ -155,59 +155,16 @@ ${frontMatterHtml ? frontMatterHtml : ''}
 ${backlinksHtml}`;
 }
 
-export function generateBaseTemplate(base: Base): string {
-    const defaultView = base.views[0] || { type: 'table', name: 'Default' };
-    const viewButtons = base.views.map(view => {
-        let iconSvg = '';
-        switch (view.type) {
-            case 'cards':
-                iconSvg = getLucideIcon('LayoutGrid', 16);
-                break;
-            case 'table':
-                iconSvg = getLucideIcon('Table', 16);
-                break;
-            case 'calendar':
-                iconSvg = getLucideIcon('Calendar', 16);
-                break;
-            case 'gallery':
-                iconSvg = getLucideIcon('Images', 16);
-                break;
-            default:
-                iconSvg = getLucideIcon('Table', 16);
-        }
+export function generateBaseTemplate(base: Base, markdownProcessor: any): string {
+    const baseControls = markdownProcessor.generateBaseControls(base);
+    const baseContent = markdownProcessor.generateBaseViewContent(base);
 
-        return `<button class="view-button ${view === defaultView ? 'active' : ''}" data-view-type="${view.type}" data-view-name="${view.name}">
-            ${iconSvg}
-            ${view.name}
-        </button>`;
-    }).join('');
-
-    return `<div class="base-header">
-        <h1 class="base-title">${base.title}</h1>
-        <div class="base-controls">
-            <div class="view-switcher">
-                ${viewButtons}
-            </div>
-            <div class="base-actions">
-                <button class="action-button" id="sort-button">
-                    ${getLucideIcon('ArrowUpDown', 16)}
-                    Sort
-                </button>
-                <button class="action-button" id="filter-button">
-                    ${getLucideIcon('Filter', 16)}
-                    Filter
-                </button>
-                ${base.properties && base.properties.length > 0 ?
-            `<button class="action-button" id="properties-button">
-                        ${getLucideIcon('Settings', 16)}
-                        Properties
-                    </button>` : ''
-        }
-            </div>
-        </div>
+    return `<h1 class="note-title">${base.title}</h1>
+    <div class="base-controls-container">
+        ${baseControls}
     </div>
     <div class="base-content" id="base-content">
-        ${generateBaseViewContent(base, defaultView)}
+        ${baseContent}
     </div>`;
 }
 

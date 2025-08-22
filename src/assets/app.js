@@ -1065,21 +1065,41 @@ function navigateToNote(noteId) {
 
 // Global function for embed toggle interaction
 function toggleEmbed(embedId) {
+  console.log('toggleEmbed called with:', embedId); // Debug log
   const embedElement = document.querySelector(`[data-embed-id="${embedId}"]`);
   const contentElement = document.getElementById(`embed-content-${embedId}`);
+  const maximizeButton = embedElement?.querySelector('.embed-maximize');
   
   if (embedElement && contentElement) {
     embedElement.classList.toggle('collapsed');
     contentElement.classList.toggle('collapsed');
+    
+    // Enable/disable maximize button based on collapsed state
+    if (maximizeButton) {
+      const isCollapsed = embedElement.classList.contains('collapsed');
+      if (isCollapsed) {
+        maximizeButton.classList.add('disabled');
+        maximizeButton.setAttribute('disabled', 'true');
+      } else {
+        maximizeButton.classList.remove('disabled');
+        maximizeButton.removeAttribute('disabled');
+      }
+    }
   }
 }
 
 // Global function for embed maximize toggle interaction
 function toggleEmbedMaximize(embedId) {
   const embedElement = document.querySelector(`[data-embed-id="${embedId}"]`);
-  const maximizeButton = embedElement?.querySelector('.embed-maximize svg');
+  const maximizeButton = embedElement?.querySelector('.embed-maximize');
+  const maximizeButtonSvg = embedElement?.querySelector('.embed-maximize svg');
   
-  if (embedElement && maximizeButton) {
+  // Don't proceed if the maximize button is disabled (when embed is collapsed)
+  if (maximizeButton?.classList.contains('disabled')) {
+    return;
+  }
+  
+  if (embedElement && maximizeButtonSvg) {
     const isCurrentlyFixedHeight = embedElement.classList.contains('fixed-height');
     
     embedElement.classList.toggle('fixed-height');
@@ -1087,7 +1107,7 @@ function toggleEmbedMaximize(embedId) {
     // Update the icon based on new state
     if (isCurrentlyFixedHeight) {
       // Now maximized, show minimize icon (minimize-2)
-      maximizeButton.innerHTML = `
+      maximizeButtonSvg.innerHTML = `
         <polyline points="4,14 10,14 10,20"></polyline>
         <polyline points="20,10 14,10 14,4"></polyline>
         <line x1="14" y1="10" x2="21" y2="3"></line>
@@ -1095,7 +1115,7 @@ function toggleEmbedMaximize(embedId) {
       `;
     } else {
       // Now fixed height, show maximize icon (maximize-2)  
-      maximizeButton.innerHTML = `
+      maximizeButtonSvg.innerHTML = `
         <polyline points="15,3 21,3 21,9"></polyline>
         <polyline points="9,21 3,21 3,15"></polyline>
         <line x1="21" y1="3" x2="14" y2="10"></line>

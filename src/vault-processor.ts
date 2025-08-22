@@ -15,6 +15,13 @@ export class VaultProcessor {
   }
 
   /**
+   * Get the markdown processor instance
+   */
+  getMarkdownProcessor(): MarkdownProcessor {
+    return this.markdownProcessor;
+  }
+
+  /**
    * Process an entire Obsidian vault directory
    */
   async processVault(vaultPath: string): Promise<VaultStructure> {
@@ -112,6 +119,12 @@ export class VaultProcessor {
     console.log('🔗 Resolving embedded notes...');
     notes.forEach(note => {
       note.html = this.markdownProcessor.resolveEmbeddedNotes(note.html, notes, bases);
+    });
+
+    // Fix wiki link paths now that all notes are processed
+    console.log('🔗 Fixing wiki link paths...');
+    notes.forEach(note => {
+      note.html = this.markdownProcessor.fixWikiLinks(note.html, notes);
     });
 
     // Build folder structure

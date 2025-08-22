@@ -234,7 +234,6 @@ function generateTableView(notes: Note[], view: BaseView): string {
         const columnName = getColumnDisplayName(col);
         return `<th data-column="${col}" class="sortable">
             ${columnName}
-            <span class="sort-indicator">${getLucideIcon('ArrowUpDown', 12)}</span>
         </th>`;
     }).join('');
 

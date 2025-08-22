@@ -6,6 +6,7 @@ import * as katex from 'katex';
 import { Note, FrontMatter, Base, BaseView } from './types';
 import { getLucideIcon } from './templates';
 import { BaseProcessor } from './base-processor';
+import { generateCardHtml, getUsedProperties } from './card-renderer';
 
 export class MarkdownProcessor {
   private linkPattern = /\[\[([^\]]+)\]\]/g;
@@ -318,11 +319,11 @@ export class MarkdownProcessor {
 
     switch (defaultView.type) {
       case 'cards':
-        return this.generateCardsViewContent(notes);
+        return this.generateCardsViewContent(notes, defaultView, base);
       case 'table':
-        return this.generateTableViewContent(notes);
+        return this.generateTableViewContent(notes, defaultView);
       default:
-        return this.generateCardsViewContent(notes);
+        return this.generateCardsViewContent(notes, defaultView, base);
     }
   }
 
@@ -395,63 +396,104 @@ export class MarkdownProcessor {
   /**
    * Generate cards view content for embedded bases
    */
-  generateCardsViewContent(notes: Note[]): string {
-    const cardsHtml = notes.map(note => {
-      const tags = note.frontMatter.tags || [];
-      const tagsHtml = Array.isArray(tags)
-        ? tags.map(tag => `<span class="tag">${tag}</span>`).join('')
-        : tags ? `<span class="tag">${tags}</span>` : '';
+  generateCardsViewContent(notes: Note[], baseView: BaseView, base?: Base): string {
+    // Instead of server-side rendering, we'll create a placeholder that gets rendered client-side
+    // This ensures embedded and standalone cards use the exact same rendering code
+    const baseData = {
+      notes: notes.map(note => ({
+        id: note.id,
+        title: note.title,
+        content: note.content,
+        frontMatter: note.frontMatter,
+        fileStats: note.fileStats
+      })),
+      view: baseView,
+      filters: base?.filters || null
+    };
 
-      // Format date
-      const dateStr = note.frontMatter.mtime || 'Unknown date';
-
-      return `<div class="card" data-note-id="${note.id}">
-        <div class="card-header">
-          <h3 class="card-title">
-            <a href="/${note.id}" class="internal-link">${note.title}</a>
-          </h3>
-        </div>
-        <div class="card-content">
-          <div class="card-meta">
-            ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
-            <div class="card-date">${dateStr}</div>
-          </div>
-          <div class="card-preview">${note.content.length > 150 ? note.content.substring(0, 150) + '...' : note.content}</div>
-        </div>
-      </div>`;
-    }).join('');
-
-    return `<div class="cards-view">
+    // Create a div that will be populated by client-side JavaScript
+    return `<div class="cards-view" data-base-cards='${JSON.stringify(baseData).replace(/'/g, "&apos;")}'>
       <div class="cards-container">
-        ${cardsHtml}
+        <!-- Cards will be rendered by client-side JavaScript for consistency -->
       </div>
     </div>`;
-  }
-
-  /**
+  }  /**
    * Generate table view content for embedded bases
    */
-  generateTableViewContent(notes: Note[]): string {
-    const rowsHtml = notes.map(note => {
-      const tags = note.frontMatter.tags || [];
-      const tagsHtml = Array.isArray(tags)
-        ? tags.map(tag => `<span class="tag">${tag}</span>`).join('')
-        : tags ? `<span class="tag">${tags}</span>` : '';
+  getPropertyValue(note: Note, property: string): string {
+    switch (property) {
+      case 'file.name':
+        return `<a href="/${note.id}" class="internal-link">${note.title}</a>`;
 
-      return `<tr data-note-id="${note.id}">
-        <td><a href="/${note.id}" class="internal-link">${note.title}</a></td>
-        <td>${tagsHtml}</td>
-        <td>${note.frontMatter.mtime || 'Unknown'}</td>
-      </tr>`;
+      case 'file.path':
+        return note.relativePath || '';
+
+      case 'file.size':
+        if (note.fileStats && note.fileStats.size) {
+          const size = note.fileStats.size;
+          if (size < 1024) return `${size} B`;
+          if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+          return `${Math.round(size / (1024 * 1024))} MB`;
+        }
+        return '';
+
+      case 'file.tags':
+        const tags = note.frontMatter?.tags || [];
+        const tagList = Array.isArray(tags) ? tags : [tags];
+        return tagList.map(tag => `<span class="tag">${tag}</span>`).join('');
+
+      case 'file.mtime':
+        if (note.fileStats && note.fileStats.mtime) {
+          const mtime = new Date(note.fileStats.mtime);
+          return this.formatDate(mtime);
+        }
+        return note.frontMatter.mtime || '';
+
+      case 'file.ctime':
+        if (note.fileStats && note.fileStats.ctime) {
+          const ctime = new Date(note.fileStats.ctime);
+          return this.formatDate(ctime);
+        }
+        return '';
+
+      default:
+        return '';
+    }
+  }
+
+  formatDate(date: Date): string {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  generateTableViewContent(notes: Note[], baseView: BaseView): string {
+    // Get the order from the baseView, defaulting to name, tags, and mtime
+    const order = baseView.order || ['file.name', 'file.tags', 'file.mtime'];
+
+    // Generate table headers based on order
+    const headersHtml = order.map(property => {
+      const label = property.replace('file.', '').replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+      return `<th>${label}</th>`;
+    }).join('');
+
+    // Generate table rows
+    const rowsHtml = notes.map(note => {
+      const cellsHtml = order.map(property => {
+        const value = this.getPropertyValue(note, property);
+        return `<td>${value}</td>`;
+      }).join('');
+
+      return `<tr data-note-id="${note.id}">${cellsHtml}</tr>`;
     }).join('');
 
     return `<div class="table-view">
       <table class="base-table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Tags</th>
-            <th>Modified</th>
+            ${headersHtml}
           </tr>
         </thead>
         <tbody>

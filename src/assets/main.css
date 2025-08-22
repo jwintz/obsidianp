@@ -1721,17 +1721,6 @@ body.menu-open {
   background-color: var(--color-bg-secondary);
 }
 
-.sort-indicator {
-  display: inline-flex;
-  align-items: center;
-  margin-left: var(--space-xs);
-  opacity: 0.4;
-}
-
-.base-table th.sortable:hover .sort-indicator {
-  opacity: 1;
-}
-
 .base-table td {
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--color-border);
@@ -1790,12 +1779,35 @@ body.menu-open {
   line-height: 1.3;
 }
 
+/* Ensure card titles in embedded contexts override note-body h3 styles */
+.embed-content .card-title,
+.note-body .card-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.3;
+}
+
 .card-title .internal-link {
   color: var(--color-text-primary);
   text-decoration: none;
 }
 
+/* Ensure card title links in embedded contexts override note-body styles */
+.embed-content .card-title .internal-link,
+.note-body .card-title .internal-link {
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
 .card-title .internal-link:hover {
+  color: var(--color-link);
+  text-decoration: underline;
+}
+
+/* Ensure card title link hovers in embedded contexts work correctly */
+.embed-content .card-title .internal-link:hover,
+.note-body .card-title .internal-link:hover {
   color: var(--color-link);
   text-decoration: underline;
 }
@@ -1809,7 +1821,21 @@ body.menu-open {
 .card-meta {
   display: flex;
   flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.card-property {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-xs);
+}
+
+.card-property-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-transform: lowercase;
+  font-weight: 500;
+  margin-bottom: 2px;
 }
 
 /* Calendar View */
@@ -1924,6 +1950,54 @@ body.menu-open {
   -webkit-line-clamp: 3;
   line-clamp: 3;
   -webkit-box-orient: vertical;
+}
+
+/* Styling for rendered HTML in card previews */
+.card-preview h4,
+.card-preview h5,
+.card-preview h6 {
+  margin: 0 0 var(--space-xs) 0;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.card-preview p {
+  margin: 0;
+  padding: 0;
+}
+
+.card-preview strong {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.card-preview em {
+  font-style: italic;
+}
+
+.card-preview code {
+  background-color: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  padding: 2px 4px;
+  border-radius: var(--border-radius-xs);
+  font-family: var(--font-family-code);
+  font-size: calc(var(--font-size-sm) - 1px);
+}
+
+.card-preview del {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+.card-preview a {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.card-preview a:hover {
+  text-decoration: underline;
 }
 
 /* Tags in properties and bases */

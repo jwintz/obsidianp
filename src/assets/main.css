@@ -386,6 +386,29 @@ body {
 .note-body li {
   margin-bottom: var(--space-xs);
   color: var(--color-text-primary);
+  position: relative;
+}
+
+/* Vertical line styling for nested lists */
+.note-body ul ul,
+.note-body ol ol,
+.note-body ul ol,
+.note-body ol ul {
+  position: relative;
+  margin: 0; /* Remove top and bottom margins for nested lists */
+}
+
+.note-body ul ul::before,
+.note-body ol ol::before,
+.note-body ul ol::before,
+.note-body ol ul::before {
+  content: '';
+  position: absolute;
+  left: -15px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--color-border);
 }
 
 .note-body blockquote {
@@ -1125,14 +1148,24 @@ body.menu-open {
   color: var(--color-text-primary);
 }
 
+
 .embed-chevron {
-  font-size: var(--font-size-sm);
+  display: flex;
+  align-items: center;
   color: var(--color-text-secondary);
   transition: transform 0.2s ease;
+  margin-left: 0.5em;
 }
 
-.embed-note.collapsed .embed-chevron {
-  transform: rotate(-90deg);
+.embed-chevron svg {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.2s ease;
+  transform: rotate(0deg); /* Point down when expanded (default) */
+}
+
+.embed-note.collapsed .embed-chevron svg {
+  transform: rotate(-90deg); /* Point right when collapsed */
 }
 
 .embed-content {

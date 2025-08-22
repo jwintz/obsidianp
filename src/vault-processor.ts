@@ -6,7 +6,7 @@ import { Note, VaultStructure, SiteConfig, FolderNode } from './types';
 
 export class VaultProcessor {
   private markdownProcessor: MarkdownProcessor;
-  
+
   constructor() {
     this.markdownProcessor = new MarkdownProcessor();
   }
@@ -24,9 +24,9 @@ export class VaultProcessor {
     const tags = new Map<string, string[]>();
 
     // Find all markdown files
-    const markdownFiles = await glob('**/*.md', { 
+    const markdownFiles = await glob('**/*.md', {
       cwd: vaultPath,
-      absolute: true 
+      absolute: true
     });
 
     // Process each markdown file
@@ -34,20 +34,20 @@ export class VaultProcessor {
       try {
         const content = await fs.readFile(filePath, 'utf-8');
         const note = this.markdownProcessor.processMarkdown(filePath, content, vaultPath);
-        
+
         notes.set(note.id, note);
-        
+
         // Build link graph
-        linkGraph.set(note.id, new Set(note.links.map(link => 
+        linkGraph.set(note.id, new Set(note.links.map(link =>
           this.generateNoteId(link)
         )));
-        
+
         // Index categories
         if (note.frontMatter.categories) {
-          const categoryList = Array.isArray(note.frontMatter.categories) 
-            ? note.frontMatter.categories 
+          const categoryList = Array.isArray(note.frontMatter.categories)
+            ? note.frontMatter.categories
             : [note.frontMatter.categories];
-          
+
           categoryList.forEach(category => {
             const cleanCategory = this.cleanWikiLink(category);
             if (!categories.has(cleanCategory)) {
@@ -56,13 +56,13 @@ export class VaultProcessor {
             categories.get(cleanCategory)?.push(note.id);
           });
         }
-        
+
         // Index tags
         if (note.frontMatter.tags) {
-          const tagList = Array.isArray(note.frontMatter.tags) 
-            ? note.frontMatter.tags 
+          const tagList = Array.isArray(note.frontMatter.tags)
+            ? note.frontMatter.tags
             : [note.frontMatter.tags];
-          
+
           tagList.forEach(tag => {
             if (!tags.has(tag)) {
               tags.set(tag, []);
@@ -120,7 +120,7 @@ export class VaultProcessor {
       // Create folder hierarchy
       parts.forEach((part, index) => {
         currentPath = currentPath ? `${currentPath}/${part}` : part;
-        
+
         if (!folderMap.has(currentPath)) {
           const folderNode: FolderNode = {
             name: part,
@@ -128,16 +128,16 @@ export class VaultProcessor {
             type: 'folder',
             children: []
           };
-          
+
           folderMap.set(currentPath, folderNode);
-          
+
           if (parentNode) {
             parentNode.children.push(folderNode);
           } else {
             rootNodes.push(folderNode);
           }
         }
-        
+
         parentNode = folderMap.get(currentPath);
       });
 

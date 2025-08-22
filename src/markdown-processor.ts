@@ -263,11 +263,11 @@ export class MarkdownProcessor {
     return html.replace(/<div class="embed-placeholder" data-embed-target="([^"]+)"><\/div>/g, (match, linkText) => {
       // Find the note to embed - try multiple ID generation strategies
       let targetNote: Note | undefined;
-      
+
       // Strategy 1: Direct ID match
       const directId = this.generateNoteId(linkText);
       targetNote = allNotes.get(directId);
-      
+
       // Strategy 2: Search by title across all notes
       if (!targetNote) {
         for (const note of allNotes.values()) {
@@ -277,7 +277,7 @@ export class MarkdownProcessor {
           }
         }
       }
-      
+
       // Strategy 3: Search by filename (without extension)
       if (!targetNote) {
         for (const note of allNotes.values()) {
@@ -296,12 +296,16 @@ export class MarkdownProcessor {
 
       // Create collapsible embed cartridge
       const embedId = `embed-${targetNote.id}-${Math.random().toString(36).substr(2, 9)}`;
-      
+
       return `
         <div class="embed-note" data-embed-id="${embedId}">
           <div class="embed-header" onclick="toggleEmbed('${embedId}')">
             <span class="embed-title">${targetNote.title}</span>
-            <span class="embed-chevron">▼</span>
+            <span class="embed-chevron" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
+                <path d="M3 8L12 17L21 8"></path>
+              </svg>
+            </span>
           </div>
           <div class="embed-content" id="embed-content-${embedId}">
             ${targetNote.html}

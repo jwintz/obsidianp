@@ -277,6 +277,7 @@ class ObsidianSSGApp {
   
   renderSidebar() {
     this.renderFolderTree();
+    this.setupExpandCollapseAll();
   }
   
   renderFolderTree() {
@@ -291,7 +292,7 @@ class ObsidianSSGApp {
       
       if (isFolder) {
         const folderId = `folder-${node.path.replace(/\//g, '-')}`;
-        const isExpanded = level < 2; // Expand first two levels by default
+        const isExpanded = false; // All folders collapsed by default
         
         html += `
           <div class="folder-item folder ${isExpanded ? 'expanded' : 'collapsed'}" data-folder="${node.path}" onclick="toggleFolder('${folderId}')">
@@ -364,6 +365,58 @@ class ObsidianSSGApp {
         }
       }
     };
+  }
+
+  setupExpandCollapseAll() {
+    const expandCollapseButton = document.getElementById('expand-collapse-all');
+    if (!expandCollapseButton) return;
+
+    let allExpanded = false;
+    
+    expandCollapseButton.addEventListener('click', () => {
+      const folderItems = document.querySelectorAll('.folder-item.folder');
+      const folderContents = document.querySelectorAll('.folder-content');
+      
+      if (allExpanded) {
+        // Collapse all folders
+        folderItems.forEach(item => {
+          item.classList.remove('expanded');
+          item.classList.add('collapsed');
+        });
+        folderContents.forEach(content => {
+          content.classList.remove('expanded');
+          content.classList.add('collapsed');
+        });
+        
+        // Update button state
+        expandCollapseButton.title = 'Expand all folders';
+        expandCollapseButton.classList.remove('all-expanded');
+        allExpanded = false;
+      } else {
+        // Expand all folders
+        folderItems.forEach(item => {
+          item.classList.remove('collapsed');
+          item.classList.add('expanded');
+        });
+        folderContents.forEach(content => {
+          content.classList.remove('collapsed');
+          content.classList.add('expanded');
+        });
+        
+        // Update button state
+        expandCollapseButton.title = 'Collapse all folders';
+        expandCollapseButton.classList.add('all-expanded');
+        allExpanded = true;
+      }
+    });
+  }
+
+  getLucideIcon(iconName, size = 16) {
+    // Using actual Lucide SVG paths for consistency
+    const icons = {
+      'TableOfContents': `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 12H3"/><path d="M16 18H3"/><path d="M16 6H3"/><path d="M21 12h.01"/><path d="M21 18h.01"/><path d="M21 6h.01"/></svg>`
+    };
+    return icons[iconName] || icons['TableOfContents'];
   }
   
   loadNote(noteId, addToHistory = true) {

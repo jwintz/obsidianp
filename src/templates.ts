@@ -1,3 +1,23 @@
+import * as lucideIcons from 'lucide-static';
+
+/**
+ * Generate a Lucide icon SVG
+ */
+function getLucideIcon(iconName: string, size = 16, className = ''): string {
+    const iconSvg = (lucideIcons as any)[iconName];
+    if (!iconSvg) {
+        console.warn(`Lucide icon '${iconName}' not found`);
+        return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="${className}"></svg>`;
+    }
+
+    // Replace default attributes with our custom ones
+    return iconSvg
+        .replace(/width="[^"]*"/, `width="${size}"`)
+        .replace(/height="[^"]*"/, `height="${size}"`)
+        .replace(/class="[^"]*"/, className ? `class="${className}"` : '')
+        .replace(/<svg/, className && !iconSvg.includes('class=') ? `<svg class="${className}"` : '<svg');
+}
+
 export function generateMainTemplate(title: string = "Obsidian Vault"): string {
     const timestamp = Date.now(); // Cache busting for development
     return `<!DOCTYPE html>
@@ -27,27 +47,10 @@ export function generateMainTemplate(title: string = "Obsidian Vault"): string {
                 <h1 class="vault-title">${title}</h1>
                 <div class="mobile-header-controls">
                     <button id="theme-toggle" class="icon-button" title="Toggle theme">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="5"></circle>
-                            <line x1="12" y1="1" x2="12" y2="3"></line>
-                            <line x1="12" y1="21" x2="12" y2="23"></line>
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                            <line x1="1" y1="12" x2="3" y2="12"></line>
-                            <line x1="21" y1="12" x2="23" y2="12"></line>
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                        </svg>
+                        ${getLucideIcon('Sun', 16)}
                     </button>
                     <button id="graph-toggle" class="icon-button" title="Toggle graph view">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="9" cy="12" r="1"></circle>
-                            <circle cx="9" cy="5" r="1"></circle>
-                            <circle cx="9" cy="19" r="1"></circle>
-                            <circle cx="15" cy="12" r="1"></circle>
-                            <circle cx="15" cy="5" r="1"></circle>
-                            <circle cx="15" cy="19" r="1"></circle>
-                        </svg>
+                        ${getLucideIcon('Waypoints', 16)}
                     </button>
                 </div>
             </div>
@@ -60,27 +63,10 @@ export function generateMainTemplate(title: string = "Obsidian Vault"): string {
                 </div>
                 <div class="sidebar-controls">
                     <button id="theme-toggle-desktop" class="icon-button" title="Toggle theme">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="5"></circle>
-                            <line x1="12" y1="1" x2="12" y2="3"></line>
-                            <line x1="12" y1="21" x2="12" y2="23"></line>
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                            <line x1="1" y1="12" x2="3" y2="12"></line>
-                            <line x1="21" y1="12" x2="23" y2="12"></line>
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                        </svg>
+                        ${getLucideIcon('Sun', 16)}
                     </button>
                     <button id="graph-toggle-desktop" class="icon-button" title="Toggle graph view">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="9" cy="12" r="1"></circle>
-                            <circle cx="9" cy="5" r="1"></circle>
-                            <circle cx="9" cy="19" r="1"></circle>
-                            <circle cx="15" cy="12" r="1"></circle>
-                            <circle cx="15" cy="5" r="1"></circle>
-                            <circle cx="15" cy="19" r="1"></circle>
-                        </svg>
+                        ${getLucideIcon('Waypoints', 16)}
                     </button>
                 </div>
             </div>
@@ -92,7 +78,12 @@ export function generateMainTemplate(title: string = "Obsidian Vault"): string {
             
             <div class="sidebar-content">
                 <div class="nav-section">
-                    <h3>Files</h3>
+                    <div class="nav-section-header">
+                        <h3>Files</h3>
+                        <button id="expand-collapse-all" class="icon-button expand-collapse-button" title="Expand all folders">
+                            ${getLucideIcon('TableOfContents', 14)}
+                        </button>
+                    </div>
                     <div id="folder-tree" class="folder-tree"></div>
                 </div>
             </div>

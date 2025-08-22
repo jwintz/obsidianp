@@ -40,6 +40,7 @@
     "glob": "^11.0.3",
     "gray-matter": "^4.0.3",
     "katex": "^0.16.22",
+    "lucide-static": "^0.541.0",
     "marked": "^16.2.0",
     "shiki": "^3.11.0"
   }

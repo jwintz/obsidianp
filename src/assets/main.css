@@ -287,15 +287,44 @@ body {
   margin-bottom: var(--space-md); /* Reduced from space-lg to space-md */
 }
 
+.nav-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+  padding: 0 var(--space-md);
+}
+
 .nav-section h3 {
   font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  margin-bottom: var(--space-sm);
-  margin-top: 0;
-  padding: 0 var(--space-md);
+  margin: 0;
+  flex: 1;
+}
+
+.expand-collapse-button {
+  opacity: 0.6;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  padding: 2px;
+  border-radius: var(--border-radius-sm);
+}
+
+.expand-collapse-button:hover {
+  opacity: 1;
+  background-color: var(--color-bg-tertiary);
+}
+
+.expand-collapse-button.all-expanded {
+  opacity: 1;
+  background-color: var(--color-primary);
+  color: var(--color-bg-primary);
+}
+
+.expand-collapse-button.all-expanded:hover {
+  background-color: var(--color-primary-hover);
 }
 
 .nav-item {
@@ -1146,6 +1175,20 @@ body.menu-open {
   font-weight: 500;
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.embed-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.embed-title-text {
+  flex: 1;
 }
 
 

@@ -300,7 +300,10 @@ export class MarkdownProcessor {
       return `
         <div class="embed-note" data-embed-id="${embedId}">
           <div class="embed-header" onclick="toggleEmbed('${embedId}')">
-            <span class="embed-title">${targetNote.title}</span>
+            <span class="embed-title">
+              ${this.generateEmbeddedIcon()}
+              <span class="embed-title-text">${targetNote.title}</span>
+            </span>
             <span class="embed-chevron" aria-hidden="true">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
                 <path d="M3 8L12 17L21 8"></path>
@@ -321,6 +324,20 @@ export class MarkdownProcessor {
   private isImageFile(filename: string): boolean {
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
     return imageExtensions.some(ext => filename.toLowerCase().endsWith(ext));
+  }
+
+  /**
+   * Generate embedded icon SVG (Lucide FileText icon)
+   */
+  private generateEmbeddedIcon(): string {
+    // Using static SVG of Lucide FileText icon for reliability
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="embed-icon">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14,2 14,8 20,8"></polyline>
+      <line x1="16" y1="13" x2="8" y2="13"></line>
+      <line x1="16" y1="17" x2="8" y2="17"></line>
+      <polyline points="10,9 9,9 8,9"></polyline>
+    </svg>`;
   }
 
   /**

@@ -1,0 +1,352 @@
+import fs from 'fs-extra';
+import path from 'path';
+import { VaultProcessor } from './vault-processor';
+import { generateMainTemplate, generateNoteTemplate } from './templates';
+import { VaultStructure, SiteConfig, Note } from './types';
+
+export class SiteGenerator {
+  private vaultProcessor: VaultProcessor;
+
+  constructor() {
+    this.vaultProcessor = new VaultProcessor();
+  }
+
+  /**
+   * Generate a complete static site from an Obsidian vault
+   */
+  async generateSite(
+    vaultPath: string,
+    outputPath: string,
+    config: SiteConfig = { title: 'Obsidian Vault' }
+  ): Promise<void> {
+    console.log('🚀 Starting site generation...');
+    console.log(`📁 Vault: ${vaultPath}`);
+    console.log(`📤 Output: ${outputPath}`);
+
+    // Process the vault
+    console.log('📖 Processing vault...');
+    const vaultStructure = await this.vaultProcessor.processVault(vaultPath);
+
+    // Ensure output directory exists and is clean
+    await fs.ensureDir(outputPath);
+    await this.cleanOutputDirectory(outputPath);
+
+    // Copy assets
+    console.log('📋 Copying assets...');
+    await this.copyAssets(outputPath);
+
+    // Apply custom CSS
+    await this.applyCustomCSS(outputPath, config);
+
+    // Copy attachments
+    console.log('🖼️ Copying attachments...');
+    await this.copyAttachments(vaultPath, outputPath);
+
+    // Generate HTML files
+    console.log('📝 Generating HTML files...');
+    await this.generateHTML(vaultStructure, outputPath, config);
+
+    // Generate data files for JavaScript
+    console.log('💾 Generating data files...');
+    await this.generateDataFiles(vaultStructure, outputPath);
+
+    console.log('✅ Site generation complete!');
+  }
+
+  /**
+   * Clean the output directory but preserve .git if it exists
+   */
+  private async cleanOutputDirectory(outputPath: string): Promise<void> {
+    const items = await fs.readdir(outputPath).catch(() => []);
+
+    for (const item of items) {
+      if (item === '.git') continue; // Preserve git directory
+      const itemPath = path.join(outputPath, item);
+      await fs.remove(itemPath);
+    }
+  }
+
+  /**
+   * Copy CSS and JavaScript assets
+   */
+  private async copyAssets(outputDir: string): Promise<void> {
+    const assetsDir = path.join(process.cwd(), 'src', 'assets');
+    const outputAssetsDir = path.join(outputDir, 'assets');
+
+    // Create assets directory
+    await fs.mkdir(outputAssetsDir, { recursive: true });
+
+    // Copy main assets
+    const files = await fs.readdir(assetsDir);
+    for (const file of files) {
+      await fs.copyFile(
+        path.join(assetsDir, file),
+        path.join(outputAssetsDir, file)
+      );
+    }
+
+    // Create fonts directory
+    const fontsDir = path.join(outputAssetsDir, 'fonts');
+    await fs.mkdir(fontsDir, { recursive: true });
+
+    // Copy Monaspace Neon font
+    const monaspaceFont = path.join(
+      process.cwd(),
+      'node_modules/@fontsource/monaspace-neon/files/monaspace-neon-latin-400-normal.woff2'
+    );
+
+    const monaspaceTarget = path.join(fontsDir, 'MonaspaceNeon-Regular.woff2');
+    await fs.copyFile(monaspaceFont, monaspaceTarget);
+
+    // Copy Mona Sans fonts
+    const monaSansWeights = ['400', '500', '600', '700'];
+    for (const weight of monaSansWeights) {
+      const monaSansFont = path.join(
+        process.cwd(),
+        `node_modules/@fontsource/mona-sans/files/mona-sans-latin-${weight}-normal.woff2`
+      );
+      const monaSansTarget = path.join(fontsDir, `MonaSans-${weight}.woff2`);
+      await fs.copyFile(monaSansFont, monaSansTarget);
+    }
+
+    // Copy KaTeX CSS for math rendering
+    const katexCSS = path.join(
+      process.cwd(),
+      'node_modules/katex/dist/katex.min.css'
+    );
+    const katexTarget = path.join(outputAssetsDir, 'katex.min.css');
+    await fs.copyFile(katexCSS, katexTarget);
+  }
+
+  /**
+   * Copy attachment files (images, etc.)
+   */
+  private async copyAttachments(vaultPath: string, outputPath: string): Promise<void> {
+    const attachmentsPath = path.join(vaultPath, 'Attachments');
+    const outputAttachmentsPath = path.join(outputPath, 'attachments');
+
+    if (await fs.pathExists(attachmentsPath)) {
+      await fs.copy(attachmentsPath, outputAttachmentsPath);
+    }
+  }
+
+  /**
+   * Generate HTML files for all notes and the main index
+   */
+  private async generateHTML(
+    vaultStructure: VaultStructure,
+    outputPath: string,
+    config: SiteConfig
+  ): Promise<void> {
+    const { notes } = vaultStructure;
+
+    // Generate index.html (main page)
+    const indexHtml = generateMainTemplate(config.title);
+    await fs.writeFile(path.join(outputPath, 'index.html'), indexHtml);
+
+    // Generate individual note pages
+    for (const note of notes.values()) {
+      const backlinks = note.backlinks
+        .map(id => notes.get(id))
+        .filter((n): n is Note => n !== undefined)
+        .map(n => n.title);
+
+      const noteHtml = generateMainTemplate(config.title);
+      const noteFileName = `${note.id}.html`;
+
+      // For individual note pages, we need to inject the note content
+      // This is a simplified approach - in a real implementation, you might want
+      // separate templates for individual notes
+      await fs.writeFile(path.join(outputPath, noteFileName), noteHtml);
+    }
+  }
+
+  /**
+   * Generate JSON data files for client-side JavaScript
+   */
+  private async generateDataFiles(
+    vaultStructure: VaultStructure,
+    outputPath: string
+  ): Promise<void> {
+    const dataDir = path.join(outputPath, 'data');
+    await fs.ensureDir(dataDir);
+
+    const { notes, linkGraph, categories, tags, folderStructure } = vaultStructure;
+
+    // Convert maps to objects for JSON serialization
+    const notesObject: Record<string, any> = {};
+    notes.forEach((note, id) => {
+      notesObject[id] = {
+        id: note.id,
+        title: note.title,
+        html: note.html,
+        content: note.content.substring(0, 500), // Truncate for search
+        links: note.links,
+        backlinks: note.backlinks,
+        frontMatter: note.frontMatter
+      };
+    });
+
+    const linkGraphObject: Record<string, string[]> = {};
+    linkGraph.forEach((targets, source) => {
+      linkGraphObject[source] = Array.from(targets);
+    });
+
+    const categoriesObject: Record<string, string[]> = {};
+    categories.forEach((noteIds, category) => {
+      categoriesObject[category] = noteIds;
+    });
+
+    const tagsObject: Record<string, string[]> = {};
+    tags.forEach((noteIds, tag) => {
+      tagsObject[tag] = noteIds;
+    });
+
+    // Write data files
+    await fs.writeFile(
+      path.join(dataDir, 'notes.json'),
+      JSON.stringify({
+        notes: notesObject,
+        linkGraph: linkGraphObject,
+        categories: categoriesObject,
+        tags: tagsObject,
+        folderStructure: folderStructure
+      }, null, 2)
+    );
+
+    // Generate search index
+    const searchIndex = Array.from(notes.values()).map(note => ({
+      id: note.id,
+      title: note.title,
+      content: note.content.substring(0, 1000),
+      url: `${note.id}.html`
+    }));
+
+    await fs.writeFile(
+      path.join(dataDir, 'search.json'),
+      JSON.stringify(searchIndex, null, 2)
+    );
+  }
+
+  /**
+   * Apply custom configuration to CSS
+   */
+  private async applyCustomCSS(
+    outputPath: string,
+    config: SiteConfig
+  ): Promise<void> {
+    const cssPath = path.join(outputPath, 'styles', 'main.css');
+
+    if (!await fs.pathExists(cssPath)) return;
+
+    let css = await fs.readFile(cssPath, 'utf-8');
+
+    // Apply theme-aware customization
+    if (config.customization) {
+      // Apply common variables to :root - replace existing values
+      if (config.customization.common) {
+        for (const [key, value] of Object.entries(config.customization.common)) {
+          const regex = new RegExp(`(--${key}):\\s*[^;]+;`, 'g');
+          css = css.replace(regex, `$1: ${value};`);
+        }
+      }
+
+      // Apply light theme variables - replace existing values only in light theme section
+      if (config.customization.light) {
+        // Find the light theme section
+        const lightThemeStart = css.indexOf(':root,\n[data-theme="light"] {');
+        const lightThemeEnd = css.indexOf('}', lightThemeStart);
+
+        if (lightThemeStart !== -1 && lightThemeEnd !== -1) {
+          let lightThemeSection = css.substring(lightThemeStart, lightThemeEnd + 1);
+
+          for (const [key, value] of Object.entries(config.customization.light)) {
+            const regex = new RegExp(`(--${key}):\\s*[^;]+;`, 'g');
+            lightThemeSection = lightThemeSection.replace(regex, `$1: ${value};`);
+          }
+
+          // Replace the light theme section in the full CSS
+          css = css.substring(0, lightThemeStart) + lightThemeSection + css.substring(lightThemeEnd + 1);
+        }
+      }
+
+      // Apply dark theme variables - replace existing values only in dark theme section
+      if (config.customization.dark) {
+        // Find the dark theme section
+        const darkThemeStart = css.indexOf('[data-theme="dark"] {');
+        const darkThemeEnd = css.indexOf('}', darkThemeStart);
+
+        if (darkThemeStart !== -1 && darkThemeEnd !== -1) {
+          let darkThemeSection = css.substring(darkThemeStart, darkThemeEnd + 1);
+
+          for (const [key, value] of Object.entries(config.customization.dark)) {
+            const regex = new RegExp(`(--${key}):\\s*[^;]+;`, 'g');
+            darkThemeSection = darkThemeSection.replace(regex, `$1: ${value};`);
+          }
+
+          // Replace the dark theme section in the full CSS
+          css = css.substring(0, darkThemeStart) + darkThemeSection + css.substring(darkThemeEnd + 1);
+        }
+      }
+    }
+
+    // Legacy support for cssVariables (deprecated)
+    if (config.cssVariables) {
+      const customVariables = Object.entries(config.cssVariables)
+        .map(([key, value]) => `  --${key}: ${value};`)
+        .join('\n');
+
+      css = css.replace(
+        ':root {',
+        `:root {\n${customVariables}`
+      );
+    }
+
+    // Apply custom fonts
+    if (config.fonts) {
+      if (config.fonts.main) {
+        css = css.replace(
+          /--font-family-main:.*?;/,
+          `--font-family-main: ${config.fonts.main};`
+        );
+      }
+      if (config.fonts.heading) {
+        css = css.replace(
+          /--font-family-heading:.*?;/,
+          `--font-family-heading: ${config.fonts.heading};`
+        );
+      }
+      if (config.fonts.code) {
+        css = css.replace(
+          /--font-family-code:.*?;/,
+          `--font-family-code: ${config.fonts.code};`
+        );
+      }
+    }
+
+    await fs.writeFile(cssPath, css);
+  }
+
+  /**
+   * Generate a simple sitemap
+   */
+  private async generateSitemap(
+    vaultStructure: VaultStructure,
+    outputPath: string,
+    baseUrl: string = ''
+  ): Promise<void> {
+    const { notes } = vaultStructure;
+
+    const sitemap = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      `  <url><loc>${baseUrl}/</loc></url>`,
+      ...Array.from(notes.values()).map(note =>
+        `  <url><loc>${baseUrl}/${note.id}.html</loc></url>`
+      ),
+      '</urlset>'
+    ].join('\n');
+
+    await fs.writeFile(path.join(outputPath, 'sitemap.xml'), sitemap);
+  }
+}

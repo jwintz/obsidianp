@@ -1,0 +1,44 @@
+{
+  "name": "obsidianp",
+  "version": "0.0.1",
+  "description": "Static site generator for Obsidian vaults",
+  "main": "dist/index.js",
+  "bin": {
+    "obsidianp": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "nodemon --watch src --watch vault --ext ts,js,css,md --exec ts-node src/cli.ts --",
+    "start": "node dist/cli.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "obsidian",
+    "static-site-generator",
+    "markdown",
+    "docs"
+  ],
+  "author": "Julien Wintz",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/glob": "^8.1.0",
+    "@types/node": "^24.3.0",
+    "nodemon": "^3.1.10",
+    "strip-json-comments": "^5.0.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@fontsource/mona-sans": "^5.2.6",
+    "@fontsource/monaspace-neon": "^5.2.5",
+    "@types/katex": "^0.16.7",
+    "commander": "^14.0.0",
+    "fs-extra": "^11.3.1",
+    "glob": "^11.0.3",
+    "gray-matter": "^4.0.3",
+    "katex": "^0.16.22",
+    "marked": "^16.2.0",
+    "shiki": "^3.11.0"
+  }
+}

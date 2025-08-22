@@ -1929,16 +1929,6 @@ body.menu-open {
   white-space: nowrap;
 }
 
-/* Sidebar base file styling */
-.folder-item.base-file {
-  border-left: 3px solid var(--color-accent);
-  background-color: rgba(139, 92, 246, 0.05);
-}
-
-.folder-item.base-file:hover {
-  background-color: rgba(139, 92, 246, 0.1);
-}
-
 .file-icon {
   display: inline-flex;
   align-items: center;
@@ -1946,8 +1936,25 @@ body.menu-open {
   color: var(--color-text-muted);
 }
 
-.base-file .file-icon {
-  color: var(--color-accent);
+/* Base pill styling */
+.base-pill {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xs);
+  font-weight: 400;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Ensure folder-item files are flex containers for the pill */
+.folder-item.file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 /* Responsive Design for Bases */
@@ -1999,14 +2006,6 @@ body.menu-open {
 
 [data-theme="dark"] .base-table th.sortable:hover {
   background-color: var(--color-bg-tertiary);
-}
-
-[data-theme="dark"] .folder-item.base-file {
-  background-color: rgba(139, 92, 246, 0.1);
-}
-
-[data-theme="dark"] .folder-item.base-file:hover {
-  background-color: rgba(139, 92, 246, 0.2);
 }
 
 /* Base Controls Container - for standalone base pages */

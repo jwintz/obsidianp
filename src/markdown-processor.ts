@@ -85,12 +85,13 @@ export class MarkdownProcessor {
     const fileName = path.basename(filePath, '.md');
     const title = frontMatter.title || fileName;
 
-    // Generate note ID from file path
-    const id = this.generateNoteId(filePath);
-
     // Get folder path relative to vault
     const relativePath = path.relative(vaultPath, filePath);
     const folderPath = path.dirname(relativePath);
+
+    // Generate note ID from relative path (without .md extension) to ensure uniqueness
+    const relativePathWithoutExt = relativePath.replace(/\.md$/, '');
+    const id = this.generateNoteId(relativePathWithoutExt);
 
     // Extract links from content
     const links = this.extractLinks(markdownContent);
@@ -195,7 +196,7 @@ export class MarkdownProcessor {
   generateNoteId(linkText: string): string {
     return linkText.toLowerCase()
       .replace(/\s+/g, '-')
-      .replace(/[^\w\-]/g, '')
+      .replace(/[^\w\-\/]/g, '')  // Keep forward slashes for folder structure
       .replace(/-+/g, '-')
       .replace(/^-+|-+$/g, '');
   }
@@ -332,6 +333,7 @@ export class MarkdownProcessor {
       if (link && !link.startsWith('!')) {
         // Handle display text with pipe separator: extract only the actual link target
         const actualLink = link.split('|')[0].trim();
+        // Keep the full path for proper linking
         links.push(actualLink);
       }
     }
@@ -365,11 +367,11 @@ export class MarkdownProcessor {
       const actualLink = parts[0].trim();
       const displayText = parts.length > 1 ? parts[1].trim() : actualLink;
 
+      // Generate ID from the actual link path for consistent resolution
       const linkId = this.generateNoteId(actualLink);
-      return `<a href="${linkId}.html" class="internal-link" data-note="${actualLink}">${displayText}</a>`;
-    });
 
-    return processed;
+      return `<a href="${linkId}.html" class="internal-link" data-note="${actualLink}">${displayText}</a>`;
+    }); return processed;
   }
 
   /**
@@ -381,11 +383,18 @@ export class MarkdownProcessor {
       let targetNote: Note | undefined;
       let targetBase: Base | undefined;
 
-      // Strategy 1: Direct note ID match
+      // Strategy 1: Direct note ID match using full path
       const directId = this.generateNoteId(linkText);
       targetNote = allNotes.get(directId);
 
-      // Strategy 2: Search by title across all notes
+      // Strategy 2: Search by filename if direct path fails
+      if (!targetNote) {
+        const fileName = linkText.includes('/') ? linkText.split('/').pop() || linkText : linkText;
+        const fileId = this.generateNoteId(fileName);
+        targetNote = allNotes.get(fileId);
+      }
+
+      // Strategy 3: Search by title across all notes
       if (!targetNote) {
         for (const note of allNotes.values()) {
           if (note.title === linkText) {
@@ -395,7 +404,7 @@ export class MarkdownProcessor {
         }
       }
 
-      // Strategy 3: Search by filename (without extension)
+      // Strategy 4: Search by filename (without extension)
       if (!targetNote) {
         for (const note of allNotes.values()) {
           const fileName = path.basename(note.path, '.md');
@@ -406,13 +415,13 @@ export class MarkdownProcessor {
         }
       }
 
-      // Strategy 4: Try to find a base if note not found
+      // Strategy 5: Try to find a base if note not found
       if (!targetNote && bases) {
         // Check if it's a .base file reference
         const baseId = this.generateBaseId(linkText);
         targetBase = bases.get(baseId);
 
-        // Strategy 5: Search by base title
+        // Strategy 6: Search by base title
         if (!targetBase) {
           for (const base of bases.values()) {
             if (base.title === linkText) {

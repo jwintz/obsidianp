@@ -154,10 +154,15 @@ export class SiteGenerator {
       const noteHtml = generateMainTemplate(config.title);
       const noteFileName = `${note.id}.html`;
 
+      // Create nested directory structure if needed  
+      const noteFilePath = path.join(outputPath, noteFileName);
+      const noteDir = path.dirname(noteFilePath);
+      await fs.ensureDir(noteDir);
+
       // For individual note pages, we need to inject the note content
       // This is a simplified approach - in a real implementation, you might want
       // separate templates for individual notes
-      await fs.writeFile(path.join(outputPath, noteFileName), noteHtml);
+      await fs.writeFile(noteFilePath, noteHtml);
     }
 
     // Generate individual base pages

@@ -117,6 +117,14 @@ export class SiteGenerator {
     const katexTarget = path.join(outputAssetsDir, 'katex.min.css');
     await fs.copyFile(katexCSS, katexTarget);
 
+    // Copy D3.js for graph rendering
+    const d3JS = path.join(
+      process.cwd(),
+      'node_modules/d3/dist/d3.min.js'
+    );
+    const d3Target = path.join(outputAssetsDir, 'd3.min.js');
+    await fs.copyFile(d3JS, d3Target);
+
     // Copy KaTeX fonts to the existing fonts directory
     const katexFontsSource = path.join(
       process.cwd(),

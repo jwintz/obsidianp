@@ -61,6 +61,7 @@
   
   /* Layout */
   --sidebar-width: 280px;
+  --right-sidebar-width: 300px;
   --border-radius: 6px;
   --border-radius-sm: 4px;
   
@@ -361,8 +362,220 @@ mark {
 .main-content {
   flex: 1;
   display: flex;
+  overflow: hidden;
+}
+
+.content-wrapper {
+  flex: 1;
+  display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* Right sidebar */
+.right-sidebar {
+  width: var(--right-sidebar-width);
+  min-width: var(--right-sidebar-width);
+  background-color: var(--color-bg-secondary);
+  border-left: 1px solid var(--color-border);
+  display: none; /* Hidden by default, shown with media query */
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Show right sidebar on larger screens */
+@media (min-width: 1200px) {
+  .right-sidebar {
+    display: flex;
+  }
+}
+
+/* Ensure right sidebar is hidden on mobile and tablet */
+@media (max-width: 1199px) {
+  .right-sidebar {
+    display: none !important;
+  }
+}
+
+.right-sidebar-section {
+  border-bottom: 1px solid var(--color-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.right-sidebar-section:last-child {
+  border-bottom: none;
+  flex: 1;
+}
+
+.right-sidebar-header {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-bg-tertiary);
+}
+
+.right-sidebar-header h3 {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.graph-controls {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.graph-expand-btn {
+  padding: 4px;
+}
+
+.mini-graph-container {
+  height: 200px;
+  padding: var(--space-sm);
+  overflow: hidden;
+}
+
+.table-of-contents {
+  padding: var(--space-md);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.toc-placeholder {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+}
+
+.toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.toc-item {
+  margin-bottom: var(--space-xs);
+  position: relative;
+}
+
+.toc-item a {
+  display: block;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  padding: var(--space-xs) 0;
+  border-radius: var(--border-radius-sm);
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.toc-item a:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-tertiary);
+  padding-left: var(--space-xs);
+  padding-right: var(--space-xs);
+}
+
+.toc-item.level-2 { padding-left: 0; }
+.toc-item.level-3 { padding-left: 20px; }
+.toc-item.level-4 { padding-left: 40px; }
+.toc-item.level-5 { padding-left: 60px; }
+.toc-item.level-6 { padding-left: 80px; }
+
+/* Indentation guides for TOC items (excluding level-2 which has no indentation) */
+.toc-item.level-3::before,
+.toc-item.level-4::before,
+.toc-item.level-5::before,
+.toc-item.level-6::before {
+  content: '';
+  position: absolute;
+  left: 4px; /* Position relative to the indented item */
+  top: 0;
+  height: 100%;
+  width: 1px;
+  background-color: var(--color-border);
+  opacity: 1.0;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+/* Hover effect - make the current segment darker */
+.toc-item.level-3:hover::before,
+.toc-item.level-4:hover::before,
+.toc-item.level-5:hover::before,
+.toc-item.level-6:hover::before {
+  background-color: var(--color-border-hover);
+  opacity: 1.0;
+}
+
+/* Active state could be added here if needed for clicked items */
+
+/* Graph Modal Popups */
+.graph-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.graph-modal.hidden {
+  display: none;
+}
+
+.graph-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.graph-modal-content {
+  position: relative;
+  width: 90vw;
+  height: 85vh;
+  max-width: 1200px;
+  background-color: var(--color-bg-primary);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.graph-modal-header {
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-bg-secondary);
+}
+
+.graph-modal-header h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.graph-modal-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
 }
 
 .breadcrumb {
@@ -2152,9 +2365,9 @@ body.menu-open {
 
 /* Sort/Filter Button Active States */
 .base-controls .action-button.has-rules {
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-primary);
   color: var(--color-text-primary);
-  border-color: var(--color-border-hover);
+  border-color: var(--color-border);
   box-shadow: var(--shadow-sm);
 }
 
@@ -2165,7 +2378,7 @@ body.menu-open {
 
 /* Embedded button active states */
 .embed-action-button.has-rules {
-  background: var(--color-bg-tertiary) !important;
+  background: var(--color-bg-primary) !important;
   color: var(--color-text-primary) !important;
   box-shadow: var(--shadow-sm);
 }
@@ -2326,8 +2539,6 @@ body.menu-open {
   background: transparent;
 }
 
-/* Legacy: embedded-base-controls for standalone contexts removed - controls now context-aware */
-
 /* ================================================ ABC Music Notation Styles ================================================ */
 
 /* ABC container styling */
@@ -2382,7 +2593,7 @@ body.menu-open {
 /* Container highlighting when playing - only highlight the specific playing container */
 .abcjs-container.is-playing {
   border-color: var(--color-accent-hover) !important;
-  box-shadow: 0 0 0 2px var(--color-accent-hover);
+  box-shadow: 0 0 0 1px var(--color-accent-hover);
   background: var(--color-bg-elevated);
 }
 

@@ -1,30 +1,75 @@
-// Graph visualization using D3.js-like approach without external dependencies
+// Graph visualization using D3.js
 class GraphView {
   constructor() {
     this.container = document.getElementById('graph-container');
+    this.miniContainer = document.getElementById('mini-graph-container');
     this.svg = null;
+    this.miniSvg = null;
     this.width = 400;
     this.height = 400;
     this.nodes = [];
     this.links = [];
     this.simulation = null;
+    this.miniSimulation = null;
     
     this.init();
   }
   
   init() {
-    if (!this.container) return;
+    if (typeof d3 === 'undefined') {
+      console.warn('D3.js not loaded, falling back to basic graph rendering');
+      this.initBasicGraph();
+      return;
+    }
     
-    this.createSVG();
+    // Initialize main graph container
+    if (this.container) {
+      this.createSVG(this.container, 'svg');
+    }
+    
+    // Initialize mini graph container
+    if (this.miniContainer) {
+      this.createSVG(this.miniContainer, 'miniSvg');
+    }
+    
     this.setupEventListeners();
   }
   
-  createSVG() {
-    this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    this.svg.setAttribute('width', '100%');
-    this.svg.setAttribute('height', '100%');
-    this.svg.setAttribute('viewBox', `0 0 ${this.width} ${this.height}`);
-    this.container.appendChild(this.svg);
+  createSVG(container, svgProperty) {
+    const svg = d3.select(container)
+      .append('svg')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('viewBox', `0 0 ${this.width} ${this.height}`)
+      .style('background-color', 'var(--color-bg-primary)');
+    
+    // Add zoom and pan behavior
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 4])
+      .on('zoom', (event) => {
+        svg.select('.graph-content').attr('transform', event.transform);
+      });
+    
+    svg.call(zoom);
+    
+    // Create main group for graph content
+    const graphContent = svg.append('g').attr('class', 'graph-content');
+    
+    // Add arrow marker definition
+    const defs = svg.append('defs');
+    defs.append('marker')
+      .attr('id', svgProperty === 'miniSvg' ? 'arrowhead-mini' : 'arrowhead')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 15)
+      .attr('refY', 0)
+      .attr('markerWidth', 6)
+      .attr('markerHeight', 6)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', 'var(--color-text-muted)');
+    
+    this[svgProperty] = svg;
   }
   
   setupEventListeners() {
@@ -34,297 +79,449 @@ class GraphView {
   }
   
   updateDimensions() {
-    if (!this.container) return;
+    if (this.container && this.svg) {
+      const rect = this.container.getBoundingClientRect();
+      this.width = rect.width || 400;
+      this.height = rect.height || 400;
+      this.svg.attr('viewBox', `0 0 ${this.width} ${this.height}`);
+    }
     
-    const rect = this.container.getBoundingClientRect();
-    this.width = rect.width || 400;
-    this.height = rect.height || 400;
-    
-    if (this.svg) {
-      this.svg.setAttribute('viewBox', `0 0 ${this.width} ${this.height}`);
+    if (this.miniContainer && this.miniSvg) {
+      const rect = this.miniContainer.getBoundingClientRect();
+      const miniWidth = rect.width || 280;
+      const miniHeight = rect.height || 200;
+      this.miniSvg.attr('viewBox', `0 0 ${miniWidth} ${miniHeight}`);
     }
   }
   
   loadData(notes, linkGraph) {
+    if (!notes || !linkGraph) return;
+    
+    this.processGraphData(notes, linkGraph);
+    this.renderMiniGraph();
+  }
+  
+  processGraphData(notes, linkGraph) {
+    // Convert Map to array and process nodes
     this.nodes = Array.from(notes.values()).map(note => ({
       id: note.id,
-      title: note.title,
-      x: Math.random() * this.width,
-      y: Math.random() * this.height,
-      vx: 0,
-      vy: 0,
-      degree: (linkGraph.get(note.id) || new Set()).size || 0
+      title: note.title || note.id,
+      degree: (linkGraph.get(note.id) || new Set()).size || 0,
+      group: this.categorizeNode(note)
     }));
     
+    // Process links
     this.links = [];
     linkGraph.forEach((targets, source) => {
-      targets.forEach(target => {
-        if (notes.has(target)) {
-          this.links.push({
-            source: source,
-            target: target
-          });
-        }
-      });
-    });
-    
-    this.render();
-    this.startSimulation();
-  }
-  
-  render() {
-    if (!this.svg) return;
-    
-    // Clear previous content
-    this.svg.innerHTML = '';
-    
-    // Create definitions for arrow markers
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-    marker.setAttribute('id', 'arrowhead');
-    marker.setAttribute('markerWidth', '10');
-    marker.setAttribute('markerHeight', '7');
-    marker.setAttribute('refX', '9');
-    marker.setAttribute('refY', '3.5');
-    marker.setAttribute('orient', 'auto');
-    
-    const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    polygon.setAttribute('points', '0 0, 10 3.5, 0 7');
-    polygon.setAttribute('fill', 'var(--color-text-muted)');
-    
-    marker.appendChild(polygon);
-    defs.appendChild(marker);
-    this.svg.appendChild(defs);
-    
-    // Render links
-    this.links.forEach(link => {
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('class', 'graph-link');
-      line.setAttribute('stroke', 'var(--color-text-muted)');
-      line.setAttribute('stroke-width', '1');
-      line.setAttribute('stroke-opacity', '0.4');
-      line.setAttribute('marker-end', 'url(#arrowhead)');
-      line.setAttribute('data-source', link.source);
-      line.setAttribute('data-target', link.target);
-      this.svg.appendChild(line);
-    });
-    
-    // Render nodes
-    this.nodes.forEach(node => {
-      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      group.setAttribute('class', 'graph-node');
-      group.setAttribute('data-node-id', node.id);
-      group.style.cursor = 'pointer';
-      
-      // Node circle
-      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      const degree = node.degree || 0;
-      circle.setAttribute('r', Math.max(6, Math.min(12, 6 + degree * 2)));
-      circle.setAttribute('fill', 'var(--color-primary)');
-      circle.setAttribute('stroke', 'var(--color-bg-primary)');
-      circle.setAttribute('stroke-width', '2');
-      
-      // Node label
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('dy', '-15');
-      text.setAttribute('text-anchor', 'middle');
-      text.setAttribute('font-size', '11px');
-      text.setAttribute('fill', 'var(--color-text-primary)');
-      text.setAttribute('font-family', 'var(--font-family-main)');
-      text.textContent = node.title.length > 15 ? 
-        node.title.substring(0, 15) + '...' : node.title;
-      
-      group.appendChild(circle);
-      group.appendChild(text);
-      
-      // Add click handler
-      group.addEventListener('click', () => {
-        if (window.app && window.app.loadNote) {
-          window.app.loadNote(node.id);
-        }
-      });
-      
-      // Add hover effects
-      group.addEventListener('mouseenter', () => {
-        circle.setAttribute('fill', 'var(--color-primary-hover)');
-        this.highlightConnections(node.id);
-      });
-      
-      group.addEventListener('mouseleave', () => {
-        circle.setAttribute('fill', 'var(--color-primary)');
-        this.clearHighlights();
-      });
-      
-      this.svg.appendChild(group);
-    });
-    
-    this.updatePositions();
-  }
-  
-  highlightConnections(nodeId) {
-    // Highlight connected links
-    this.svg.querySelectorAll('.graph-link').forEach(link => {
-      const source = link.getAttribute('data-source');
-      const target = link.getAttribute('data-target');
-      
-      if (source === nodeId || target === nodeId) {
-        link.setAttribute('stroke', 'var(--color-primary)');
-        link.setAttribute('stroke-opacity', '0.8');
-        link.setAttribute('stroke-width', '2');
-      }
-    });
-    
-    // Highlight connected nodes
-    this.links.forEach(link => {
-      if (link.source === nodeId) {
-        const targetNode = this.svg.querySelector(`[data-node-id="${link.target}"]`);
-        if (targetNode) {
-          const circle = targetNode.querySelector('circle');
-          circle.setAttribute('fill', 'var(--color-accent)');
-        }
-      } else if (link.target === nodeId) {
-        const sourceNode = this.svg.querySelector(`[data-node-id="${link.source}"]`);
-        if (sourceNode) {
-          const circle = sourceNode.querySelector('circle');
-          circle.setAttribute('fill', 'var(--color-accent)');
-        }
-      }
-    });
-  }
-  
-  clearHighlights() {
-    // Reset link styles
-    this.svg.querySelectorAll('.graph-link').forEach(link => {
-      link.setAttribute('stroke', 'var(--color-text-muted)');
-      link.setAttribute('stroke-opacity', '0.4');
-      link.setAttribute('stroke-width', '1');
-    });
-    
-    // Reset node styles
-    this.svg.querySelectorAll('.graph-node circle').forEach(circle => {
-      circle.setAttribute('fill', 'var(--color-primary)');
-    });
-  }
-  
-  startSimulation() {
-    // Simple force simulation
-    const centerX = this.width / 2;
-    const centerY = this.height / 2;
-    
-    let alpha = 1;
-    const alphaDecay = 0.02;
-    const minAlpha = 0.001;
-    
-    const tick = () => {
-      // Apply forces
-      this.nodes.forEach(node => {
-        // Center force
-        const dx = centerX - node.x;
-        const dy = centerY - node.y;
-        node.vx += dx * 0.001 * alpha;
-        node.vy += dy * 0.001 * alpha;
-        
-        // Collision with other nodes
-        this.nodes.forEach(other => {
-          if (node === other) return;
-          
-          const dx = other.x - node.x;
-          const dy = other.y - node.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          const minDistance = 50;
-          
-          if (distance < minDistance && distance > 0) {
-            const strength = (minDistance - distance) / minDistance;
-            const force = strength * 0.1 * alpha;
-            
-            node.vx -= (dx / distance) * force;
-            node.vy -= (dy / distance) * force;
-            other.vx += (dx / distance) * force;
-            other.vy += (dy / distance) * force;
+      if (Array.isArray(targets)) {
+        targets.forEach(target => {
+          if (notes.has(target)) {
+            this.links.push({
+              source: source,
+              target: target
+            });
           }
         });
-      });
-      
-      // Apply link forces
-      this.links.forEach(link => {
-        const sourceNode = this.nodes.find(n => n.id === link.source);
-        const targetNode = this.nodes.find(n => n.id === link.target);
-        
-        if (sourceNode && targetNode) {
-          const dx = targetNode.x - sourceNode.x;
-          const dy = targetNode.y - sourceNode.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          const targetDistance = 100;
-          
-          if (distance > 0) {
-            const strength = (distance - targetDistance) / distance;
-            const force = strength * 0.1 * alpha;
-            
-            sourceNode.vx += dx * force;
-            sourceNode.vy += dy * force;
-            targetNode.vx -= dx * force;
-            targetNode.vy -= dy * force;
+      } else if (targets instanceof Set) {
+        targets.forEach(target => {
+          if (notes.has(target)) {
+            this.links.push({
+              source: source,
+              target: target
+            });
           }
-        }
-      });
-      
-      // Update positions
-      this.nodes.forEach(node => {
-        node.x += node.vx;
-        node.y += node.vy;
-        
-        // Apply damping
-        node.vx *= 0.9;
-        node.vy *= 0.9;
-        
-        // Keep within bounds
-        const margin = 50;
-        node.x = Math.max(margin, Math.min(this.width - margin, node.x));
-        node.y = Math.max(margin, Math.min(this.height - margin, node.y));
-      });
-      
-      this.updatePositions();
-      
-      // Continue simulation
-      alpha *= 1 - alphaDecay;
-      if (alpha > minAlpha) {
-        requestAnimationFrame(tick);
+        });
       }
-    };
-    
-    requestAnimationFrame(tick);
+    });
   }
   
-  updatePositions() {
-    if (!this.svg) return;
-    
-    // Update node positions
-    this.nodes.forEach(node => {
-      const group = this.svg.querySelector(`[data-node-id="${node.id}"]`);
-      if (group) {
-        group.setAttribute('transform', `translate(${node.x}, ${node.y})`);
-      }
-    });
-    
-    // Update link positions
-    this.links.forEach(link => {
-      const sourceNode = this.nodes.find(n => n.id === link.source);
-      const targetNode = this.nodes.find(n => n.id === link.target);
+  categorizeNode(note) {
+    // Simple categorization based on note properties
+    if (note.frontMatter?.tags) {
+      const tags = Array.isArray(note.frontMatter.tags) 
+        ? note.frontMatter.tags 
+        : [note.frontMatter.tags];
       
-      if (sourceNode && targetNode) {
-        const line = this.svg.querySelector(`[data-source="${link.source}"][data-target="${link.target}"]`);
-        if (line) {
-          line.setAttribute('x1', sourceNode.x);
-          line.setAttribute('y1', sourceNode.y);
-          line.setAttribute('x2', targetNode.x);
-          line.setAttribute('y2', targetNode.y);
+      if (tags.includes('project')) return 'project';
+      if (tags.includes('journal')) return 'journal';
+      if (tags.includes('research')) return 'research';
+    }
+    
+    // Categorize by path
+    if (note.id.includes('journal/')) return 'journal';
+    if (note.id.includes('projects/')) return 'project';
+    if (note.id.includes('research/')) return 'research';
+    if (note.id.includes('drums/')) return 'drums';
+    if (note.id.includes('math/')) return 'math';
+    
+    return 'default';
+  }
+  
+  renderMiniGraph() {
+    if (!this.miniSvg || this.nodes.length === 0) return;
+    
+    const container = this.miniContainer;
+    const rect = container.getBoundingClientRect();
+    const width = rect.width || 280;
+    const height = rect.height || 200;
+    
+    // Update viewBox
+    this.miniSvg.attr('viewBox', `0 0 ${width} ${height}`);
+    
+    // Clear previous content
+    const graphContent = this.miniSvg.select('.graph-content');
+    graphContent.selectAll('*').remove();
+    
+    // Create simulation for mini graph
+    this.miniSimulation = d3.forceSimulation(this.nodes)
+      .force('link', d3.forceLink(this.links).id(d => d.id).distance(30))
+      .force('charge', d3.forceManyBody().strength(-50))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide().radius(8));
+    
+    // Create links
+    const links = graphContent.append('g')
+      .attr('class', 'links')
+      .selectAll('line')
+      .data(this.links)
+      .enter()
+      .append('line')
+      .attr('stroke', 'var(--color-text-muted)')
+      .attr('stroke-opacity', 0.6)
+      .attr('stroke-width', 1)
+      .attr('marker-end', 'url(#arrowhead-mini)');
+    
+    // Create nodes
+    const nodes = graphContent.append('g')
+      .attr('class', 'nodes')
+      .selectAll('circle')
+      .data(this.nodes)
+      .enter()
+      .append('circle')
+      .attr('r', d => Math.max(3, Math.min(8, 3 + d.degree)))
+      .attr('fill', d => this.getNodeColor(d.group))
+      .attr('stroke', 'var(--color-bg-primary)')
+      .attr('stroke-width', 1)
+      .style('cursor', 'pointer')
+      .on('click', (event, d) => {
+        if (window.app && typeof window.app.loadNote === 'function') {
+          window.app.loadNote(d.id);
+        }
+      })
+      .on('mouseover', function(event, d) {
+        d3.select(this).attr('r', Math.max(4, Math.min(10, 4 + d.degree)));
+      })
+      .on('mouseout', function(event, d) {
+        d3.select(this).attr('r', Math.max(3, Math.min(8, 3 + d.degree)));
+      });
+    
+    // Add titles for tooltips
+    nodes.append('title').text(d => d.title);
+    
+    // Update simulation
+    this.miniSimulation.on('tick', () => {
+      links
+        .attr('x1', d => d.source.x)
+        .attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x)
+        .attr('y2', d => d.target.y);
+      
+      nodes
+        .attr('cx', d => d.x)
+        .attr('cy', d => d.y);
+    });
+  }
+  
+  renderGlobalGraph(containerElement) {
+    if (!containerElement || !d3) return;
+    
+    const width = 1000;
+    const height = 700;
+    
+    // Clear container
+    d3.select(containerElement).selectAll('*').remove();
+    
+    // Create SVG
+    const svg = d3.select(containerElement)
+      .append('svg')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('viewBox', `0 0 ${width} ${height}`);
+    
+    // Add zoom behavior
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 4])
+      .on('zoom', (event) => {
+        graphContent.attr('transform', event.transform);
+      });
+    
+    svg.call(zoom);
+    
+    const graphContent = svg.append('g').attr('class', 'graph-content');
+    
+    // Add arrow marker
+    const defs = svg.append('defs');
+    defs.append('marker')
+      .attr('id', 'arrowhead-global')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 15)
+      .attr('refY', 0)
+      .attr('markerWidth', 6)
+      .attr('markerHeight', 6)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', 'var(--color-text-muted)');
+    
+    // Create simulation
+    const simulation = d3.forceSimulation(this.nodes)
+      .force('link', d3.forceLink(this.links).id(d => d.id).distance(60))
+      .force('charge', d3.forceManyBody().strength(-200))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide().radius(15));
+    
+    // Create links
+    const links = graphContent.append('g')
+      .selectAll('line')
+      .data(this.links)
+      .enter()
+      .append('line')
+      .attr('stroke', 'var(--color-text-muted)')
+      .attr('stroke-opacity', 0.6)
+      .attr('stroke-width', 1.5)
+      .attr('marker-end', 'url(#arrowhead-global)');
+    
+    // Create nodes
+    const nodes = graphContent.append('g')
+      .selectAll('g')
+      .data(this.nodes)
+      .enter()
+      .append('g')
+      .attr('class', 'node-group')
+      .style('cursor', 'pointer')
+      .call(d3.drag()
+        .on('start', dragStarted)
+        .on('drag', dragged)
+        .on('end', dragEnded));
+    
+    nodes.append('circle')
+      .attr('r', d => Math.max(5, Math.min(15, 5 + d.degree * 2)))
+      .attr('fill', d => this.getNodeColor(d.group))
+      .attr('stroke', 'var(--color-bg-primary)')
+      .attr('stroke-width', 2);
+    
+    nodes.append('text')
+      .text(d => d.title.length > 15 ? d.title.substring(0, 15) + '...' : d.title)
+      .attr('dx', d => Math.max(5, Math.min(15, 5 + d.degree * 2)) + 5)
+      .attr('dy', '.35em')
+      .style('font-size', '11px')
+      .style('fill', 'var(--color-text-secondary)');
+    
+    nodes.on('click', (event, d) => {
+      if (window.app && typeof window.app.loadNote === 'function') {
+        window.app.loadNote(d.id);
+        // Close modal
+        const modal = document.getElementById('global-graph-modal');
+        if (modal) {
+          modal.classList.add('hidden');
         }
       }
     });
+    
+    // Update simulation
+    simulation.on('tick', () => {
+      links
+        .attr('x1', d => d.source.x)
+        .attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x)
+        .attr('y2', d => d.target.y);
+      
+      nodes.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+    
+    function dragStarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+    
+    function dragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+    
+    function dragEnded(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+  }
+  
+  renderLocalGraph(containerElement, currentNodeId) {
+    if (!containerElement || !d3 || !currentNodeId) return;
+    
+    // Filter nodes and links for local graph (current node + direct connections)
+    const connectedNodeIds = new Set([currentNodeId]);
+    
+    // Find all directly connected nodes
+    this.links.forEach(link => {
+      if (link.source === currentNodeId || (typeof link.source === 'object' && link.source.id === currentNodeId)) {
+        connectedNodeIds.add(typeof link.target === 'object' ? link.target.id : link.target);
+      }
+      if (link.target === currentNodeId || (typeof link.target === 'object' && link.target.id === currentNodeId)) {
+        connectedNodeIds.add(typeof link.source === 'object' ? link.source.id : link.source);
+      }
+    });
+    
+    const localNodes = this.nodes.filter(node => connectedNodeIds.has(node.id));
+    const localLinks = this.links.filter(link => {
+      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+      return connectedNodeIds.has(sourceId) && connectedNodeIds.has(targetId);
+    });
+    
+    const width = 1000;
+    const height = 700;
+    
+    // Clear container
+    d3.select(containerElement).selectAll('*').remove();
+    
+    // Create SVG
+    const svg = d3.select(containerElement)
+      .append('svg')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('viewBox', `0 0 ${width} ${height}`);
+    
+    // Add zoom behavior
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 4])
+      .on('zoom', (event) => {
+        graphContent.attr('transform', event.transform);
+      });
+    
+    svg.call(zoom);
+    
+    const graphContent = svg.append('g').attr('class', 'graph-content');
+    
+    // Add arrow marker
+    const defs = svg.append('defs');
+    defs.append('marker')
+      .attr('id', 'arrowhead-local')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 15)
+      .attr('refY', 0)
+      .attr('markerWidth', 6)
+      .attr('markerHeight', 6)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', 'var(--color-text-muted)');
+    
+    // Create simulation
+    const simulation = d3.forceSimulation(localNodes)
+      .force('link', d3.forceLink(localLinks).id(d => d.id).distance(80))
+      .force('charge', d3.forceManyBody().strength(-300))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide().radius(20));
+    
+    // Create links
+    const links = graphContent.append('g')
+      .selectAll('line')
+      .data(localLinks)
+      .enter()
+      .append('line')
+      .attr('stroke', 'var(--color-text-muted)')
+      .attr('stroke-opacity', 0.8)
+      .attr('stroke-width', 2)
+      .attr('marker-end', 'url(#arrowhead-local)');
+    
+    // Create nodes
+    const nodes = graphContent.append('g')
+      .selectAll('g')
+      .data(localNodes)
+      .enter()
+      .append('g')
+      .attr('class', 'node-group')
+      .style('cursor', 'pointer')
+      .call(d3.drag()
+        .on('start', dragStarted)
+        .on('drag', dragged)
+        .on('end', dragEnded));
+    
+    nodes.append('circle')
+      .attr('r', d => d.id === currentNodeId ? 20 : Math.max(8, Math.min(18, 8 + d.degree * 2)))
+      .attr('fill', d => d.id === currentNodeId ? 'var(--color-primary)' : this.getNodeColor(d.group))
+      .attr('stroke', 'var(--color-bg-primary)')
+      .attr('stroke-width', 3);
+    
+    nodes.append('text')
+      .text(d => d.title.length > 20 ? d.title.substring(0, 20) + '...' : d.title)
+      .attr('dx', d => (d.id === currentNodeId ? 20 : Math.max(8, Math.min(18, 8 + d.degree * 2))) + 8)
+      .attr('dy', '.35em')
+      .style('font-size', '12px')
+      .style('font-weight', d => d.id === currentNodeId ? 'bold' : 'normal')
+      .style('fill', d => d.id === currentNodeId ? 'var(--color-primary)' : 'var(--color-text-secondary)');
+    
+    nodes.on('click', (event, d) => {
+      if (window.app && typeof window.app.loadNote === 'function') {
+        window.app.loadNote(d.id);
+        // Close modal
+        const modal = document.getElementById('local-graph-modal');
+        if (modal) {
+          modal.classList.add('hidden');
+        }
+      }
+    });
+    
+    // Update simulation
+    simulation.on('tick', () => {
+      links
+        .attr('x1', d => d.source.x)
+        .attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x)
+        .attr('y2', d => d.target.y);
+      
+      nodes.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+    
+    function dragStarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+    
+    function dragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+    
+    function dragEnded(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+  }
+  
+  getNodeColor(group) {
+    const colors = {
+      'project': '#8b5cf6',
+      'journal': '#06b6d4',
+      'research': '#059669',
+      'drums': '#dc2626',
+      'math': '#7c3aed',
+      'default': '#6b7280'
+    };
+    return colors[group] || colors.default;
+  }
+  
+  // Fallback for when D3 is not available
+  initBasicGraph() {
+    console.log('Initializing basic graph without D3.js');
+    // Basic fallback implementation could go here
+    // For now, just log that D3 is not available
   }
 }
 
-// Initialize graph when DOM is loaded
-if (typeof window !== 'undefined') {
-  window.GraphView = GraphView;
-}
+// Initialize the graph view
+window.GraphView = GraphView;

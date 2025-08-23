@@ -321,6 +321,9 @@ class ObsidianSSGApp {
       });
     }
     
+    // Graph expansion controls
+    this.initializeGraphControls();
+    
     // Handle internal link clicks
     document.addEventListener('click', (event) => {
       const link = event.target.closest('.internal-link');
@@ -344,6 +347,104 @@ class ObsidianSSGApp {
         this.closeMobileMenu();
       }
     });
+  }
+  
+  initializeGraphControls() {
+    // Global graph expansion button
+    const expandGlobalBtn = document.getElementById('expand-global-graph');
+    if (expandGlobalBtn) {
+      expandGlobalBtn.addEventListener('click', () => {
+        this.showGlobalGraphModal();
+      });
+    }
+    
+    // Local graph expansion button  
+    const expandLocalBtn = document.getElementById('expand-local-graph');
+    if (expandLocalBtn) {
+      expandLocalBtn.addEventListener('click', () => {
+        this.showLocalGraphModal();
+      });
+    }
+    
+    // Close modal buttons
+    const closeGlobalBtn = document.getElementById('close-global-graph');
+    if (closeGlobalBtn) {
+      closeGlobalBtn.addEventListener('click', () => {
+        this.hideGlobalGraphModal();
+      });
+    }
+    
+    const closeLocalBtn = document.getElementById('close-local-graph');
+    if (closeLocalBtn) {
+      closeLocalBtn.addEventListener('click', () => {
+        this.hideLocalGraphModal();
+      });
+    }
+    
+    // Close modal when clicking overlay
+    const globalOverlay = document.getElementById('global-graph-overlay');
+    if (globalOverlay) {
+      globalOverlay.addEventListener('click', () => {
+        this.hideGlobalGraphModal();
+      });
+    }
+    
+    const localOverlay = document.getElementById('local-graph-overlay');
+    if (localOverlay) {
+      localOverlay.addEventListener('click', () => {
+        this.hideLocalGraphModal();
+      });
+    }
+    
+    // Close modals on Escape key
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        this.hideGlobalGraphModal();
+        this.hideLocalGraphModal();
+      }
+    });
+  }
+  
+  showGlobalGraphModal() {
+    const modal = document.getElementById('global-graph-modal');
+    const container = document.getElementById('global-graph-container');
+    
+    if (modal && container && this.graph) {
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      
+      // Render global graph
+      this.graph.renderGlobalGraph(container);
+    }
+  }
+  
+  hideGlobalGraphModal() {
+    const modal = document.getElementById('global-graph-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      document.body.style.overflow = ''; // Restore scrolling
+    }
+  }
+  
+  showLocalGraphModal() {
+    const modal = document.getElementById('local-graph-modal');
+    const container = document.getElementById('local-graph-container');
+    
+    if (modal && container && this.graph && this.currentNote) {
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      
+      // Render local graph
+      this.graph.renderLocalGraph(container, this.currentNote);
+    }
+  }
+  
+  hideLocalGraphModal() {
+    const modal = document.getElementById('local-graph-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      document.body.style.overflow = ''; // Restore scrolling
+    }
   }
   
   renderSidebar(expandToNoteId = null) {
@@ -599,6 +700,14 @@ class ObsidianSSGApp {
     // Update active state in sidebar
     this.updateSidebarActiveState(noteId);
     
+    // Update table of contents
+    if (window.tableOfContents) {
+      // Small delay to ensure content is rendered
+      setTimeout(() => {
+        window.tableOfContents.setCurrentNote(noteId);
+      }, 100);
+    }
+    
     // Scroll to top
     if (noteContent) {
       noteContent.scrollTop = 0;
@@ -642,6 +751,11 @@ class ObsidianSSGApp {
     
     // Update active state in sidebar
     this.updateSidebarActiveState(baseId);
+    
+    // Clear table of contents for base views
+    if (window.tableOfContents) {
+      window.tableOfContents.setCurrentNote(null);
+    }
     
     // Scroll to top
     if (noteContent) {

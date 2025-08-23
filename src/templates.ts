@@ -121,8 +121,62 @@ function generateTemplate(title: string, mainContent: string): string {
         </nav>
         
         <main class="main-content">
-            ${mainContent}
+            <div class="content-wrapper">
+                ${mainContent}
+            </div>
+            <aside class="right-sidebar" id="right-sidebar">
+                <div class="right-sidebar-section">
+                    <div class="right-sidebar-header">
+                        <h3>Interactive Graph</h3>
+                        <div class="graph-controls">
+                            <button id="expand-global-graph" class="icon-button graph-expand-btn" title="Expand global graph">
+                                ${getLucideIcon('Maximize2', 14)}
+                            </button>
+                            <button id="expand-local-graph" class="icon-button graph-expand-btn" title="Expand local graph">
+                                ${getLucideIcon('Focus', 14)}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mini-graph-container" id="mini-graph-container"></div>
+                </div>
+                
+                <div class="right-sidebar-section">
+                    <div class="right-sidebar-header">
+                        <h3>On This Page</h3>
+                    </div>
+                    <div class="table-of-contents" id="table-of-contents">
+                        <div class="toc-placeholder">No headings found</div>
+                    </div>
+                </div>
+            </aside>
         </main>
+        
+        <!-- Graph Modal Popups -->
+        <div class="graph-modal hidden" id="global-graph-modal">
+            <div class="graph-modal-overlay" id="global-graph-overlay"></div>
+            <div class="graph-modal-content">
+                <div class="graph-modal-header">
+                    <h3>Global Graph</h3>
+                    <button id="close-global-graph" class="icon-button">
+                        ${getLucideIcon('X', 16)}
+                    </button>
+                </div>
+                <div class="graph-modal-container" id="global-graph-container"></div>
+            </div>
+        </div>
+        
+        <div class="graph-modal hidden" id="local-graph-modal">
+            <div class="graph-modal-overlay" id="local-graph-overlay"></div>
+            <div class="graph-modal-content">
+                <div class="graph-modal-header">
+                    <h3>Local Graph</h3>
+                    <button id="close-local-graph" class="icon-button">
+                        ${getLucideIcon('X', 16)}
+                    </button>
+                </div>
+                <div class="graph-modal-container" id="local-graph-container"></div>
+            </div>
+        </div>
         
         <div class="graph-panel hidden" id="graph-panel">
             <div class="graph-header">
@@ -313,7 +367,9 @@ function generateTemplate(title: string, mainContent: string): string {
             window.initializeAllABCNotation();
         }
     </script>
+    <script src="/assets/d3.min.js"></script>
     <script src="/assets/search.js"></script>
+    <script src="/assets/table-of-contents.js"></script>
     <script src="/assets/graph.js"></script>
     <script src="/assets/app.js"></script>
 </body>

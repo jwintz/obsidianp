@@ -216,10 +216,16 @@ function generateTemplate(title: string, mainContent: string): string {
                     const noteHighlighter = {
                         beatSubdivisions: 2,
                         onStart: function() {
-                            container.parentElement && container.parentElement.classList.add('is-playing');
+                            // Remove is-playing class from all ABC containers
+                            const allContainers = document.querySelectorAll('.abcjs-container');
+                            allContainers.forEach(function(c) {
+                                c.classList.remove('is-playing');
+                            });
+                            // Add is-playing class to current container only
+                            container.classList.add('is-playing');
                         },
                         onFinished: function() {
-                            container.parentElement && container.parentElement.classList.remove('is-playing');
+                            container.classList.remove('is-playing');
                             const highlighted = Array.from(container.querySelectorAll('.abcjs-highlight'));
                             highlighted.forEach(function(el) { el.classList.remove('abcjs-highlight'); });
                         },

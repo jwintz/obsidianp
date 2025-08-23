@@ -2379,11 +2379,10 @@ body.menu-open {
   fill: var(--color-accent-hover) !important;
 }
 
-/* Container highlighting when playing */
-.abcjs-container.is-playing,
-.is-playing .abcjs-container {
-  border-color: var(--color-accent-hover);
-  box-shadow: 0 0 0 1px var(--color-accent-hover);
+/* Container highlighting when playing - only highlight the specific playing container */
+.abcjs-container.is-playing {
+  border-color: var(--color-accent-hover) !important;
+  box-shadow: 0 0 0 2px var(--color-accent-hover);
   background: var(--color-bg-elevated);
 }
 

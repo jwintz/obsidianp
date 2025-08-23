@@ -29,9 +29,6 @@ class ObsidianSSGApp {
     this.initializeEventListeners();
     this.initializeEmbeddedBases();
     
-    // Render initial content
-    this.renderSidebar();
-    
     // Load default note if available
     let noteId = null;
     
@@ -69,6 +66,9 @@ class ObsidianSSGApp {
     if (!noteId) {
       noteId = this.getDefaultNote();
     }
+
+    // Render initial content - expand to the note that will be loaded
+    this.renderSidebar(noteId);
     
     if (noteId) {
       // Check if it's a base first
@@ -346,12 +346,60 @@ class ObsidianSSGApp {
     });
   }
   
-  renderSidebar() {
-    this.renderFolderTree();
+  renderSidebar(expandToNoteId = null) {
+    let expandedPaths = [];
+    if (expandToNoteId) {
+      const pathToNote = this.findPathToNote(expandToNoteId);
+      if (pathToNote) {
+        expandedPaths = pathToNote;
+      }
+    }
+    this.renderFolderTree(expandedPaths);
     this.setupExpandCollapseAll();
   }
+
+  // Find the path to a note in the folder structure
+  findPathToNote(noteId, nodes = this.folderStructure, currentPath = []) {
+    for (const node of nodes) {
+      const newPath = [...currentPath, node.path];
+      
+      if (node.type === 'file' && node.noteId === noteId) {
+        return newPath.slice(0, -1); // Return folder path, exclude the file itself
+      }
+      
+      if (node.type === 'folder' && node.children) {
+        const found = this.findPathToNote(noteId, node.children, newPath);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Expand folders to show the path to a specific note
+  expandPathToNote(noteId) {
+    if (!noteId) return;
+    
+    const pathToNote = this.findPathToNote(noteId);
+    if (!pathToNote) return;
+    
+    // Expand each folder in the path
+    pathToNote.forEach(folderPath => {
+      const folderId = `folder-${folderPath.replace(/\//g, '-')}`;
+      const content = document.getElementById(folderId);
+      const folderItem = document.querySelector(`[onclick="toggleFolder('${folderId}')"]`);
+      
+      if (content && folderItem) {
+        content.classList.remove('collapsed');
+        content.classList.add('expanded');
+        folderItem.classList.remove('collapsed');  
+        folderItem.classList.add('expanded');
+      }
+    });
+  }
   
-  renderFolderTree() {
+  renderFolderTree(expandedPaths = []) {
     const folderTree = document.getElementById('folder-tree');
     if (!folderTree) return;
     
@@ -363,7 +411,7 @@ class ObsidianSSGApp {
       
       if (isFolder) {
         const folderId = `folder-${node.path.replace(/\//g, '-')}`;
-        const isExpanded = false; // All folders collapsed by default
+        const isExpanded = expandedPaths.includes(node.path);
         
         html += `
           <div class="folder-item folder ${isExpanded ? 'expanded' : 'collapsed'}" data-folder="${node.path}" onclick="toggleFolder('${folderId}')">

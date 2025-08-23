@@ -473,14 +473,22 @@ mark {
   line-height: 1.4;
   padding: var(--space-xs) 0;
   border-radius: var(--border-radius-sm);
-  transition: color 0.2s ease, background-color 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .toc-item a:hover {
   color: var(--color-text-primary);
-  background-color: var(--color-bg-tertiary);
-  padding-left: var(--space-xs);
-  padding-right: var(--space-xs);
+}
+
+/* Embedded content styling */
+.toc-item.toc-embed-title a {
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.toc-item.toc-embedded:not(.toc-embed-title) a {
+  opacity: 0.8;
+  font-size: 0.95em;
 }
 
 .toc-item.level-2 { padding-left: 0; }
@@ -489,32 +497,78 @@ mark {
 .toc-item.level-5 { padding-left: 60px; }
 .toc-item.level-6 { padding-left: 80px; }
 
-/* Indentation guides for TOC items (excluding level-2 which has no indentation) */
-.toc-item.level-3::before,
-.toc-item.level-4::before,
-.toc-item.level-5::before,
-.toc-item.level-6::before {
+/* Indentation guides for TOC items - show parent levels only */
+.toc-item {
+  position: relative;
+}
+
+/* Level 2 (h2) - shows 0 guide lines */
+.toc-item.level-2::before {
+  content: '';
+  /* No guides for level 2 */
+}
+
+/* Level 3 (h3) - shows 1 guide line at 4px */
+.toc-item.level-3::before {
   content: '';
   position: absolute;
-  left: 4px; /* Position relative to the indented item */
+  left: 4px;
   top: 0;
   height: 100%;
   width: 1px;
   background-color: var(--color-border);
   opacity: 1.0;
-  transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
-/* Hover effect - make the current segment darker */
-.toc-item.level-3:hover::before,
-.toc-item.level-4:hover::before,
-.toc-item.level-5:hover::before,
-.toc-item.level-6:hover::before {
-  background-color: var(--color-border-hover);
+/* Level 4 (h4) - shows 2 guide lines at 4px and 24px */
+.toc-item.level-4::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 0;
+  height: 100%;
+  width: 1px;
+  background-color: var(--color-border);
   opacity: 1.0;
+  box-shadow: 20px 0 0 var(--color-border);
 }
 
-/* Active state could be added here if needed for clicked items */
+/* Level 5 (h5) - shows 3 guide lines at 4px, 24px, and 44px */
+.toc-item.level-5::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 0;
+  height: 100%;
+  width: 1px;
+  background-color: var(--color-border);
+  opacity: 1.0;
+  box-shadow: 
+    20px 0 0 var(--color-border),
+    40px 0 0 var(--color-border);
+}
+
+/* Level 6 (h6) - shows 4 guide lines at 4px, 24px, 44px, and 64px */
+.toc-item.level-6::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 0;
+  height: 100%;
+  width: 1px;
+  background-color: var(--color-border);
+  opacity: 1.0;
+  box-shadow: 
+    20px 0 0 var(--color-border),
+    40px 0 0 var(--color-border),
+    60px 0 0 var(--color-border);
+}
+
+/* Active state for currently visible section */
+.toc-item.active a {
+  color: var(--color-accent);
+  font-weight: 500;
+}
 
 /* Graph Modal Popups */
 .graph-modal {

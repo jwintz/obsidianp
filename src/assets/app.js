@@ -535,6 +535,11 @@ class ObsidianSSGApp {
           <div id="backlinks-content"></div>
         </aside>
       `;
+      
+      // Initialize ABC notation containers after content is loaded
+      if (window.initializeAllABCNotation) {
+        window.initializeAllABCNotation();
+      }
     }
     
     // Update backlinks

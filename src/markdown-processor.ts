@@ -7,6 +7,7 @@ import { Note, FrontMatter, Base, BaseView } from './types';
 import { getLucideIcon } from './templates';
 import { BaseProcessor } from './base-processor';
 import { generateCardHtml, getUsedProperties } from './card-renderer';
+import { AbcProcessor } from './abc-processor';
 
 export class MarkdownProcessor {
   private linkPattern = /\[\[([^\]]+)\]\]/g;
@@ -47,6 +48,24 @@ export class MarkdownProcessor {
       // Set up custom marked renderer for code blocks
       const renderer = new marked.Renderer();
       renderer.code = ({ text, lang, escaped }: { text: string; lang?: string; escaped?: boolean; }) => {
+        // Debug logging to see what language we get
+        if (lang && (lang.includes('abc') || lang.includes('music'))) {
+          console.log(`🎵 Processing code block with language: "${lang}"`);
+        }
+
+        // Handle ABC music notation
+        if (lang === 'music-abc') {
+          try {
+            console.log(`🎵 Processing ABC notation with ${text.length} characters`);
+            const abcProcessor = new AbcProcessor(text);
+            const result = abcProcessor.generateHtml();
+            return result;
+          } catch (error) {
+            console.log(`⚠️  ABC rendering failed, falling back to plain text:`, error);
+            return `<pre><code class="language-abc">${text}</code></pre>`;
+          }
+        }
+
         if (this.highlighter && lang) {
           try {
             const lightHtml = this.highlighter.codeToHtml(text, {

@@ -41,6 +41,14 @@ export function generateBaseHTML(base: Base, title: string = "Obsidian Vault", m
     `);
 }
 
+export function generateNoteHTML(noteContent: string, title: string = "Note"): string {
+    return generateTemplate(title, `
+        <article class="note-content" id="note-content">
+            ${noteContent}
+        </article>
+    `);
+}
+
 function generateTemplate(title: string, mainContent: string): string {
     // const timestamp = Date.now(); // Cache busting disabled for development
     return `<!DOCTYPE html>
@@ -130,6 +138,175 @@ function generateTemplate(title: string, mainContent: string): string {
         </div>
     </div>
     
+    <script src="/assets/abcjs-basic-min.js"></script>
+    <script>
+        // Global ABC Music Notation Initialization
+        
+        window.initializeABCNotation = function(containerId) {
+            const ABCJS = window.ABCJS || window.abcjs || window.Abc;
+            if (!ABCJS) {
+                console.error('ABCJS library not available');
+                return;
+            }
+            
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error('ABC container not found:', containerId);
+                return;
+            }
+            
+            // Get data from container attributes
+            const sourceData = container.getAttribute('data-abc-source');
+            const optionsData = container.getAttribute('data-abc-options');
+            
+            if (!sourceData) {
+                console.error('ABC source data not found for container:', containerId);
+                return;
+            }
+            
+            // Decode base64 and parse JSON
+            let source;
+            let options = {};
+            
+            try {
+                source = JSON.parse(atob(sourceData));
+            } catch (e) {
+                console.error('Failed to decode/parse ABC source for container:', containerId, e);
+                return;
+            }
+            
+            if (optionsData) {
+                try {
+                    options = JSON.parse(atob(optionsData));
+                } catch (e) {
+                    console.error('Failed to decode/parse ABC options for container:', containerId, e);
+                }
+            }
+            
+            console.log('Initializing ABC notation for container:', containerId);
+            
+            // Clear loading message
+            container.innerHTML = '';
+            
+            const defaultOptions = {
+                add_classes: true,
+                responsive: 'resize'
+            };
+            
+            try {
+                // Render the ABC notation (source is already parsed from JSON)
+                const renderResp = ABCJS.renderAbc(container, source, Object.assign({}, defaultOptions, options));
+                console.log('ABC rendered successfully for container:', containerId);
+                
+                // Set up MIDI playback if available
+                if (renderResp && renderResp[0] && ABCJS.synth && ABCJS.synth.supportsAudio && ABCJS.synth.supportsAudio()) {
+                    const synthController = new ABCJS.synth.SynthController();
+                    const midiBuffer = new ABCJS.synth.CreateSynth();
+                    
+                    // Create playback controls element if it doesn't exist
+                    let controlsEl = document.getElementById('abcjs-playback-controls');
+                    if (!controlsEl) {
+                        controlsEl = document.createElement('div');
+                        controlsEl.id = 'abcjs-playback-controls';
+                        controlsEl.style.display = 'none';
+                        document.body.appendChild(controlsEl);
+                    }
+                    
+                    // Note highlighter implementation
+                    const noteHighlighter = {
+                        beatSubdivisions: 2,
+                        onStart: function() {
+                            container.parentElement && container.parentElement.classList.add('is-playing');
+                        },
+                        onFinished: function() {
+                            container.parentElement && container.parentElement.classList.remove('is-playing');
+                            const highlighted = Array.from(container.querySelectorAll('.abcjs-highlight'));
+                            highlighted.forEach(function(el) { el.classList.remove('abcjs-highlight'); });
+                        },
+                        onEvent: function(event) {
+                            if (event.measureStart && event.left === null) return;
+                            
+                            // Clear previous highlights
+                            const highlighted = Array.from(container.querySelectorAll('.abcjs-highlight'));
+                            highlighted.forEach(function(el) { el.classList.remove('abcjs-highlight'); });
+                            
+                            // Highlight current notes
+                            if (event.elements) {
+                                event.elements.flat().forEach(function(el) { el.classList.add('abcjs-highlight'); });
+                            }
+                        }
+                    };
+                    
+                    // Load synth controller
+                    synthController.load(controlsEl, noteHighlighter);
+                    
+                    // Initialize MIDI
+                    midiBuffer.init({
+                        visualObj: renderResp[0],
+                        options: {}
+                    }).then(function() {
+                        synthController.setTune(renderResp[0], false, { qpm: 120 });
+                        console.log('MIDI initialized for container:', containerId);
+                    }).catch(function(error) {
+                        console.warn('Failed to initialize MIDI for container:', containerId, error);
+                    });
+                    
+                    // Add click handlers for playback
+                    container.style.cursor = 'pointer';
+                    container.addEventListener('click', function() {
+                        try {
+                            const isPlaying = midiBuffer.isRunning;
+                            if (isPlaying) {
+                                synthController.pause();
+                            } else {
+                                synthController.play();
+                            }
+                        } catch (error) {
+                            console.error('Playback error for container:', containerId, error);
+                        }
+                    });
+                    
+                    container.addEventListener('dblclick', function() {
+                        try {
+                            synthController.restart();
+                        } catch (error) {
+                            console.error('Restart error for container:', containerId, error);
+                        }
+                    });
+                    
+                    console.log('ABC playback setup complete for container:', containerId);
+                }
+            } catch (error) {
+                console.error('Failed to render ABC notation for container:', containerId, error);
+                container.innerHTML = '<div class="abcjs-error">Failed to render ABC notation: ' + error.message + '</div>';
+            }
+        };
+        
+        // Initialize all ABC containers on page load
+        window.initializeAllABCNotation = function() {
+            // Find all ABC containers in the current DOM
+            const containers = document.querySelectorAll('.abcjs-container[data-abc-source]');
+            
+            if (containers.length === 0) {
+                return;
+            }
+            
+            console.log('Initializing', containers.length, 'ABC containers found in DOM');
+            containers.forEach(function(container) {
+                if (container.id) {
+                    window.initializeABCNotation(container.id);
+                }
+            });
+        };
+        
+        // Auto-initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', window.initializeAllABCNotation);
+        } else {
+            // DOM already ready, initialize immediately
+            window.initializeAllABCNotation();
+        }
+    </script>
     <script src="/assets/search.js"></script>
     <script src="/assets/graph.js"></script>
     <script src="/assets/app.js"></script>

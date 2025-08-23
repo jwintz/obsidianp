@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { VaultProcessor } from './vault-processor';
-import { generateMainTemplate, generateNoteTemplate, generateBaseTemplate, generateBaseHTML } from './templates';
+import { generateMainTemplate, generateNoteTemplate, generateBaseHTML, generateNoteHTML } from './templates';
 import { VaultStructure, SiteConfig, Note, Base } from './types';
 
 export class SiteGenerator {
@@ -168,7 +168,10 @@ export class SiteGenerator {
         .filter((n): n is Note => n !== undefined)
         .map(n => n.title);
 
-      const noteHtml = generateMainTemplate(config.title);
+      // Use generateNoteTemplate with the actual note content
+      const noteContent = generateNoteTemplate(note.title, note.html, note.frontMatterHtml, backlinks);
+      // Wrap the note content in a proper HTML structure - use config.title for vault title
+      const noteHtml = generateNoteHTML(noteContent, config.title);
       const noteFileName = `${note.id}.html`;
 
       // Create nested directory structure if needed  
@@ -176,9 +179,6 @@ export class SiteGenerator {
       const noteDir = path.dirname(noteFilePath);
       await fs.ensureDir(noteDir);
 
-      // For individual note pages, we need to inject the note content
-      // This is a simplified approach - in a real implementation, you might want
-      // separate templates for individual notes
       await fs.writeFile(noteFilePath, noteHtml);
     }
 

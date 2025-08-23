@@ -2327,3 +2327,76 @@ body.menu-open {
 }
 
 /* Legacy: embedded-base-controls for standalone contexts removed - controls now context-aware */
+
+/* ================================================ ABC Music Notation Styles ================================================ */
+
+/* ABC container styling */
+.abcjs-container {
+  margin: var(--space-md) 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  background: var(--color-bg-secondary);
+  cursor: pointer;
+}
+
+/* ABC SVG styling - use theme colors */
+.abcjs-container svg path {
+  fill: var(--color-text-primary);
+}
+
+.abcjs-container svg text {
+  fill: var(--color-text-primary);
+}
+
+.abcjs-brace {
+  stroke: var(--color-text-primary);
+}
+
+/* Loading state */
+.abcjs-loading {
+  padding: var(--space-lg);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Error state */
+.abcjs-error {
+  background-color: #e74c3c;
+  color: white;
+  padding: var(--space-md);
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Note highlighting during playback - use accent hover color */
+.abcjs-highlight path {
+  fill: var(--color-accent-hover) !important;
+}
+
+.abcjs-highlight text {
+  fill: var(--color-accent-hover) !important;
+}
+
+/* Container highlighting when playing */
+.abcjs-container.is-playing,
+.is-playing .abcjs-container {
+  border-color: var(--color-accent-hover);
+  box-shadow: 0 0 0 1px var(--color-accent-hover);
+  background: var(--color-bg-elevated);
+}
+
+/* Interactive feedback */
+.abcjs-container:hover {
+  border-color: var(--color-border-hover);
+}
+
+.abcjs-container:active {
+  transform: translateY(1px);
+}
+
+/* Hide abcjs warning messages */
+.abcjs-css-warning {
+  display: none;
+}

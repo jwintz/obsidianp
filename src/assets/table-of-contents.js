@@ -178,12 +178,12 @@ class TableOfContents {
       });
     });
     
-    // Find all embedded notes/bases and add them as level 2 items
-    const embeddedNotes = noteContent.querySelectorAll('.embed-note');
+    // Find embedded notes (but exclude bases) and add them as level 2 items
+    const embeddedNotes = noteContent.querySelectorAll('.embed-note:not(.embed-base)');
     embeddedNotes.forEach(embedNote => {
       const embedTitle = embedNote.querySelector('.embed-title-text');
       if (embedTitle) {
-        // Add the embedded note/base title as level 2
+        // Add the embedded note title as level 2
         allTocItems.push({
           element: embedNote,
           level: 2,
@@ -192,15 +192,11 @@ class TableOfContents {
           isEmbedTitle: true
         });
         
-        // Find headings within this embedded content and increase their level by 1
+        // Find headings within this embedded note content and increase their level by 1
         const embeddedHeadings = embedNote.querySelectorAll('.embed-content h1, .embed-content h2, .embed-content h3, .embed-content h4, .embed-content h5, .embed-content h6');
         embeddedHeadings.forEach(heading => {
           const currentLevel = parseInt(heading.tagName.charAt(1));
-          
-          // For bases, drop an extra indentation level (increase by 1 instead of 2)
-          const isBase = embedNote.classList.contains('embed-base');
-          const levelIncrease = isBase ? 0 : 1; // Bases: no increase, Notes: +1 increase
-          const newLevel = Math.min(currentLevel + levelIncrease, 6); // Cap at h6
+          const newLevel = Math.min(currentLevel + 1, 6); // Increase by 1, cap at h6
           
           allTocItems.push({
             element: heading,
@@ -208,11 +204,13 @@ class TableOfContents {
             text: heading.textContent || heading.innerText || '',
             isEmbedded: true,
             embedContainer: embedNote,
-            isBase: isBase
+            isBase: false
           });
         });
       }
     });
+    
+    // Embedded bases are completely excluded from ToC
     
     // Sort items by their position in the DOM
     allTocItems.sort((a, b) => {

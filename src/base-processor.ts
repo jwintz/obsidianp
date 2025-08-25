@@ -148,7 +148,7 @@ export class BaseProcessor {
     /**
      * Evaluate a filter against a note
      */
-    private evaluateFilter(filter: BaseFilter | string, note: Note): boolean {
+    evaluateFilter(filter: BaseFilter | string, note: Note): boolean {
         // Handle string filters (like "file.hasTag("project")")
         if (typeof filter === 'string') {
             return this.evaluateStringFilter(filter, note);

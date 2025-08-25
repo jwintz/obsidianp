@@ -11,7 +11,7 @@ import { AbcProcessor } from './abc-processor';
 
 export class MarkdownProcessor {
   private linkPattern = /\[\[([^\]]+)\]\]/g;
-  private embedPattern = /!\[\[([^\]]+)\]\]/g;
+  private embedPattern = /!\[\[([^\]]+?)(#([^|\]]+))?(\|([^\]]+))?\]\]/g;
   private highlighter: any = null;
   private mathPlaceholders: Map<string, string> = new Map();
   private mathCounter = 0;
@@ -321,15 +321,21 @@ export class MarkdownProcessor {
   /**
    * Generate base view content (used in both standalone and embedded contexts)
    */
-  generateBaseViewContent(base: Base): string {
+  generateBaseViewContent(base: Base, specifiedView?: BaseView): string {
     let notes = base.matchedNotes || [];
+
+    // Use specified view if provided, otherwise use the first view or default to cards
+    const defaultView: BaseView = specifiedView || (base.views && base.views.length > 0 ? base.views[0] : { type: 'cards', name: 'Default' });
+
+    // Apply view-specific filters if defined
+    if (defaultView.filter || (defaultView as any).filters) {
+      const viewFilter = defaultView.filter || (defaultView as any).filters;
+      notes = notes.filter(note => this.baseProcessor.evaluateFilter(viewFilter, note));
+    }
 
     if (notes.length === 0) {
       return '<div class="empty-base">No items found matching the filters</div>';
     }
-
-    // Use the first view or default to cards
-    const defaultView: BaseView = base.views && base.views.length > 0 ? base.views[0] : { type: 'cards', name: 'Default' };
 
     // Apply sorting if defined in the view
     if (defaultView.sort && Array.isArray(defaultView.sort)) {
@@ -349,8 +355,8 @@ export class MarkdownProcessor {
   /**
    * Generate embedded base content with controls in context-appropriate locations
    */
-  generateEmbeddedBaseContent(base: Base, includeControls: boolean = false): string {
-    const baseContent = this.generateBaseViewContent(base);
+  generateEmbeddedBaseContent(base: Base, includeControls: boolean = false, specifiedView?: BaseView): string {
+    const baseContent = this.generateBaseViewContent(base, specifiedView);
 
     if (includeControls) {
       // For standalone context: controls in separate cartridge
@@ -367,17 +373,18 @@ export class MarkdownProcessor {
   /**
    * Generate base controls for embedded header
    */
-  generateEmbedHeaderControls(base: Base): string {
+  generateEmbedHeaderControls(base: Base, currentView?: BaseView): string {
     const defaultView = (base.views && base.views.length > 0 ? base.views[0] : { type: 'cards', name: 'Default' }) as BaseView;
+    const activeView = currentView || defaultView;
 
-    // Check if base has sort or filter rules
-    const hasSortRules = defaultView.sort && defaultView.sort.length > 0;
+    // Check if base has sort or filter rules - use active view instead of default
+    const hasSortRules = activeView.sort && activeView.sort.length > 0;
     const hasFilterRules = (base.filters && (
       (typeof base.filters === 'string') ||
       (typeof base.filters === 'object' && base.filters !== null && Object.keys(base.filters).length > 0)
-    )) || (defaultView.filter && (
-      (typeof defaultView.filter === 'string') ||
-      (typeof defaultView.filter === 'object' && defaultView.filter !== null && Object.keys(defaultView.filter).length > 0)
+    )) || (activeView.filter && (
+      (typeof activeView.filter === 'string') ||
+      (typeof activeView.filter === 'object' && activeView.filter !== null && Object.keys(activeView.filter).length > 0)
     ));
 
     const viewButtons = base.views && base.views.length > 0 ? base.views.map(view => {
@@ -396,7 +403,7 @@ export class MarkdownProcessor {
           iconSvg = getLucideIcon('Table', 14);
       }
 
-      return `<button class="embed-view-button ${view === defaultView ? 'active' : ''}" data-view-type="${view.type}" data-view-name="${view.name}" onclick="event.stopPropagation();" title="${view.name}">
+      return `<button class="embed-view-button ${view === activeView ? 'active' : ''}" data-view-type="${view.type}" data-view-name="${view.name}" onclick="event.stopPropagation();" title="${view.name}">
             ${iconSvg}
         </button>`;
     }).join('') : '';
@@ -553,12 +560,12 @@ export class MarkdownProcessor {
     let processed = content;
 
     // Process embeds first (images, other notes)
-    processed = processed.replace(this.embedPattern, (match, link) => {
+    processed = processed.replace(this.embedPattern, (match, link, viewHash, viewName, displayPipe, displayText) => {
       if (this.isImageFile(link)) {
         return `![${link}](attachments/${link})`;
       } else {
         // Create placeholder that will be resolved later with actual content
-        return `<div class="embed-placeholder" data-embed-target="${link}"></div>`;
+        return `<div class="embed-placeholder" data-embed-target="${link}" data-embed-view="${viewName || ''}" data-embed-display="${displayText || ''}"></div>`;
       }
     });
 
@@ -666,7 +673,7 @@ export class MarkdownProcessor {
    * Resolve embedded notes and bases by replacing placeholders with actual content
    */
   resolveEmbeddedNotes(html: string, allNotes: Map<string, Note>, bases?: Map<string, Base>): string {
-    return html.replace(/<div class="embed-placeholder" data-embed-target="([^"]+)"><\/div>/g, (match, linkText) => {
+    return html.replace(/<div class="embed-placeholder" data-embed-target="([^"]+)" data-embed-view="([^"]*)" data-embed-display="([^"]*)"><\/div>/g, (match, linkText, viewName, displayText) => {
       // First try to find a note to embed
       let targetNote: Note | undefined;
       let targetBase: Base | undefined;
@@ -738,16 +745,22 @@ export class MarkdownProcessor {
       if (targetBase) {
         const safeBaseId = targetBase.id.replace(/\//g, '-');
         const embedId = `embed-${safeBaseId}-${Math.random().toString(36).substr(2, 9)}`;
-        const baseContent = this.generateEmbeddedBaseContent(targetBase, false); // No controls in content
-        const headerControls = this.generateEmbedHeaderControls(targetBase); // Controls in header
+
+        // Use the specified view if provided, otherwise use default view
+        const specifiedView = viewName ? targetBase.views.find(v => v.name === viewName || v.type === viewName) : null;
+        const baseContent = this.generateEmbeddedBaseContent(targetBase, false, specifiedView || undefined); // No controls in content, specific view
+        const headerControls = this.generateEmbedHeaderControls(targetBase, specifiedView || undefined); // Controls in header, pass specified view
         const baseUrl = `/${targetBase.folderPath.toLowerCase()}/${path.basename(targetBase.relativePath, '.base').toLowerCase()}`;
 
-        return `<div class="embed-note embed-base" data-embed-id="${embedId}" data-base-id="${targetBase.id}">
+        // Use display text as title if provided, otherwise use base title
+        const titleText = displayText || targetBase.title;
+
+        return `<div class="embed-note embed-base" data-embed-id="${embedId}" data-base-id="${targetBase.id}" data-embed-view="${viewName || ''}">
           <div class="embed-header" onclick="toggleEmbed('${embedId}')">
             <span class="embed-title">
               <a href="${baseUrl}" class="embed-title-link" onclick="event.stopPropagation();">
                 ${this.generateEmbeddedBaseIcon()}
-                <span class="embed-title-text">${targetBase.title}</span>
+                <span class="embed-title-text">${titleText}</span>
               </a>
             </span>
             <span class="embed-controls">

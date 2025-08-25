@@ -590,15 +590,27 @@ class ObsidianSSGApp {
           </div>
         `;
       } else {
-        // File node - check if it's a base or regular note
+        // File node - check if it's a base, folder index, or regular note
         const isBase = this.bases.has(node.noteId);
+        const isFolderIndex = node.noteId && node.noteId.startsWith('-');
         
-        html += `
-          <div class="folder-item file ${isBase ? 'base-file' : ''}" data-note-id="${node.noteId}" data-is-base="${isBase}">
-            <span class="file-name">${node.name}</span>
-            ${isBase ? '<span class="base-pill">BASE</span>' : ''}
-          </div>
-        `;
+        if (isFolderIndex) {
+          // Render as a folder-style item for folder index files
+          html += `
+            <div class="folder-item file folder-index" data-note-id="${node.noteId}" data-is-base="${isBase}">
+              <span class="file-name">${node.name}</span>
+              ${isBase ? '<span class="base-pill">BASE</span>' : ''}
+            </div>
+          `;
+        } else {
+          // Regular file
+          html += `
+            <div class="folder-item file ${isBase ? 'base-file' : ''}" data-note-id="${node.noteId}" data-is-base="${isBase}">
+              <span class="file-name">${node.name}</span>
+              ${isBase ? '<span class="base-pill">BASE</span>' : ''}
+            </div>
+          `;
+        }
       }
       
       return html;
@@ -751,8 +763,9 @@ class ObsidianSSGApp {
     // Initialize embedded bases if any exist
     this.initializeEmbeddedBases();
     
-    // Update active state in sidebar
+    // Update active state in sidebar and expand hierarchy
     this.updateSidebarActiveState(noteId);
+    this.expandPathToNote(noteId);
     
     // Update table of contents
     if (window.tableOfContents) {
@@ -808,8 +821,9 @@ class ObsidianSSGApp {
       this.initializeBaseInteractions(base);
     }
     
-    // Update active state in sidebar
+    // Update active state in sidebar and expand hierarchy
     this.updateSidebarActiveState(baseId);
+    this.expandPathToNote(baseId);
     
     // Clear table of contents for base views
     if (window.tableOfContents) {

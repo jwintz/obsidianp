@@ -575,7 +575,7 @@ function getColumnValue(note: Note, column: string): string {
         case 'file.tags':
             const tags = note.frontMatter.tags || [];
             const tagList = Array.isArray(tags) ? tags : [tags];
-            return tagList.map(tag => `<span class="tag">${tag}</span>`).join('');
+            return tagList.filter(tag => tag && tag.trim()).map(tag => `<span class="tag">${tag.trim()}</span>`).join('');
 
         case 'file.mtime':
             const mtime = getFileModificationTime(note);
@@ -606,7 +606,7 @@ function getColumnValue(note: Note, column: string): string {
             // Handle different value types
             if (Array.isArray(value)) {
                 if (value.every(item => typeof item === 'string')) {
-                    return value.map(item => `<span class="tag">${item}</span>`).join('');
+                    return value.filter(item => item && item.trim()).map(item => `<span class="tag">${item.trim()}</span>`).join('');
                 }
                 return value.join(', ');
             }

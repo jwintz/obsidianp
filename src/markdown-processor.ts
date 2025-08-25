@@ -466,7 +466,7 @@ export class MarkdownProcessor {
       case 'file.tags':
         const tags = note.frontMatter?.tags || [];
         const tagList = Array.isArray(tags) ? tags : [tags];
-        return tagList.map(tag => `<span class="tag">${tag}</span>`).join('');
+        return tagList.filter(tag => tag && tag.trim()).map(tag => `<span class="tag">${tag.trim()}</span>`).join('');
 
       case 'file.mtime':
         if (note.fileStats && note.fileStats.mtime) {
@@ -909,7 +909,7 @@ export class MarkdownProcessor {
       if (key === 'tags' && Array.isArray(value)) {
         // Special handling for tags - escape HTML to prevent overflow
         const tagsHtml = value.map(tag =>
-          `<span class="property-tag">${this.escapeHtml(String(tag))}</span>`
+          `<span class="tag">${this.escapeHtml(String(tag))}</span>`
         ).join('');
         propertyHtml = `
           <div class="property-row">

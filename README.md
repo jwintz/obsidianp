@@ -130,13 +130,13 @@ jobs:
     
     - name: Generate site
       run: |
-        npx obsidianp generate ./vault ./dist
+        npx obsidianp generate ./vault ./site
     
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist
+        publish_dir: ./site
 ```
 
 ## License

@@ -1573,7 +1573,7 @@ class ObsidianSSGApp {
         case 'file.tags':
             const tags = note.frontMatter?.tags || [];
             const tagList = Array.isArray(tags) ? tags : [tags];
-            return tagList.map(tag => `<span class="tag">${tag}</span>`).join('');
+            return tagList.filter(tag => tag && tag.trim()).map(tag => `<span class="tag">${tag.trim()}</span>`).join('');
         
         case 'file.mtime':
             if (note.fileStats && note.fileStats.mtime) {

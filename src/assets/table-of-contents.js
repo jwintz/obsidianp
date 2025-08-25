@@ -6,7 +6,15 @@ class TableOfContents {
     this.headings = [];
     this.tocItems = [];
     this.activeItem = null;
-    this.scrollTimeout = null;
+    this.currentActiveIndex = -1;
+    this.scrollRAF = null;
+    this.resizeTimeout = null;
+    this.updateTimeout = null;
+    this.manuallyClicked = false;
+    this.manualClickTime = 0;
+    this.manualClickTimeout = null;
+    this.lastScrollPosition = 0;
+    this.scrollThreshold = 50; // pixels to consider as intentional scroll
     this.init();
   }
   
@@ -55,73 +63,115 @@ class TableOfContents {
   setupScrollTracking() {
     const noteContent = document.getElementById('note-content');
     if (!noteContent) return;
-    
+
     const handleScroll = () => {
-      // Debounce scroll events for performance
-      clearTimeout(this.scrollTimeout);
-      this.scrollTimeout = setTimeout(() => {
+      // Use requestAnimationFrame for smoother updates
+      if (this.scrollRAF) {
+        cancelAnimationFrame(this.scrollRAF);
+      }
+      this.scrollRAF = requestAnimationFrame(() => {
         this.updateActiveSection();
-      }, 50);
+      });
     };
-    
-    noteContent.addEventListener('scroll', handleScroll);
+
+    noteContent.addEventListener('scroll', handleScroll, { passive: true });
     
     // Also update on window resize in case layout changes
     window.addEventListener('resize', () => {
-      clearTimeout(this.scrollTimeout);
-      this.scrollTimeout = setTimeout(() => {
+      if (this.resizeTimeout) {
+        clearTimeout(this.resizeTimeout);
+      }
+      this.resizeTimeout = setTimeout(() => {
         this.updateActiveSection();
       }, 100);
     });
   }
-  
+
   updateActiveSection() {
     if (this.headings.length === 0 || this.tocItems.length === 0) return;
     
     const noteContent = document.getElementById('note-content');
     if (!noteContent) return;
     
-    const containerRect = noteContent.getBoundingClientRect();
-    const scrollTop = noteContent.scrollTop;
+    const currentScrollPosition = noteContent.scrollTop;
     
-    // Find the heading that's currently most visible
+    // Check if we should ignore automatic updates due to recent manual click
+    if (this.manuallyClicked) {
+      const timeSinceClick = Date.now() - this.manualClickTime;
+      
+      // Check if user has scrolled significantly since the manual click
+      const scrollDelta = Math.abs(currentScrollPosition - this.lastScrollPosition);
+      const hasUserScrolled = scrollDelta > this.scrollThreshold;
+      
+      // Resume tracking if user has scrolled OR if timeout has passed
+      if (hasUserScrolled || timeSinceClick >= 3000) {
+        // Reset manual click state
+        this.manuallyClicked = false;
+        if (this.manualClickTimeout) {
+          clearTimeout(this.manualClickTimeout);
+          this.manualClickTimeout = null;
+        }
+      } else {
+        // Still in sticky mode and user hasn't scrolled significantly
+        this.lastScrollPosition = currentScrollPosition;
+        return; // Don't update automatically
+      }
+    }
+    
+    // Update scroll position for next comparison
+    this.lastScrollPosition = currentScrollPosition;
+    
+    const containerRect = noteContent.getBoundingClientRect();
+    const containerHeight = containerRect.height;
+    const viewportCenter = containerHeight / 2;
+    
     let activeHeadingIndex = 0;
-    let bestScore = -1;
+    let bestDistance = Infinity;
+    
+    // Find the heading closest to the reading position (top third of viewport)
+    const readingPosition = containerHeight * 0.3; // 30% from top
     
     this.headings.forEach((heading, index) => {
       const headingRect = heading.getBoundingClientRect();
       const relativeTop = headingRect.top - containerRect.top;
       
-      // Score based on visibility and position
-      let score = 0;
-      if (relativeTop <= 100) { // Within the top 100px of the container
-        score = 100 - Math.abs(relativeTop);
-        if (score > bestScore) {
-          bestScore = score;
+      // Calculate distance from reading position
+      const distance = Math.abs(relativeTop - readingPosition);
+      
+      // Prefer headings that are visible in viewport
+      if (relativeTop >= -50 && relativeTop <= containerHeight + 50) {
+        if (distance < bestDistance) {
+          bestDistance = distance;
           activeHeadingIndex = index;
         }
       }
     });
     
-    // If no heading is in the top area, find the last heading that's above the viewport
-    if (bestScore === -1) {
+    // If no heading is near the reading position, find the last visible heading above it
+    if (bestDistance === Infinity) {
       for (let i = this.headings.length - 1; i >= 0; i--) {
         const headingRect = this.headings[i].getBoundingClientRect();
         const relativeTop = headingRect.top - containerRect.top;
         
-        if (relativeTop < 0) {
+        if (relativeTop < readingPosition) {
           activeHeadingIndex = i;
           break;
         }
       }
     }
     
-    // Update active state
-    this.setActiveItem(activeHeadingIndex);
+    // Update active state if different from current
+    if (this.currentActiveIndex !== activeHeadingIndex) {
+      this.currentActiveIndex = activeHeadingIndex;
+      this.setActiveItem(activeHeadingIndex);
+    }
   }
   
-  setActiveItem(index) {
+  setActiveItem(index, isManualClick = false) {
     if (index < 0 || index >= this.tocItems.length) return;
+    
+    const newActiveItem = this.tocItems[index];
+    if (newActiveItem === this.activeItem && !isManualClick) return; // No change needed
     
     // Remove previous active state
     if (this.activeItem) {
@@ -129,8 +179,56 @@ class TableOfContents {
     }
     
     // Set new active state
-    this.activeItem = this.tocItems[index];
+    this.activeItem = newActiveItem;
     this.activeItem.classList.add('active');
+    
+    // Handle manual click behavior
+    if (isManualClick) {
+      this.manuallyClicked = true;
+      this.manualClickTime = Date.now();
+      
+      // Capture current scroll position to detect future scrolling
+      const noteContent = document.getElementById('note-content');
+      if (noteContent) {
+        this.lastScrollPosition = noteContent.scrollTop;
+      }
+      
+      // Clear any existing timeout
+      if (this.manualClickTimeout) {
+        clearTimeout(this.manualClickTimeout);
+      }
+      
+      // Set a timeout to resume automatic tracking (fallback if no scrolling)
+      this.manualClickTimeout = setTimeout(() => {
+        this.manuallyClicked = false;
+        this.manualClickTimeout = null;
+        // Immediately update to current scroll position
+        this.updateActiveSection();
+      }, 3000); // 3 seconds
+    }
+    
+    // Smooth scroll the ToC to keep active item visible (but not during manual clicks)
+    if (!isManualClick) {
+      this.scrollToCActiveItem();
+    }
+  }
+  
+  scrollToCActiveItem() {
+    if (!this.activeItem || !this.container) return;
+    
+    const containerRect = this.container.getBoundingClientRect();
+    const itemRect = this.activeItem.getBoundingClientRect();
+    
+    // Check if item is outside visible area
+    const isAbove = itemRect.top < containerRect.top;
+    const isBelow = itemRect.bottom > containerRect.bottom;
+    
+    if (isAbove || isBelow) {
+      this.activeItem.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
   }
 
   updateFromContent() {
@@ -254,6 +352,22 @@ class TableOfContents {
     this.headings = tocItems.map(item => item.element);
     this.tocItems = [];
     this.activeItem = null;
+    this.currentActiveIndex = -1;
+    
+    // Reset manual click state
+    this.manuallyClicked = false;
+    this.manualClickTime = 0;
+    this.lastScrollPosition = 0;
+    if (this.manualClickTimeout) {
+      clearTimeout(this.manualClickTimeout);
+      this.manualClickTimeout = null;
+    }
+    
+    // Cancel any pending animation frames or timeouts
+    if (this.scrollRAF) {
+      cancelAnimationFrame(this.scrollRAF);
+      this.scrollRAF = null;
+    }
     
     const tocList = document.createElement('ul');
     tocList.className = 'toc-list';
@@ -290,6 +404,11 @@ class TableOfContents {
       // Add click handler for smooth scrolling
       link.addEventListener('click', (e) => {
         e.preventDefault();
+        
+        // Set this item as manually clicked and active
+        this.setActiveItem(index, true); // true indicates manual click
+        
+        // Then scroll to the element
         this.scrollToElement(elementId, tocItem);
       });
       
@@ -306,6 +425,11 @@ class TableOfContents {
     
     // Initialize active section after a brief delay
     setTimeout(() => {
+      // Initialize scroll position tracking
+      const noteContent = document.getElementById('note-content');
+      if (noteContent) {
+        this.lastScrollPosition = noteContent.scrollTop;
+      }
       this.updateActiveSection();
     }, 100);
   }

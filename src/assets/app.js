@@ -198,32 +198,6 @@ class ObsidianSSGApp {
       this.graph = new window.GraphView();
       this.graph.loadData(this.notes, this.linkGraph);
     }
-    
-    // Graph toggle functionality
-    const graphToggle = document.getElementById('graph-toggle');
-    const graphToggleDesktop = document.getElementById('graph-toggle-desktop');
-    const graphPanel = document.getElementById('graph-panel');
-    const closeGraph = document.getElementById('close-graph');
-    
-    // Handle mobile graph toggle
-    if (graphToggle && graphPanel) {
-      graphToggle.addEventListener('click', () => {
-        graphPanel.classList.toggle('visible');
-      });
-    }
-    
-    // Handle desktop graph toggle
-    if (graphToggleDesktop && graphPanel) {
-      graphToggleDesktop.addEventListener('click', () => {
-        graphPanel.classList.toggle('visible');
-      });
-    }
-    
-    if (closeGraph && graphPanel) {
-      closeGraph.addEventListener('click', () => {
-        graphPanel.classList.remove('visible');
-      });
-    }
   }
   
   initializeNavigation() {

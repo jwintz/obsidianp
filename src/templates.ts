@@ -80,9 +80,6 @@ function generateTemplate(title: string, mainContent: string): string {
                     <button id="theme-toggle" class="icon-button" title="Toggle theme">
                         ${getLucideIcon('Sun', 16)}
                     </button>
-                    <button id="graph-toggle" class="icon-button" title="Toggle graph view">
-                        ${getLucideIcon('Waypoints', 16)}
-                    </button>
                 </div>
             </div>
         </header>
@@ -95,9 +92,6 @@ function generateTemplate(title: string, mainContent: string): string {
                 <div class="sidebar-controls">
                     <button id="theme-toggle-desktop" class="icon-button" title="Toggle theme">
                         ${getLucideIcon('Sun', 16)}
-                    </button>
-                    <button id="graph-toggle-desktop" class="icon-button" title="Toggle graph view">
-                        ${getLucideIcon('Waypoints', 16)}
                     </button>
                 </div>
             </div>
@@ -176,19 +170,6 @@ function generateTemplate(title: string, mainContent: string): string {
                 </div>
                 <div class="graph-modal-container" id="local-graph-container"></div>
             </div>
-        </div>
-        
-        <div class="graph-panel hidden" id="graph-panel">
-            <div class="graph-header">
-                <h3>Graph View</h3>
-                <button id="close-graph" class="icon-button">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <div id="graph-container"></div>
         </div>
     </div>
     

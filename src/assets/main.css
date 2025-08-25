@@ -438,7 +438,7 @@ mark {
 
 .mini-graph-container {
   height: 200px;
-  padding: var(--space-sm);
+  /* padding: var(--space-sm); */
   overflow: hidden;
 }
 
@@ -565,9 +565,29 @@ mark {
 }
 
 /* Active state for currently visible section */
+.toc-item.active {
+  /* background-color: var(--color-bg-tertiary); */
+  /* border-radius: var(--border-radius-sm); */
+  transition: background-color 0.2s ease;
+}
+
 .toc-item.active a {
   color: var(--color-accent);
-  font-weight: 500;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.toc-item.active::before {
+  opacity: 1;
+}
+
+/* Smooth transitions for all ToC items */
+.toc-item {
+  transition: background-color 0.2s ease;
+}
+
+.toc-item a {
+  transition: color 0.2s ease;
 }
 
 /* Graph Modal Popups */
@@ -999,45 +1019,6 @@ mark {
   color: var(--color-text-primary);
 }
 
-/* Graph panel */
-.graph-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 400px;
-  height: 100vh;
-  background-color: var(--color-bg-elevated);
-  border-left: 1px solid var(--color-border);
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
-}
-
-.graph-panel.visible {
-  transform: translateX(0);
-}
-
-.graph-header {
-  padding: var(--space-md);
-  border-bottom: 1px solid var(--color-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.graph-header h3 {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-#graph-container {
-  flex: 1;
-  position: relative;
-}
-
 /* Folder tree styles */
 .folder-tree {
   font-size: var(--font-size-sm);
@@ -1363,11 +1344,6 @@ body.menu-open {
   
   .backlinks-panel {
     display: none;
-  }
-  
-  .graph-panel {
-    width: 100vw;
-    width: 100%; /* Safari fallback */
   }
 }
 

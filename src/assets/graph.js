@@ -9,6 +9,8 @@ class GraphView {
     this.height = 400;
     this.nodes = [];
     this.links = [];
+    this.notes = new Map();
+    this.tags = new Map();
     this.simulation = null;
     this.miniSimulation = null;
     
@@ -94,11 +96,13 @@ class GraphView {
     }
   }
   
-  loadData(notes, linkGraph) {
+  loadData(notes, linkGraph, tags = new Map()) {
     if (!notes || !linkGraph) return;
     
+    this.notes = notes;
+    this.tags = tags;
     this.processGraphData(notes, linkGraph);
-    this.renderMiniGraph();
+    // Don't render mini graph here - it will be rendered when a note is selected
   }
   
   processGraphData(notes, linkGraph) {
@@ -133,6 +137,8 @@ class GraphView {
         });
       }
     });
+    
+    console.log(`Graph: Processed ${this.nodes.length} nodes and ${this.links.length} links`);
   }
   
   categorizeNode(note) {
@@ -157,9 +163,37 @@ class GraphView {
     return 'default';
   }
   
-  renderMiniGraph() {
-    if (!this.miniSvg || this.nodes.length === 0) return;
+  renderMiniGraph(currentNodeId = null) {
+    if (!this.miniSvg) return;
     
+    let nodesToRender = this.nodes;
+    let linksToRender = this.links;
+    
+    // If currentNodeId is provided, show local graph (current node + connections)
+    if (currentNodeId && this.nodes.length > 0) {
+      const connectedNodeIds = this.getLocalGraphNodes(currentNodeId);
+      
+      // Filter nodes and links for local graph
+      nodesToRender = this.nodes.filter(node => connectedNodeIds.has(node.id));
+      linksToRender = this.links.filter(link => {
+        const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+        const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+        return connectedNodeIds.has(sourceId) && connectedNodeIds.has(targetId);
+      });
+    } else {
+      // When no currentNodeId is provided, show empty graph (will be populated when note loads)
+      nodesToRender = [];
+      linksToRender = [];
+    }
+    
+    // If no nodes to render, show empty graph
+    if (nodesToRender.length === 0) {
+      // Clear the graph but keep the SVG structure
+      const graphContent = this.miniSvg.select('.graph-content');
+      graphContent.selectAll('*').remove();
+      return;
+    }
+
     const container = this.miniContainer;
     const rect = container.getBoundingClientRect();
     const width = rect.width || 280;
@@ -171,10 +205,10 @@ class GraphView {
     // Clear previous content
     const graphContent = this.miniSvg.select('.graph-content');
     graphContent.selectAll('*').remove();
-    
-    // Create simulation for mini graph
-    this.miniSimulation = d3.forceSimulation(this.nodes)
-      .force('link', d3.forceLink(this.links).id(d => d.id).distance(30))
+
+    // Create simulation for mini graph - adjust forces for better layout
+    this.miniSimulation = d3.forceSimulation(nodesToRender)
+      .force('link', d3.forceLink(linksToRender).id(d => d.id).distance(30))
       .force('charge', d3.forceManyBody().strength(-50))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide().radius(8));
@@ -183,25 +217,24 @@ class GraphView {
     const links = graphContent.append('g')
       .attr('class', 'links')
       .selectAll('line')
-      .data(this.links)
+      .data(linksToRender)
       .enter()
       .append('line')
       .attr('stroke', 'var(--color-text-muted)')
-      .attr('stroke-opacity', 0.6)
-      .attr('stroke-width', 1)
+      .attr('stroke-opacity', 0.8)
+      .attr('stroke-width', 1.5)
       .attr('marker-end', 'url(#arrowhead-mini)');
+      
+    console.log(`Mini graph: Rendering ${linksToRender.length} links, ${links.size()} elements created`);
     
     // Create nodes
     const nodes = graphContent.append('g')
       .attr('class', 'nodes')
-      .selectAll('circle')
-      .data(this.nodes)
+      .selectAll('g')
+      .data(nodesToRender)
       .enter()
-      .append('circle')
-      .attr('r', d => Math.max(3, Math.min(8, 3 + d.degree)))
-      .attr('fill', d => this.getNodeColor(d.group))
-      .attr('stroke', 'var(--color-bg-primary)')
-      .attr('stroke-width', 1)
+      .append('g')
+      .attr('class', 'node-group')
       .style('cursor', 'pointer')
       .on('click', (event, d) => {
         if (window.app && typeof window.app.loadNote === 'function') {
@@ -209,16 +242,79 @@ class GraphView {
         }
       })
       .on('mouseover', function(event, d) {
-        d3.select(this).attr('r', Math.max(4, Math.min(10, 4 + d.degree)));
+        d3.select(this).select('circle')
+          .transition().duration(200)
+          .attr('r', d => {
+            const baseRadius = currentNodeId && d.id === currentNodeId ? 8 : Math.max(3, Math.min(8, 3 + d.degree));
+            return baseRadius + 1;
+          });
+        
+        // Highlight connected edges
+        graphContent.selectAll('.links line')
+          .attr('stroke-opacity', edge => {
+            const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
+            const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
+            return (sourceId === d.id || targetId === d.id) ? 1.0 : 0.2;
+          })
+          .attr('stroke-width', edge => {
+            const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
+            const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
+            return (sourceId === d.id || targetId === d.id) ? 2 : 1;
+          })
+          .attr('stroke', edge => {
+            const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
+            const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
+            return (sourceId === d.id || targetId === d.id) ? 'var(--color-primary)' : 'var(--color-text-muted)';
+          });
       })
       .on('mouseout', function(event, d) {
-        d3.select(this).attr('r', Math.max(3, Math.min(8, 3 + d.degree)));
+        d3.select(this).select('circle')
+          .transition().duration(200)
+          .attr('r', d => currentNodeId && d.id === currentNodeId ? 8 : Math.max(3, Math.min(8, 3 + d.degree)));
+        
+        // Reset edge highlighting
+        graphContent.selectAll('.links line')
+          .attr('stroke-opacity', 0.8)
+          .attr('stroke-width', 1.5)
+          .attr('stroke', 'var(--color-text-muted)');
       });
-    
-    // Add titles for tooltips
+
+    // Add circles
+    nodes.append('circle')
+      .attr('r', d => {
+        // Highlight current node with larger size
+        if (currentNodeId && d.id === currentNodeId) {
+          return 8;
+        }
+        return Math.max(3, Math.min(8, 3 + d.degree));
+      })
+      .attr('fill', d => {
+        // Highlight current node with primary color
+        if (currentNodeId && d.id === currentNodeId) {
+          return 'var(--color-primary)';
+        }
+        return this.getNodeColor(d.group);
+      })
+      .attr('stroke', 'var(--color-bg-primary)')
+      .attr('stroke-width', d => currentNodeId && d.id === currentNodeId ? 2 : 1);
+
+    // Add labels for nodes
+    nodes.append('text')
+      .text(d => this.truncateTitle(d.title, 12))
+      .attr('dx', d => {
+        const radius = currentNodeId && d.id === currentNodeId ? 8 : Math.max(3, Math.min(8, 3 + d.degree));
+        return radius + 4;
+      })
+      .attr('dy', '.35em')
+      .style('font-size', '9px')
+      .style('font-weight', d => currentNodeId && d.id === currentNodeId ? 'bold' : 'normal')
+      .style('fill', 'var(--color-text-secondary)')
+      .style('pointer-events', 'none');
+
+    // Add tooltips
     nodes.append('title').text(d => d.title);
     
-    // Update simulation
+    // Update simulation with zoom-to-fit
     this.miniSimulation.on('tick', () => {
       links
         .attr('x1', d => d.source.x)
@@ -226,10 +322,185 @@ class GraphView {
         .attr('x2', d => d.target.x)
         .attr('y2', d => d.target.y);
       
-      nodes
-        .attr('cx', d => d.x)
-        .attr('cy', d => d.y);
+      nodes.attr('transform', d => `translate(${d.x},${d.y})`);
     });
+
+    // Zoom to fit after simulation stabilizes
+    this.miniSimulation.on('end', () => {
+      this.zoomToFitMiniGraph(graphContent, width, height);
+    });
+  }
+
+  // Helper method to get all nodes connected to the current node
+  getLocalGraphNodes(currentNodeId) {
+    const connectedNodeIds = new Set([currentNodeId]);
+    
+    // Get current note to check its properties
+    const currentNote = Array.from(this.notes.values()).find(note => note.id === currentNodeId);
+    if (!currentNote) return connectedNodeIds;
+
+    // 1. Add outgoing links (current node -> other nodes)
+    if (currentNote.links) {
+      currentNote.links.forEach(linkId => {
+        connectedNodeIds.add(linkId);
+      });
+    }
+
+    // 2. Add backlinks (other nodes -> current node)  
+    if (currentNote.backlinks) {
+      currentNote.backlinks.forEach(backlinkId => {
+        connectedNodeIds.add(backlinkId);
+      });
+    }
+
+    // 3. Add tag-based connections
+    if (currentNote.frontMatter && currentNote.frontMatter.tags) {
+      const currentTags = Array.isArray(currentNote.frontMatter.tags) 
+        ? currentNote.frontMatter.tags 
+        : [currentNote.frontMatter.tags];
+      
+      // Find other notes with shared tags
+      this.notes.forEach((note, noteId) => {
+        if (noteId === currentNodeId) return;
+        
+        if (note.frontMatter && note.frontMatter.tags) {
+          const noteTags = Array.isArray(note.frontMatter.tags) 
+            ? note.frontMatter.tags 
+            : [note.frontMatter.tags];
+          
+          // Check for tag overlap
+          const hasSharedTag = currentTags.some(tag => noteTags.includes(tag));
+          if (hasSharedTag) {
+            connectedNodeIds.add(noteId);
+          }
+        }
+      });
+    }
+
+    // 4. Also check the linkGraph for additional connections
+    this.links.forEach(link => {
+      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+      
+      if (sourceId === currentNodeId) {
+        connectedNodeIds.add(targetId);
+      }
+      if (targetId === currentNodeId) {
+        connectedNodeIds.add(sourceId);
+      }
+    });
+    
+    return connectedNodeIds;
+  }
+
+  // Helper method to truncate long titles
+  truncateTitle(title, maxLength) {
+    if (title.length <= maxLength) return title;
+    return title.substring(0, maxLength - 3) + '...';
+  }
+
+  // Zoom to fit functionality for mini graph
+  zoomToFitMiniGraph(graphContent, width, height) {
+    try {
+      const bounds = graphContent.node().getBBox();
+      if (bounds.width === 0 || bounds.height === 0) return;
+
+      const fullWidth = width;
+      const fullHeight = height;
+      const widthScale = fullWidth / bounds.width;
+      const heightScale = fullHeight / bounds.height;
+      
+      // Adjust scaling factor based on number of nodes - less zoom for fewer nodes
+      const nodeCount = graphContent.selectAll('.node-group').size();
+      let paddingFactor;
+      
+      if (nodeCount <= 2) {
+        paddingFactor = 0.3; // Less zoom for very few nodes to avoid over-magnification
+      } else if (nodeCount <= 5) {
+        paddingFactor = 0.5; // Moderate zoom for small graphs
+      } else {
+        paddingFactor = 0.7; // More zoom for larger graphs to fit them better
+      }
+      
+      const scale = Math.min(widthScale, heightScale) * paddingFactor;
+
+      const translateX = (fullWidth - bounds.width * scale) / 2 - bounds.x * scale;
+      const translateY = (fullHeight - bounds.height * scale) / 2 - bounds.y * scale;
+
+      graphContent.transition()
+        .duration(750)
+        .attr('transform', `translate(${translateX}, ${translateY}) scale(${scale})`)
+        .on('end', () => {
+          // Update text sizes based on zoom level for better readability
+          this.updateTextSizesForZoom(graphContent, scale, 'mini');
+        });
+    } catch (error) {
+      console.warn('Zoom to fit failed:', error);
+    }
+  }
+  
+  // Update text sizes based on zoom level for better readability
+  updateTextSizesForZoom(graphContent, zoomScale, graphType) {
+    try {
+      let baseFontSize;
+      if (graphType === 'mini') {
+        baseFontSize = 9;
+      } else if (graphType === 'global') {
+        baseFontSize = 11;  
+      } else {
+        baseFontSize = 12; // local graph
+      }
+      
+      // Calculate adaptive font size - smaller zoom means larger font for readability
+      // Use inverse relationship but with reasonable bounds
+      const adaptiveFontSize = Math.max(8, Math.min(16, baseFontSize / Math.max(0.5, zoomScale)));
+      
+      graphContent.selectAll('text')
+        .style('font-size', `${adaptiveFontSize}px`);
+        
+    } catch (error) {
+      console.warn('Text size update failed:', error);
+    }
+  }
+
+  // Zoom to fit functionality for modal graph  
+  zoomToFitModalGraph(graphContent, width, height) {
+    try {
+      const bounds = graphContent.node().getBBox();
+      if (bounds.width === 0 || bounds.height === 0) return;
+
+      const fullWidth = width;
+      const fullHeight = height;
+      const widthScale = fullWidth / bounds.width;
+      const heightScale = fullHeight / bounds.height;
+      
+      // Adjust scaling factor based on number of nodes - less zoom for fewer nodes
+      const nodeCount = graphContent.selectAll('.node-group').size();
+      let paddingFactor;
+      
+      if (nodeCount <= 2) {
+        paddingFactor = 0.25; // Much less zoom for very few nodes in modal
+      } else if (nodeCount <= 5) {
+        paddingFactor = 0.4; // Moderate zoom for small graphs in modal
+      } else {
+        paddingFactor = 0.6; // More zoom for larger graphs in modal
+      }
+      
+      const scale = Math.min(widthScale, heightScale) * paddingFactor;
+
+      const translateX = (fullWidth - bounds.width * scale) / 2 - bounds.x * scale;
+      const translateY = (fullHeight - bounds.height * scale) / 2 - bounds.y * scale;
+
+      graphContent.transition()
+        .duration(750)
+        .attr('transform', `translate(${translateX}, ${translateY}) scale(${scale})`)
+        .on('end', () => {
+          // Update text sizes based on zoom level for better readability
+          this.updateTextSizesForZoom(graphContent, scale, 'modal');
+        });
+    } catch (error) {
+      console.warn('Modal zoom to fit failed:', error);
+    }
   }
   
   renderGlobalGraph(containerElement) {
@@ -282,14 +553,17 @@ class GraphView {
     
     // Create links
     const links = graphContent.append('g')
+      .attr('class', 'links-group')
       .selectAll('line')
       .data(this.links)
       .enter()
       .append('line')
       .attr('stroke', 'var(--color-text-muted)')
-      .attr('stroke-opacity', 0.6)
+      .attr('stroke-opacity', 0.8)
       .attr('stroke-width', 1.5)
       .attr('marker-end', 'url(#arrowhead-global)');
+      
+    console.log(`Global graph: Rendering ${this.links.length} links, ${links.size()} elements created`);
     
     // Create nodes
     const nodes = graphContent.append('g')
@@ -326,6 +600,45 @@ class GraphView {
           modal.classList.add('hidden');
         }
       }
+    })
+    .on('mouseover', function(event, d) {
+      // Enlarge hovered node
+      d3.select(this).select('circle')
+        .transition().duration(200)
+        .attr('r', d => {
+          const baseRadius = Math.max(5, Math.min(15, 5 + d.degree * 2));
+          return baseRadius + 2;
+        });
+      
+      // Highlight connected edges
+      graphContent.selectAll('line')
+        .attr('stroke-opacity', edge => {
+          const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
+          const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
+          return (sourceId === d.id || targetId === d.id) ? 1.0 : 0.2;
+        })
+        .attr('stroke-width', edge => {
+          const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
+          const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
+          return (sourceId === d.id || targetId === d.id) ? 2.5 : 1.5;
+        })
+        .attr('stroke', edge => {
+          const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
+          const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
+          return (sourceId === d.id || targetId === d.id) ? 'var(--color-primary)' : 'var(--color-text-muted)';
+        });
+    })
+    .on('mouseout', function(event, d) {
+      // Reset node size
+      d3.select(this).select('circle')
+        .transition().duration(200)
+        .attr('r', d => Math.max(5, Math.min(15, 5 + d.degree * 2)));
+      
+      // Reset edge highlighting
+      graphContent.selectAll('line')
+        .attr('stroke-opacity', 0.8)
+        .attr('stroke-width', 1.5)
+        .attr('stroke', 'var(--color-text-muted)');
     });
     
     // Update simulation
@@ -360,18 +673,8 @@ class GraphView {
   renderLocalGraph(containerElement, currentNodeId) {
     if (!containerElement || !d3 || !currentNodeId) return;
     
-    // Filter nodes and links for local graph (current node + direct connections)
-    const connectedNodeIds = new Set([currentNodeId]);
-    
-    // Find all directly connected nodes
-    this.links.forEach(link => {
-      if (link.source === currentNodeId || (typeof link.source === 'object' && link.source.id === currentNodeId)) {
-        connectedNodeIds.add(typeof link.target === 'object' ? link.target.id : link.target);
-      }
-      if (link.target === currentNodeId || (typeof link.target === 'object' && link.target.id === currentNodeId)) {
-        connectedNodeIds.add(typeof link.source === 'object' ? link.source.id : link.source);
-      }
-    });
+    // Use the same local graph computation as mini graph
+    const connectedNodeIds = this.getLocalGraphNodes(currentNodeId);
     
     const localNodes = this.nodes.filter(node => connectedNodeIds.has(node.id));
     const localLinks = this.links.filter(link => {
@@ -427,6 +730,7 @@ class GraphView {
     
     // Create links
     const links = graphContent.append('g')
+      .attr('class', 'links-group')
       .selectAll('line')
       .data(localLinks)
       .enter()
@@ -435,6 +739,8 @@ class GraphView {
       .attr('stroke-opacity', 0.8)
       .attr('stroke-width', 2)
       .attr('marker-end', 'url(#arrowhead-local)');
+      
+    console.log(`Local graph: Rendering ${localLinks.length} links, ${links.size()} elements created`);
     
     // Create nodes
     const nodes = graphContent.append('g')
@@ -472,6 +778,45 @@ class GraphView {
           modal.classList.add('hidden');
         }
       }
+    })
+    .on('mouseover', function(event, d) {
+      // Enlarge hovered node
+      d3.select(this).select('circle')
+        .transition().duration(200)
+        .attr('r', d => {
+          const baseRadius = d.id === currentNodeId ? 20 : Math.max(8, Math.min(18, 8 + d.degree * 2));
+          return baseRadius + 2;
+        });
+      
+      // Highlight connected edges
+      graphContent.selectAll('line')
+        .attr('stroke-opacity', edge => {
+          const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
+          const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
+          return (sourceId === d.id || targetId === d.id) ? 1.0 : 0.3;
+        })
+        .attr('stroke-width', edge => {
+          const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
+          const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
+          return (sourceId === d.id || targetId === d.id) ? 3 : 2;
+        })
+        .attr('stroke', edge => {
+          const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
+          const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
+          return (sourceId === d.id || targetId === d.id) ? 'var(--color-primary)' : 'var(--color-text-muted)';
+        });
+    })
+    .on('mouseout', function(event, d) {
+      // Reset node size
+      d3.select(this).select('circle')
+        .transition().duration(200)
+        .attr('r', d => d.id === currentNodeId ? 20 : Math.max(8, Math.min(18, 8 + d.degree * 2)));
+      
+      // Reset edge highlighting
+      graphContent.selectAll('line')
+        .attr('stroke-opacity', 0.8)
+        .attr('stroke-width', 2)
+        .attr('stroke', 'var(--color-text-muted)');
     });
     
     // Update simulation
@@ -483,6 +828,11 @@ class GraphView {
         .attr('y2', d => d.target.y);
       
       nodes.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+
+    // Apply zoom-to-fit after simulation stabilizes
+    simulation.on('end', () => {
+      this.zoomToFitModalGraph(graphContent, width, height);
     });
     
     function dragStarted(event, d) {
@@ -514,7 +864,12 @@ class GraphView {
     };
     return colors[group] || colors.default;
   }
-  
+
+  // Update mini graph for current note
+  updateMiniGraph(currentNodeId) {
+    this.renderMiniGraph(currentNodeId);
+  }
+
   // Fallback for when D3 is not available
   initBasicGraph() {
     console.log('Initializing basic graph without D3.js');

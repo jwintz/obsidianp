@@ -5,6 +5,7 @@ class ObsidianSSGApp {
     this.bases = new Map();
     this.linkGraph = new Map();
     this.categories = new Map();
+    this.tags = new Map();
     this.folderStructure = [];
     this.currentNote = null;
     this.currentBase = null;
@@ -91,6 +92,7 @@ class ObsidianSSGApp {
         this.bases = new Map(Object.entries(data.bases || {}));
         this.linkGraph = new Map(Object.entries(data.linkGraph || {}));
         this.categories = new Map(Object.entries(data.categories || {}));
+        this.tags = new Map(Object.entries(data.tags || {}));
         this.folderStructure = data.folderStructure || [];
       } else {
         console.warn('Notes data not found, using empty dataset');
@@ -196,7 +198,8 @@ class ObsidianSSGApp {
   initializeGraph() {
     if (window.GraphView) {
       this.graph = new window.GraphView();
-      this.graph.loadData(this.notes, this.linkGraph);
+      this.graph.loadData(this.notes, this.linkGraph, this.tags);
+      // Initialize empty - will be populated when a note is loaded
     }
   }
   
@@ -324,19 +327,46 @@ class ObsidianSSGApp {
   }
   
   initializeGraphControls() {
-    // Global graph expansion button
-    const expandGlobalBtn = document.getElementById('expand-global-graph');
-    if (expandGlobalBtn) {
-      expandGlobalBtn.addEventListener('click', () => {
-        this.showGlobalGraphModal();
+    // Single graph expansion button
+    const expandGraphBtn = document.getElementById('expand-graph');
+    if (expandGraphBtn) {
+      expandGraphBtn.addEventListener('click', () => {
+        // Show local graph if we have a current note, otherwise show global graph
+        if (this.currentNote) {
+          this.showLocalGraphModal();
+        } else {
+          this.showGlobalGraphModal();
+        }
       });
     }
     
-    // Local graph expansion button  
-    const expandLocalBtn = document.getElementById('expand-local-graph');
-    if (expandLocalBtn) {
-      expandLocalBtn.addEventListener('click', () => {
-        this.showLocalGraphModal();
+    // Graph mode toggle buttons
+    const localToggleBtn = document.getElementById('local-graph-toggle');
+    const globalToggleBtn = document.getElementById('global-graph-toggle');
+    const globalLocalToggleBtn = document.getElementById('global-local-graph-toggle');
+    const globalGlobalToggleBtn = document.getElementById('global-global-graph-toggle');
+    
+    if (localToggleBtn) {
+      localToggleBtn.addEventListener('click', () => {
+        // Already in local mode, no action needed
+      });
+    }
+    
+    if (globalToggleBtn) {
+      globalToggleBtn.addEventListener('click', () => {
+        this.switchToGlobalGraph();
+      });
+    }
+    
+    if (globalLocalToggleBtn) {
+      globalLocalToggleBtn.addEventListener('click', () => {
+        this.switchToLocalGraph();
+      });
+    }
+    
+    if (globalGlobalToggleBtn) {
+      globalGlobalToggleBtn.addEventListener('click', () => {
+        // Already in global mode, no action needed
       });
     }
     
@@ -389,6 +419,9 @@ class ObsidianSSGApp {
       
       // Render global graph
       this.graph.renderGlobalGraph(container);
+      
+      // Update toggle states
+      this.updateGraphToggleStates('global');
     }
   }
   
@@ -408,8 +441,11 @@ class ObsidianSSGApp {
       modal.classList.remove('hidden');
       document.body.style.overflow = 'hidden'; // Prevent background scrolling
       
-      // Render local graph
-      this.graph.renderLocalGraph(container, this.currentNote);
+      // Render local graph - pass note ID, not note object
+      this.graph.renderLocalGraph(container, this.currentNote.id);
+      
+      // Update toggle states
+      this.updateGraphToggleStates('local');
     }
   }
   
@@ -418,6 +454,50 @@ class ObsidianSSGApp {
     if (modal) {
       modal.classList.add('hidden');
       document.body.style.overflow = ''; // Restore scrolling
+    }
+  }
+  
+  switchToGlobalGraph() {
+    this.hideLocalGraphModal();
+    this.showGlobalGraphModal();
+    this.updateGraphToggleStates('global');
+  }
+  
+  switchToLocalGraph() {
+    this.hideGlobalGraphModal();
+    if (this.currentNote) {
+      this.showLocalGraphModal();
+      this.updateGraphToggleStates('local');
+    }
+  }
+  
+  updateGraphToggleStates(activeMode) {
+    // Update local modal toggle states
+    const localToggleBtn = document.getElementById('local-graph-toggle');
+    const globalToggleBtn = document.getElementById('global-graph-toggle');
+    
+    if (localToggleBtn && globalToggleBtn) {
+      if (activeMode === 'local') {
+        localToggleBtn.classList.add('active');
+        globalToggleBtn.classList.remove('active');
+      } else {
+        localToggleBtn.classList.remove('active');
+        globalToggleBtn.classList.add('active');
+      }
+    }
+    
+    // Update global modal toggle states
+    const globalLocalToggleBtn = document.getElementById('global-local-graph-toggle');
+    const globalGlobalToggleBtn = document.getElementById('global-global-graph-toggle');
+    
+    if (globalLocalToggleBtn && globalGlobalToggleBtn) {
+      if (activeMode === 'local') {
+        globalLocalToggleBtn.classList.add('active');
+        globalGlobalToggleBtn.classList.remove('active');
+      } else {
+        globalLocalToggleBtn.classList.remove('active');
+        globalGlobalToggleBtn.classList.add('active');
+      }
     }
   }
   
@@ -681,6 +761,11 @@ class ObsidianSSGApp {
         window.tableOfContents.setCurrentNote(noteId);
       }, 100);
     }
+
+    // Update mini graph to show local graph for current note
+    if (this.graph) {
+      this.graph.updateMiniGraph(noteId);
+    }
     
     // Scroll to top
     if (noteContent) {
@@ -729,6 +814,11 @@ class ObsidianSSGApp {
     // Clear table of contents for base views
     if (window.tableOfContents) {
       window.tableOfContents.setCurrentNote(null);
+    }
+
+    // Clear mini graph for base views (bases aren't part of the note graph)
+    if (this.graph) {
+      this.graph.updateMiniGraph(null);
     }
     
     // Scroll to top

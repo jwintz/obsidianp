@@ -376,11 +376,10 @@ mark {
 .right-sidebar {
   width: var(--right-sidebar-width);
   min-width: var(--right-sidebar-width);
-  background-color: var(--color-bg-secondary);
-  border-left: 1px solid var(--color-border);
   display: none; /* Hidden by default, shown with media query */
   flex-direction: column;
   overflow: hidden;
+  padding-top: var(--space-md);
 }
 
 /* Show right sidebar on larger screens */
@@ -398,24 +397,22 @@ mark {
 }
 
 .right-sidebar-section {
-  border-bottom: 1px solid var(--color-border);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  margin-bottom: var(--space-lg); /* Add spacing between sections */
 }
 
 .right-sidebar-section:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
   flex: 1;
 }
 
 .right-sidebar-header {
-  padding: var(--space-md);
-  border-bottom: 1px solid var(--color-border);
+  padding: 0 var(--space-md) var(--space-sm) var(--space-md); /* Smaller horizontal padding */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: var(--color-bg-tertiary);
 }
 
 .right-sidebar-header h3 {
@@ -438,12 +435,15 @@ mark {
 
 .mini-graph-container {
   height: 200px;
-  /* padding: var(--space-sm); */
+  /* padding: 0 var(--space-xl); Align with note content padding */
+  margin: 0 var(--space-md) var(--space-md) var(--space-md); /* Smaller horizontal margins */
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
   overflow: hidden;
 }
 
 .table-of-contents {
-  padding: var(--space-md);
+  padding: 0 var(--space-md); /* Smaller horizontal padding */
   overflow-y: auto;
   flex: 1;
 }
@@ -613,7 +613,7 @@ mark {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(2px);
 }
 
@@ -631,11 +631,11 @@ mark {
 }
 
 .graph-modal-header {
-  padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
   background-color: var(--color-bg-secondary);
 }
 
@@ -644,6 +644,86 @@ mark {
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
+  flex-shrink: 0;
+  order: 1;
+}
+
+.graph-modal-controls {
+  display: flex;
+  align-items: center;
+  order: 2;
+  flex: 1;
+  justify-content: center;
+}
+
+.graph-modal-controls .view-switcher {
+  display: flex;
+  gap: 0;
+  border-radius: var(--border-radius);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  padding: 2px;
+}
+
+.graph-modal-controls .view-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border: none;
+  border-radius: calc(var(--border-radius) - 2px);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.graph-modal-controls .view-button:hover {
+  background-color: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+}
+
+.graph-modal-controls .view-button.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.graph-modal-controls .view-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.graph-modal-header .icon-button {
+  order: 3;
+  flex-shrink: 0;
+}
+
+.graph-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-accent);
+  color: var(--color-text-primary);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.graph-mode-toggle:hover {
+  background: var(--color-bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.graph-mode-toggle:active {
+  transform: translateY(0);
 }
 
 .graph-modal-container {

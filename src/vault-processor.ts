@@ -54,10 +54,8 @@ export class VaultProcessor {
 
         notes.set(note.id, note);
 
-        // Build link graph
-        linkGraph.set(note.id, new Set(note.links.map(link =>
-          this.generateNoteId(link)
-        )));
+        // Build link graph - defer until all notes are processed
+        // This will be done after all notes are loaded
 
         // Index categories
         if (note.frontMatter.categories) {
@@ -127,6 +125,19 @@ export class VaultProcessor {
       note.html = this.markdownProcessor.fixWikiLinks(note.html, notes);
     });
 
+    // Build link graph now that all notes are processed
+    console.log('🔗 Building link graph...');
+    notes.forEach(note => {
+      const resolvedLinks = new Set<string>();
+      note.links.forEach(linkText => {
+        const resolvedId = this.resolveLinkToNoteId(linkText, notes);
+        if (resolvedId) {
+          resolvedLinks.add(resolvedId);
+        }
+      });
+      linkGraph.set(note.id, resolvedLinks);
+    });
+
     // Build folder structure
     const folderStructure = this.buildFolderStructure(notes, bases, vaultPath);
 
@@ -145,6 +156,38 @@ export class VaultProcessor {
    */
   private generateNoteId(title: string): string {
     return title.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  }
+
+  /**
+   * Resolve a link text to an actual note ID by searching through all notes
+   */
+  private resolveLinkToNoteId(linkText: string, notes: Map<string, Note>): string | null {
+    // First try exact match with generated ID
+    const directId = this.markdownProcessor.generateNoteId(linkText);
+    if (notes.has(directId)) {
+      return directId;
+    }
+
+    // Try to find by title match
+    for (const [noteId, note] of notes) {
+      if (note.title === linkText) {
+        return noteId;
+      }
+
+      // Try matching without folder path
+      const fileName = noteId.split('/').pop() || '';
+      if (fileName === directId) {
+        return noteId;
+      }
+
+      // Try matching the generated ID from just the filename part
+      const generatedFromTitle = this.markdownProcessor.generateNoteId(note.title);
+      if (generatedFromTitle === directId) {
+        return noteId;
+      }
+    }
+
+    return null;
   }
 
   /**

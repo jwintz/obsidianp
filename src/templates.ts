@@ -123,11 +123,8 @@ function generateTemplate(title: string, mainContent: string): string {
                     <div class="right-sidebar-header">
                         <h3>Interactive Graph</h3>
                         <div class="graph-controls">
-                            <button id="expand-global-graph" class="icon-button graph-expand-btn" title="Expand global graph">
+                            <button id="expand-graph" class="icon-button graph-expand-btn" title="Expand graph">
                                 ${getLucideIcon('Maximize2', 14)}
-                            </button>
-                            <button id="expand-local-graph" class="icon-button graph-expand-btn" title="Expand local graph">
-                                ${getLucideIcon('Focus', 14)}
                             </button>
                         </div>
                     </div>
@@ -150,7 +147,19 @@ function generateTemplate(title: string, mainContent: string): string {
             <div class="graph-modal-overlay" id="global-graph-overlay"></div>
             <div class="graph-modal-content">
                 <div class="graph-modal-header">
-                    <h3>Global Graph</h3>
+                    <h3 id="global-graph-modal-title">Graph</h3>
+                    <div class="graph-modal-controls">
+                        <div class="view-switcher">
+                            <button id="global-local-graph-toggle" class="view-button" data-mode="local">
+                                ${getLucideIcon('Network', 16)}
+                                <span>Local</span>
+                            </button>
+                            <button id="global-global-graph-toggle" class="view-button active" data-mode="global">
+                                ${getLucideIcon('Globe', 16)}
+                                <span>Global</span>
+                            </button>
+                        </div>
+                    </div>
                     <button id="close-global-graph" class="icon-button">
                         ${getLucideIcon('X', 16)}
                     </button>
@@ -163,7 +172,19 @@ function generateTemplate(title: string, mainContent: string): string {
             <div class="graph-modal-overlay" id="local-graph-overlay"></div>
             <div class="graph-modal-content">
                 <div class="graph-modal-header">
-                    <h3>Local Graph</h3>
+                    <h3 id="graph-modal-title">Graph</h3>
+                    <div class="graph-modal-controls">
+                        <div class="view-switcher">
+                            <button id="local-graph-toggle" class="view-button active" data-mode="local">
+                                ${getLucideIcon('Network', 16)}
+                                <span>Local</span>
+                            </button>
+                            <button id="global-graph-toggle" class="view-button" data-mode="global">
+                                ${getLucideIcon('Globe', 16)}
+                                <span>Global</span>
+                            </button>
+                        </div>
+                    </div>
                     <button id="close-local-graph" class="icon-button">
                         ${getLucideIcon('X', 16)}
                     </button>

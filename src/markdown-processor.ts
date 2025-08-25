@@ -54,7 +54,7 @@ export class MarkdownProcessor {
         }
 
         // Handle ABC music notation
-        if (lang === 'music-abc') {
+        if (lang === 'music-abc' || lang === 'abc') {
           try {
             console.log(`🎵 Processing ABC notation with ${text.length} characters`);
             const abcProcessor = new AbcProcessor(text);

@@ -427,36 +427,23 @@ function generateBaseViewContent(base: Base, view: BaseView): string {
 }
 
 function generateCardsView(notes: Note[], view: BaseView): string {
-    const cardsHtml = notes.map(note => {
-        const tags = note.frontMatter.tags || [];
-        const tagsHtml = Array.isArray(tags)
-            ? tags.map(tag => `<span class="tag">${tag}</span>`).join('')
-            : `<span class="tag">${tags}</span>`;
+    // Delegate to client-side rendering for consistency with embedded cards
+    const baseData = {
+        notes: notes.map(note => ({
+            id: note.id,
+            title: note.title,
+            content: note.content,
+            frontMatter: note.frontMatter,
+            fileStats: note.fileStats
+        })),
+        view: view,
+        filters: null // Standalone base views don't need base filters
+    };
 
-        const mtime = getFileModificationTime(note);
-
-        return `<div class="card" data-note-id="${note.id}">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <a href="/${note.id}" class="internal-link">${note.title}</a>
-                </h3>
-            </div>
-            <div class="card-content">
-                <div class="card-meta">
-                    ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
-                    ${mtime ? `<div class="card-date">${formatDate(mtime)}</div>` : ''}
-                </div>
-                ${note.content.length > 200
-                ? `<div class="card-preview">${note.content.substring(0, 200)}...</div>`
-                : `<div class="card-preview">${note.content}</div>`
-            }
-            </div>
-        </div>`;
-    }).join('');
-
-    return `<div class="cards-view">
+    // Create a div that will be populated by client-side JavaScript
+    return `<div class="cards-view" data-base-cards='${JSON.stringify(baseData).replace(/'/g, "&apos;")}'>
         <div class="cards-container">
-            ${cardsHtml}
+            <!-- Cards will be rendered by client-side JavaScript for consistency -->
         </div>
     </div>`;
 }

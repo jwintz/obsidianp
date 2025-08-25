@@ -287,7 +287,7 @@ class ObsidianSSGApp {
         if (cardsContainer) {
           const usedProperties = this.getUsedProperties(view, filters);
           const cardsHtml = notes.map(note => {
-            return this.generateCardHtml(note, usedProperties, 150);
+            return this.generateCardHtml(note, usedProperties, 150, view); // Pass view parameter
           }).join('');
           cardsContainer.innerHTML = cardsHtml;
         }
@@ -1142,54 +1142,271 @@ class ObsidianSSGApp {
   /**
    * Generate card HTML for a single note
    */
-  generateCardHtml(note, usedProperties, contentPreviewLength = 200) {
-    // Always show title in header
-    const headerHtml = `<div class="card-header">
-      <h3 class="card-title">
-        <a href="/${note.id}" class="internal-link">${note.title}</a>
-      </h3>
+  generateCardHtml(note, usedProperties, contentPreviewLength = 150, view = null) {
+    // Generate top section (image or skeleton)
+    const topSectionHtml = this.generateCardTopSection(note, view);
+
+    // Title comes after the top section
+    const titleHtml = `<div class="card-title-section">
+        <h3 class="card-title">
+            <a href="/${note.id}" class="internal-link">${note.title}</a>
+        </h3>
     </div>`;
 
-    // Generate meta content based only on properties used for filtering/sorting
-    const metaElements = usedProperties.map(property => {
-      // Skip file.name since that's always in the header
-      if (property === 'file.name') return '';
-      
-      const value = this.getColumnValue(note, property);
-      if (value) {
-        // Get human-readable label for the property
-        const label = this.getPropertyLabel(property);
-        
-        if (property === 'file.tags') {
-          return `<div class="card-property">
-            <div class="card-property-label">${label}</div>
-            <div class="card-tags">${value}</div>
-          </div>`;
-        }
-        if (property.includes('time')) {
-          return `<div class="card-property">
-            <div class="card-property-label">${label}</div>
-            <div class="card-date">${value}</div>
-          </div>`;
-        }
-        return `<div class="card-property">
-          <div class="card-property-label">${label}</div>
-          <div class="card-${property.replace('file.', '')}">${value}</div>
-        </div>`;
-      }
-      return '';
-    }).filter(element => element).join('');
-
-    const renderedContent = this.renderMarkdownForPreview(note.content);
+    // Generate properties table for filtering/sorting fields
+    const propertiesTableHtml = this.generateCardPropertiesTable(usedProperties, note);
 
     return `<div class="card" data-note-id="${note.id}">
-      ${headerHtml}
-      <div class="card-content">
-        <div class="card-meta">
-          ${metaElements}
-        </div>
-        ${renderedContent ? `<div class="card-preview">${renderedContent.length > contentPreviewLength ? renderedContent.substring(0, contentPreviewLength) + '...' : renderedContent}</div>` : ''}
-      </div>
+        ${topSectionHtml}
+        ${titleHtml}
+        ${propertiesTableHtml}
+    </div>`;
+  }
+
+  /**
+   * Generate the top section of a card (image or skeleton)
+   */
+  generateCardTopSection(note, view) {
+    // Check if the view has an image entry
+    if (view?.image) {
+      const imageValue = this.getImageFromNote(note, view.image);
+      if (imageValue) {
+        return `<div class="card-top-image">
+            <img src="${imageValue}" alt="${note.title}" />
+        </div>`;
+      }
+    }
+
+    // Generate content-based skeleton if no image
+    return this.generateContentBasedSkeleton(note);
+  }
+
+  /**
+   * Generate skeleton lines based on actual note content structure
+   */
+  generateContentBasedSkeleton(note) {
+    if (!note.content) {
+      // Default skeleton if no content - fill available space
+      return this.generateDefaultSkeleton();
+    }
+
+    // Remove frontmatter first
+    let content = note.content.replace(/^---[\s\S]*?---\s*/, '');
+    
+    // Split into lines and analyze structure
+    const lines = content.split('\n').filter(line => line.trim().length > 0);
+    const skeletonLines = [];
+    
+    // With thinner lines and gap spacing, calculate available space
+    // Height: 200px, padding: 24px (12px * 2), gap: 4px between lines, average line height: ~10px
+    const availableHeight = 200 - (24 * 2); // 152px available
+    const avgLineHeight = 10; // Average line height
+    const gapSize = 4; // Gap between lines
+    // Calculate lines with gap: (height - (gaps * (lines-1))) / lineHeight = lines
+    // Rearranging: height = lines * lineHeight + gaps * (lines-1)
+    // height = lines * (lineHeight + gap) - gap
+    const effectiveLineHeight = avgLineHeight + gapSize;
+    const maxPossibleLines = Math.floor((availableHeight + gapSize) / effectiveLineHeight); // ~12 lines
+    
+    // Analyze content structure for the number of lines we can fit
+    const contentLines = Math.min(lines.length, maxPossibleLines);
+    
+    for (let i = 0; i < contentLines; i++) {
+      const line = lines[i].trim();
+      
+      if (!line) continue;
+      
+      // Determine skeleton line type based on content
+      let skeletonClass = '';
+      
+      if (line.startsWith('# ')) {
+        // Main heading - tall and prominent
+        skeletonClass = 'skeleton-line-heading-1';
+      } else if (line.startsWith('## ')) {
+        // Secondary heading
+        skeletonClass = 'skeleton-line-heading-2';
+      } else if (line.startsWith('### ') || line.startsWith('#### ')) {
+        // Sub-headings
+        skeletonClass = 'skeleton-line-heading-3';
+      } else if (line.startsWith('- ') || line.startsWith('* ') || line.startsWith('+ ')) {
+        // Bullet list items - with bullet point
+        skeletonClass = 'skeleton-line-list';
+      } else if (line.match(/^\d+\. /)) {
+        // Numbered list items
+        skeletonClass = 'skeleton-line-medium';
+      } else if (line.startsWith('```')) {
+        // Code blocks - monospaced feel
+        skeletonClass = 'skeleton-line-code';
+      } else if (line.startsWith('> ')) {
+        // Quotes - medium width
+        skeletonClass = 'skeleton-line-medium';
+      } else if (line.length > 80) {
+        // Long paragraphs
+        skeletonClass = 'skeleton-line-long';
+      } else if (line.length > 50) {
+        // Medium paragraphs
+        skeletonClass = 'skeleton-line-medium';
+      } else if (line.length > 20) {
+        // Short paragraphs
+        skeletonClass = 'skeleton-line-short';
+      } else {
+        // Very short lines
+        skeletonClass = 'skeleton-line-short';
+      }
+      
+      skeletonLines.push(`<div class="skeleton-line ${skeletonClass}"></div>`);
+    }
+    
+    // If we have room for more lines and haven't used all content, add more based on remaining content
+    if (skeletonLines.length < maxPossibleLines && lines.length > contentLines) {
+      const remainingSpace = maxPossibleLines - skeletonLines.length;
+      const remainingContent = lines.slice(contentLines);
+      
+      // Add more skeleton lines based on remaining content patterns
+      for (let i = 0; i < Math.min(remainingSpace, remainingContent.length); i++) {
+        const line = remainingContent[i].trim();
+        let skeletonClass;
+        
+        if (line.startsWith('- ') || line.startsWith('* ')) {
+          skeletonClass = 'skeleton-line-list';
+        } else if (line.length > 60) {
+          skeletonClass = 'skeleton-line-long';
+        } else if (line.length > 30) {
+          skeletonClass = 'skeleton-line-medium';
+        } else {
+          skeletonClass = 'skeleton-line-short';
+        }
+        
+        skeletonLines.push(`<div class="skeleton-line ${skeletonClass}"></div>`);
+      }
+    }
+    
+    // If we still have space and no more content, fill with varied lines to use all space
+    if (skeletonLines.length < maxPossibleLines) {
+      const remainingSpace = maxPossibleLines - skeletonLines.length;
+      const patterns = ['skeleton-line-long', 'skeleton-line-medium', 'skeleton-line-short', 'skeleton-line-medium'];
+      
+      for (let i = 0; i < remainingSpace; i++) {
+        const patternIndex = i % patterns.length;
+        skeletonLines.push(`<div class="skeleton-line ${patterns[patternIndex]}"></div>`);
+      }
+    }
+    
+    return `<div class="card-top-skeleton">
+        ${skeletonLines.join('')}
+    </div>`;
+  }
+
+  /**
+   * Generate default skeleton when no content is available
+   */
+  generateDefaultSkeleton() {
+    // Fill available space with varied skeleton lines that look like a document
+    const availableHeight = 200 - (24 * 2); // 152px available
+    const avgLineHeight = 10; // Average line height
+    const gapSize = 4; // Gap between lines
+    const effectiveLineHeight = avgLineHeight + gapSize;
+    const maxLines = Math.floor((availableHeight + gapSize) / effectiveLineHeight); // ~12 lines
+    
+    // Create a realistic document structure
+    const documentStructure = [
+      'skeleton-line-heading-1', // Title
+      'skeleton-line-long',      // First paragraph
+      'skeleton-line-medium',    // Second line
+      'skeleton-line-short',     // Third line
+      'skeleton-line-heading-2', // Subheading
+      'skeleton-line-list',      // List item
+      'skeleton-line-list',      // List item
+      'skeleton-line-list',      // List item
+      'skeleton-line-medium',    // Paragraph
+      'skeleton-line-long',      // Long paragraph
+      'skeleton-line-short',     // Short line
+      'skeleton-line-medium',    // Medium line
+      'skeleton-line-heading-3', // Another heading
+      'skeleton-line-long',      // Content
+      'skeleton-line-medium'     // More content
+    ];
+    
+    const skeletonLines = [];
+    const linesToUse = Math.min(maxLines, documentStructure.length);
+    
+    for (let i = 0; i < linesToUse; i++) {
+      skeletonLines.push(`<div class="skeleton-line ${documentStructure[i]}"></div>`);
+    }
+    
+    return `<div class="card-top-skeleton">
+        ${skeletonLines.join('')}
+    </div>`;
+  }
+
+  /**
+   * Extract image value from note based on view configuration
+   */
+  getImageFromNote(note, imageConfig) {
+    if (!imageConfig || !note) return null;
+    
+    // Handle note.cover or similar property references
+    if (imageConfig.startsWith('note.')) {
+      const property = imageConfig.substring(5); // Remove 'note.' prefix
+      
+      // Try frontmatter first
+      if (note.frontMatter && note.frontMatter[property]) {
+        return note.frontMatter[property];
+      }
+      
+      // Try other note properties
+      if (note[property]) {
+        return note[property];
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Generate properties table for filtering and sorting fields
+   */
+  generateCardPropertiesTable(usedProperties, note) {
+    if (!usedProperties || usedProperties.length === 0) {
+      return '';
+    }
+
+    const propertyRows = usedProperties
+      .filter(property => property !== 'file.name') // Skip file.name since title is shown above
+      .map(property => {
+        const value = this.getColumnValue(note, property);
+        if (!value) return '';
+
+        const label = this.getPropertyLabel(property);
+        
+        // Special handling for different property types
+        let valueHtml = '';
+        if (property === 'file.tags') {
+          valueHtml = `<div class="card-tags">${value}</div>`;
+        } else if (property.includes('time')) {
+          valueHtml = `<div class="card-date">${value}</div>`;
+        } else {
+          valueHtml = `<div class="card-property-value">${value}</div>`;
+        }
+
+        return `<tr class="card-property-row">
+            <td class="card-property-label">${label}</td>
+            <td class="card-property-value-cell">${valueHtml}</td>
+        </tr>`;
+      })
+      .filter(row => row)
+      .join('');
+
+    if (!propertyRows) {
+      return '';
+    }
+
+    return `<div class="card-properties-table">
+        <table class="properties-table">
+            <tbody>
+                ${propertyRows}
+            </tbody>
+        </table>
     </div>`;
   }
   
@@ -1213,7 +1430,7 @@ class ObsidianSSGApp {
     const usedProperties = this.getUsedProperties(view, filters);
     
     const cardsHtml = notes.map(note => {
-      return this.generateCardHtml(note, usedProperties, 150); // Use same preview length as embedded
+      return this.generateCardHtml(note, usedProperties, 150, view); // Pass view parameter
     }).join('');
     
     return `<div class="cards-view">

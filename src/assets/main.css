@@ -1212,7 +1212,7 @@ mark {
 }
 
 .folder-content.expanded {
-  max-height: 1000px;
+  max-height: none;
 }
 
 .folder-item.folder.expanded .folder-toggle svg {
@@ -1241,6 +1241,9 @@ mark {
   opacity: 1.0;
   transition: background-color 0.15s ease, opacity 0.15s ease;
 }
+
+/* .folder-content.expanded .folder-content.expanded .folder-children .folder-item::before */
+
 
 /* Hover effect - make the current segment darker */
 .folder-children .folder-item:hover::before {

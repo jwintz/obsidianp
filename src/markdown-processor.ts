@@ -1043,7 +1043,7 @@ export class MarkdownProcessor {
     try {
       // Parse YAML content to get base configuration
       const { data: baseConfig } = matter(`---\n${yamlContent}\n---`);
-      
+
       // Create a temporary base object from the inline configuration
       const inlineBase: Base = {
         id: `inline-base-${Math.random().toString(36).substr(2, 9)}`,
@@ -1065,10 +1065,10 @@ export class MarkdownProcessor {
       // This will need to be handled client-side or during a later processing phase
       const embedId = `embed-${inlineBase.id}`;
       const viewName = inlineBase.views.length > 0 ? inlineBase.views[0].name : 'Default';
-      
+
       // Create the embed structure similar to how regular bases are embedded
       const headerControls = this.generateEmbedHeaderControls(inlineBase, inlineBase.views[0]);
-      
+
       return `<div class="embed-note embed-base inline-base" data-embed-id="${embedId}" data-base-id="${inlineBase.id}" data-embed-view="${viewName}" data-base-config='${JSON.stringify(baseConfig).replace(/'/g, "&apos;")}'>
         <div class="embed-header" onclick="toggleEmbed('${embedId}')">
           <span class="embed-title">

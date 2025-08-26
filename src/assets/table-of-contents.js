@@ -243,11 +243,16 @@ class TableOfContents {
     // Collect all headings including embedded content
     const allTocItems = [];
     
-    // Find all direct heading elements (h2-h6 only) in the main note content
-    const directHeadings = noteContent.querySelectorAll('h2, h3, h4, h5, h6');
+    // Find all heading elements (h1-h6) in the main note content
+    const directHeadings = noteContent.querySelectorAll('h1, h2, h3, h4, h5, h6');
     
     // Filter out headings that are inside embedded content or excluded areas
     const validDirectHeadings = Array.from(directHeadings).filter(heading => {
+      // Exclude the main note title (h1 with class note-title)
+      if (heading.tagName === 'H1' && heading.classList.contains('note-title')) {
+        return false;
+      }
+      
       // Check if heading is inside an embedded note
       if (heading.closest('.embed-content')) {
         return false;

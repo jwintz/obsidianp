@@ -120,12 +120,16 @@ class ObsidianSSGApp {
     });
   }
 
+  getSystemTheme() {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+
   initializeTheme() {
     const themeToggle = document.getElementById('theme-toggle');
     const themeToggleDesktop = document.getElementById('theme-toggle-desktop');
     
-    // Load saved theme or default to light
-    const savedTheme = localStorage.getItem('obsidian-theme') || 'light';
+    // Load saved theme or default to system theme
+    const savedTheme = localStorage.getItem('obsidian-theme') || this.getSystemTheme();
     this.setTheme(savedTheme);
     
     // Listen for system theme changes
@@ -170,16 +174,6 @@ class ObsidianSSGApp {
       // Fallback for older browsers
       mediaQuery.addListener(handleSystemThemeChange);
     }
-    
-    // Initial system theme detection (only if no saved preference)
-    if (!localStorage.getItem('obsidian-theme')) {
-      const systemTheme = mediaQuery.matches ? 'dark' : 'light';
-      this.setTheme(systemTheme);
-    }
-  }
-  
-  getSystemTheme() {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
   
   setTheme(theme) {
@@ -238,10 +232,15 @@ class ObsidianSSGApp {
   initializeEmbeddedBases() {
     // Find all embedded bases and initialize their interactions
     const embedBases = document.querySelectorAll('.embed-base');
-    embedBases.forEach(embedBase => {
+    
+    embedBases.forEach((embedBase, index) => {
       // Extract base data from the embedded element
       const baseId = embedBase.dataset.baseId;
-      if (baseId && this.bases.has(baseId)) {
+      
+      // Handle inline bases
+      if (embedBase.classList.contains('inline-base')) {
+        this.processInlineBase(embedBase);
+      } else if (baseId && this.bases.has(baseId)) {
         const base = this.bases.get(baseId);
         this.initializeBaseInteractions(base);
       }
@@ -274,6 +273,72 @@ class ObsidianSSGApp {
     });
   }
   
+  processInlineBase(embedBase) {
+    try {
+      // Get the base configuration from the inline-base-placeholder element
+      const placeholder = embedBase.querySelector('.inline-base-placeholder');
+      
+      if (!placeholder || !placeholder.dataset.baseConfig) {
+        console.error('No base config found in inline base placeholder');
+        return;
+      }
+      
+      const baseConfig = JSON.parse(placeholder.dataset.baseConfig);
+      const embedId = embedBase.dataset.embedId;
+      
+      // Create a temporary base object from the inline configuration
+      const inlineBase = {
+        id: embedBase.dataset.baseId,
+        title: baseConfig.title || 'Inline Base',
+        source: '',
+        path: '',
+        relativePath: '',
+        folderPath: '',
+        description: baseConfig.description || '',
+        views: baseConfig.views || [{ type: 'cards', name: 'Default' }],
+        properties: baseConfig.properties || [],
+        formulas: baseConfig.formulas || [],
+        filters: baseConfig.filters || (baseConfig.views && baseConfig.views[0] && baseConfig.views[0].filters) || null,
+        matchedNotes: []
+      };
+      
+      // Process the filters to match notes from the vault
+      if (inlineBase.filters) {
+        const allNotesArray = Array.from(this.notes.values());
+        inlineBase.matchedNotes = this.filterNotesForBase(inlineBase, allNotesArray);
+      } else {
+        // If no filters, use all notes
+        inlineBase.matchedNotes = Array.from(this.notes.values());
+      }
+      
+      // Apply formulas if any
+      if (inlineBase.formulas && inlineBase.formulas.length > 0) {
+        inlineBase.matchedNotes = this.processFormulasForNotes(inlineBase, inlineBase.matchedNotes);
+      }
+      
+      // Register the inline base in the bases Map so it can be found later
+      this.bases.set(inlineBase.id, inlineBase);
+      
+      // Find the content container and render the base view
+      const contentContainer = embedBase.querySelector('.inline-base-placeholder');
+      if (contentContainer) {
+        const defaultView = inlineBase.views && inlineBase.views.length > 0 ? inlineBase.views[0] : { type: 'cards', name: 'Default' };
+        const baseContent = this.renderBaseViewContent(inlineBase, defaultView);
+        contentContainer.innerHTML = baseContent;
+        
+        // Initialize interactions for this inline base
+        this.initializeBaseInteractions(inlineBase);
+      }
+      
+    } catch (error) {
+      console.error('Failed to process inline base:', error);
+      const contentContainer = embedBase.querySelector('.inline-base-placeholder');
+      if (contentContainer) {
+        contentContainer.innerHTML = `<div class="base-error">❌ Failed to process inline base: ${error.message}</div>`;
+      }
+    }
+  }
+
   initializeEventListeners() {
     // Mobile menu toggle
     const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
@@ -896,7 +961,16 @@ class ObsidianSSGApp {
   renderBaseViewContent(base, view) {
     // Get matched notes and convert IDs to full note objects
     const matchedNoteIds = base.matchedNotes || [];
-    let notes = matchedNoteIds.map(id => this.notes.get(id)).filter(note => note);
+    
+    // Check if matchedNotes contains objects or IDs
+    let notes;
+    if (matchedNoteIds.length > 0 && typeof matchedNoteIds[0] === 'object') {
+      // Already note objects
+      notes = matchedNoteIds;
+    } else {
+      // Note IDs that need to be converted
+      notes = matchedNoteIds.map(id => this.notes.get(id)).filter(note => note);
+    }
     
     // Apply view-specific filters if they exist
     if (view.filters) {
@@ -1066,7 +1140,7 @@ class ObsidianSSGApp {
         return noteValue !== value;
       }
     }
-    
+
     // Handle file.hasTag() filters
     const hasTagMatch = filter.match(/file\.hasTag\(["']([^"']+)["']\)/);
     if (hasTagMatch) {
@@ -1075,11 +1149,9 @@ class ObsidianSSGApp {
       const tagList = Array.isArray(tags) ? tags : [tags];
       return tagList.includes(tag);
     }
-    
+
     return false;
-  }
-  
-  evaluatePropertyFilter(property, value, note) {
+  }  evaluatePropertyFilter(property, value, note) {
     const noteValue = note.frontMatter?.[property];
     
     // Handle simple equality
@@ -1137,6 +1209,32 @@ class ObsidianSSGApp {
   }
 
   /**
+   * Filter notes for a base using its filters
+   */
+  filterNotesForBase(base, allNotes) {
+    if (!base.filters) {
+      return allNotes;
+    }
+    
+    const filteredNotes = allNotes.filter(note => {
+      const result = this.evaluateViewFilter(base.filters, note);
+      
+      return result;
+    });
+    
+    return filteredNotes;
+  }
+
+  /**
+   * Process formulas for notes (placeholder implementation)
+   */
+  processFormulasForNotes(base, notes) {
+    // For now, just return the notes as-is
+    // TODO: Implement formula processing when needed
+    return notes;
+  }
+
+  /**
    * Determine which properties are used for filtering and sorting
    */
   getUsedProperties(baseView, baseFilters) {
@@ -1158,11 +1256,10 @@ class ObsidianSSGApp {
       });
     }
     
-    // If no specific filtering/sorting properties are identified, fall back to showing tags and mtime
-    // since most bases use tags for filtering and mtime for sorting
+    // If no specific filtering/sorting properties are identified, fall back to showing tags only
+    // since most bases use tags for filtering
     if (usedProperties.size === 0) {
       usedProperties.add('file.tags');
-      usedProperties.add('file.mtime');
     }
     
     return Array.from(usedProperties);
@@ -1510,15 +1607,13 @@ class ObsidianSSGApp {
     const cardsHtml = notes.map(note => {
       return this.generateCardHtml(note, usedProperties, 150, view); // Pass view parameter
     }).join('');
-    
+
     return `<div class="cards-view">
         <div class="cards-container">
             ${cardsHtml}
         </div>
     </div>`;
-  }
-  
-  renderTableView(notes, view) {
+  }  renderTableView(notes, view) {
     if (notes.length === 0) {
         return '<div class="table-view"><p class="empty-state">No notes match the current filters.</p></div>';
     }

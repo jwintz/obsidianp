@@ -400,7 +400,7 @@ mark {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  margin-bottom: var(--space-lg); /* Add spacing between sections */
+  /* margin-bottom: var(--space-lg); Add spacing between sections */
 }
 
 .right-sidebar-section:last-child {
@@ -443,7 +443,7 @@ mark {
 }
 
 .table-of-contents {
-  padding: 0 var(--space-md); /* Smaller horizontal padding */
+  padding: 0 var(--space-md) var(--space-xl); /* Smaller horizontal padding */
   overflow-y: auto;
   flex: 1;
 }
@@ -461,7 +461,8 @@ mark {
 }
 
 .toc-item {
-  margin-bottom: var(--space-xs);
+  /* margin-bottom: var(--space-xs); */
+  padding-bottom: var(--space-xs);
   position: relative;
 }
 
@@ -1115,7 +1116,7 @@ mark {
   cursor: pointer;
   user-select: none;
   position: relative;
-  margin-bottom: 2px;
+  /* margin-bottom: 2px; */
   font-weight: 400;
   background: none; /* Remove background */
 }
@@ -1221,6 +1222,11 @@ mark {
 .folder-children {
   position: relative;
   padding-left: 20px; /* Indent nested items */
+}
+
+.folder-content.expanded .folder-content.expanded .folder-children {
+  left: 4px;
+  border-left: 1px solid var(--color-border);
 }
 
 /* Indentation guides - create individual segments for each item */
@@ -1994,6 +2000,32 @@ body.menu-open {
   min-height: 400px;
 }
 
+/* Base Error States */
+.base-error {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--border-radius);
+  padding: var(--space-md);
+  margin: var(--space-md) 0;
+  color: var(--color-accent);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.inline-base-loading {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.inline-base-placeholder {
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Table View */
 .table-view {
   overflow-x: auto;
@@ -2058,6 +2090,10 @@ body.menu-open {
   padding: var(--space-2xl);
   color: var(--color-text-muted);
   font-style: italic;
+}
+
+.cards-view {
+  width: 100%;
 }
 
 .cards-container {

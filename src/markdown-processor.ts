@@ -53,6 +53,17 @@ export class MarkdownProcessor {
           console.log(`🎵 Processing code block with language: "${lang}"`);
         }
 
+        // Handle inline base syntax
+        if (lang === 'base') {
+          try {
+            console.log(`📊 Processing inline base syntax with ${text.length} characters`);
+            return this.processInlineBase(text);
+          } catch (error) {
+            console.log(`⚠️  Inline base rendering failed, falling back to plain text:`, error);
+            return `<div class="base-error">❌ Failed to render base: ${error instanceof Error ? error.message : 'Unknown error'}</div>`;
+          }
+        }
+
         // Handle ABC music notation
         if (lang === 'music-abc' || lang === 'abc') {
           try {
@@ -1023,5 +1034,75 @@ export class MarkdownProcessor {
         }
       });
     });
+  }
+
+  /**
+   * Process inline base syntax and render it as an embedded base
+   */
+  private processInlineBase(yamlContent: string): string {
+    try {
+      // Parse YAML content to get base configuration
+      const { data: baseConfig } = matter(`---\n${yamlContent}\n---`);
+      
+      // Create a temporary base object from the inline configuration
+      const inlineBase: Base = {
+        id: `inline-base-${Math.random().toString(36).substr(2, 9)}`,
+        title: baseConfig.title || 'Inline Base',
+        source: '',
+        path: '',
+        relativePath: '',
+        folderPath: '',
+        description: baseConfig.description || '',
+        views: baseConfig.views || [{ type: 'cards', name: 'Default' }],
+        properties: baseConfig.properties || [],
+        formulas: baseConfig.formulas || [],
+        filters: baseConfig.filters || null,
+        matchedNotes: [] // Will be populated when the base is actually processed
+      };
+
+      // Generate the embedded base content
+      // Note: We can't filter notes here because we don't have access to all notes
+      // This will need to be handled client-side or during a later processing phase
+      const embedId = `embed-${inlineBase.id}`;
+      const viewName = inlineBase.views.length > 0 ? inlineBase.views[0].name : 'Default';
+      
+      // Create the embed structure similar to how regular bases are embedded
+      const headerControls = this.generateEmbedHeaderControls(inlineBase, inlineBase.views[0]);
+      
+      return `<div class="embed-note embed-base inline-base" data-embed-id="${embedId}" data-base-id="${inlineBase.id}" data-embed-view="${viewName}" data-base-config='${JSON.stringify(baseConfig).replace(/'/g, "&apos;")}'>
+        <div class="embed-header" onclick="toggleEmbed('${embedId}')">
+          <span class="embed-title">
+            <span class="embed-title-link">
+              ${this.generateEmbeddedBaseIcon()}
+              <span class="embed-title-text">${inlineBase.title}</span>
+            </span>
+          </span>
+          <span class="embed-controls">
+            ${headerControls}
+            <span class="embed-maximize" onclick="event.stopPropagation(); toggleEmbedMaximize('${embedId}')" title="Limit height">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon minimize-2">
+                <polyline points="4,14 10,14 10,20"></polyline>
+                <polyline points="20,10 14,10 14,4"></polyline>
+                <line x1="14" y1="10" x2="21" y2="3"></line>
+                <line x1="3" y1="21" x2="10" y2="14"></line>
+              </svg>
+            </span>
+            <span class="embed-chevron" onclick="event.stopPropagation(); toggleEmbed('${embedId}')" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
+                <path d="M3 8L12 17L21 8"></path>
+              </svg>
+            </span>
+          </span>
+        </div>
+        <div class="embed-content" id="embed-content-${embedId}">
+          <div class="inline-base-placeholder" data-base-config='${JSON.stringify(baseConfig).replace(/'/g, "&apos;")}'>
+            <div class="inline-base-loading">Processing inline base...</div>
+          </div>
+        </div>
+      </div>`;
+    } catch (error) {
+      console.error('Failed to parse inline base YAML:', error);
+      return `<div class="base-error">❌ Invalid base configuration: ${error instanceof Error ? error.message : 'Unknown error'}</div>`;
+    }
   }
 }

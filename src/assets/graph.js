@@ -114,6 +114,21 @@ class GraphView {
       group: this.categorizeNode(note)
     }));
     
+    // Add tag nodes if tags exist
+    if (this.tags && this.tags.size > 0) {
+      this.tags.forEach((tagNotes, tagName) => {
+        // Create tag node with safe degree calculation
+        const degree = (tagNotes && typeof tagNotes.size === 'number') ? tagNotes.size : 
+                      (Array.isArray(tagNotes) ? tagNotes.length : 1);
+        this.nodes.push({
+          id: `tag:${tagName}`,
+          title: `#${tagName}`,
+          degree: degree,
+          group: 'tag'
+        });
+      });
+    }
+    
     // Process links
     this.links = [];
     linkGraph.forEach((targets, source) => {
@@ -137,6 +152,21 @@ class GraphView {
         });
       }
     });
+    
+    // Add note-to-tag relationships
+    if (this.tags && this.tags.size > 0) {
+      this.tags.forEach((tagNotes, tagName) => {
+        const tagId = `tag:${tagName}`;
+        tagNotes.forEach(noteId => {
+          if (notes.has(noteId)) {
+            this.links.push({
+              source: noteId,
+              target: tagId
+            });
+          }
+        });
+      });
+    }
     
     console.log(`Graph: Processed ${this.nodes.length} nodes and ${this.links.length} links`);
   }
@@ -174,11 +204,14 @@ class GraphView {
       const connectedNodeIds = this.getLocalGraphNodes(currentNodeId);
       
       // Filter nodes and links for local graph
-      nodesToRender = this.nodes.filter(node => connectedNodeIds.has(node.id));
+      nodesToRender = this.nodes.filter(node => 
+        connectedNodeIds.has(node.id) && !node.id.startsWith('tag:')
+      );
       linksToRender = this.links.filter(link => {
         const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
         const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-        return connectedNodeIds.has(sourceId) && connectedNodeIds.has(targetId);
+        return connectedNodeIds.has(sourceId) && connectedNodeIds.has(targetId) && 
+               !sourceId.startsWith('tag:') && !targetId.startsWith('tag:');
       });
     } else {
       // When no currentNodeId is provided, show empty graph (will be populated when note loads)
@@ -211,7 +244,9 @@ class GraphView {
       .force('link', d3.forceLink(linksToRender).id(d => d.id).distance(30))
       .force('charge', d3.forceManyBody().strength(-50))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(8));
+      .force('collision', d3.forceCollide().radius(8))
+      .alphaDecay(0.05) // Faster simulation decay
+      .alphaMin(0.01);  // Lower alpha minimum for quicker end
     
     // Create links
     const links = graphContent.append('g')
@@ -220,7 +255,7 @@ class GraphView {
       .data(linksToRender)
       .enter()
       .append('line')
-      .attr('stroke', 'var(--color-text-muted)')
+      .attr('stroke', 'var(--color-graph-edge)')
       .attr('stroke-opacity', 0.8)
       .attr('stroke-width', 1.5)
       .attr('marker-end', 'url(#arrowhead-mini)');
@@ -245,38 +280,59 @@ class GraphView {
         d3.select(this).select('circle')
           .transition().duration(200)
           .attr('r', d => {
-            const baseRadius = currentNodeId && d.id === currentNodeId ? 8 : Math.max(3, Math.min(8, 3 + d.degree));
+            const degree = typeof d.degree === 'number' && !isNaN(d.degree) ? d.degree : 0;
+            const baseRadius = currentNodeId && d.id === currentNodeId ? 8 : Math.max(3, Math.min(8, 3 + degree));
             return baseRadius + 1;
           });
         
-        // Highlight connected edges
+        // Highlight connected edges and fade others
         graphContent.selectAll('.links line')
           .attr('stroke-opacity', edge => {
             const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
             const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
             return (sourceId === d.id || targetId === d.id) ? 1.0 : 0.2;
           })
-          .attr('stroke-width', edge => {
+          .attr('marker-opacity', edge => {
             const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
             const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
-            return (sourceId === d.id || targetId === d.id) ? 2 : 1;
+            return (sourceId === d.id || targetId === d.id) ? 1.0 : 0.2;
           })
           .attr('stroke', edge => {
             const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
             const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
-            return (sourceId === d.id || targetId === d.id) ? 'var(--color-primary)' : 'var(--color-text-muted)';
+            return (sourceId === d.id || targetId === d.id) ? 'var(--color-graph-highlight)' : 'var(--color-graph-edge)';
+          });
+        
+        // Fade non-connected nodes
+        graphContent.selectAll('.node-group')
+          .style('opacity', node => {
+            if (node.id === d.id) return 1.0; // Keep hovered node fully visible
+            // Check if this node is directly connected to the hovered node
+            const isDirectlyConnected = linksToRender.some(link => {
+              const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+              const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+              return (sourceId === d.id && targetId === node.id) || (targetId === d.id && sourceId === node.id);
+            });
+            return isDirectlyConnected ? 1.0 : 0.2;
           });
       })
       .on('mouseout', function(event, d) {
         d3.select(this).select('circle')
           .transition().duration(200)
-          .attr('r', d => currentNodeId && d.id === currentNodeId ? 8 : Math.max(3, Math.min(8, 3 + d.degree)));
+          .attr('r', d => {
+            const degree = typeof d.degree === 'number' && !isNaN(d.degree) ? d.degree : 0;
+            return currentNodeId && d.id === currentNodeId ? 8 : Math.max(3, Math.min(8, 3 + degree));
+          });
         
         // Reset edge highlighting
         graphContent.selectAll('.links line')
           .attr('stroke-opacity', 0.8)
-          .attr('stroke-width', 1.5)
-          .attr('stroke', 'var(--color-text-muted)');
+          .attr('marker-opacity', 0.8)
+          .attr('stroke', 'var(--color-graph-edge)');
+        
+        // Reset node opacity
+        graphContent.selectAll('.node-group')
+          .style('opacity', 1.0);
       });
 
     // Add circles
@@ -286,14 +342,15 @@ class GraphView {
         if (currentNodeId && d.id === currentNodeId) {
           return 8;
         }
-        return Math.max(3, Math.min(8, 3 + d.degree));
+        const degree = typeof d.degree === 'number' && !isNaN(d.degree) ? d.degree : 0;
+        return Math.max(3, Math.min(8, 3 + degree));
       })
       .attr('fill', d => {
         // Highlight current node with primary color
         if (currentNodeId && d.id === currentNodeId) {
-          return 'var(--color-primary)';
+          return 'var(--color-graph-highlight)';
         }
-        return this.getNodeColor(d.group);
+        return d.group === 'tag' ? 'var(--color-graph-tag)' : 'var(--color-graph-node)';
       })
       .attr('stroke', 'var(--color-bg-primary)')
       .attr('stroke-width', d => currentNodeId && d.id === currentNodeId ? 2 : 1);
@@ -302,7 +359,8 @@ class GraphView {
     nodes.append('text')
       .text(d => this.truncateTitle(d.title, 12))
       .attr('dx', d => {
-        const radius = currentNodeId && d.id === currentNodeId ? 8 : Math.max(3, Math.min(8, 3 + d.degree));
+        const degree = typeof d.degree === 'number' && !isNaN(d.degree) ? d.degree : 0;
+        const radius = currentNodeId && d.id === currentNodeId ? 8 : Math.max(3, Math.min(8, 3 + degree));
         return radius + 4;
       })
       .attr('dy', '.35em')
@@ -428,7 +486,7 @@ class GraphView {
       const translateY = (fullHeight - bounds.height * scale) / 2 - bounds.y * scale;
 
       graphContent.transition()
-        .duration(750)
+        .duration(250)
         .attr('transform', `translate(${translateX}, ${translateY}) scale(${scale})`)
         .on('end', () => {
           // Update text sizes based on zoom level for better readability
@@ -492,7 +550,7 @@ class GraphView {
       const translateY = (fullHeight - bounds.height * scale) / 2 - bounds.y * scale;
 
       graphContent.transition()
-        .duration(750)
+        .duration(250)
         .attr('transform', `translate(${translateX}, ${translateY}) scale(${scale})`)
         .on('end', () => {
           // Update text sizes based on zoom level for better readability
@@ -549,7 +607,9 @@ class GraphView {
       .force('link', d3.forceLink(this.links).id(d => d.id).distance(60))
       .force('charge', d3.forceManyBody().strength(-200))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(15));
+      .force('collision', d3.forceCollide().radius(15))
+      .alphaDecay(0.05) // Faster simulation decay
+      .alphaMin(0.01);  // Lower alpha minimum for quicker end
     
     // Create links
     const links = graphContent.append('g')
@@ -558,7 +618,7 @@ class GraphView {
       .data(this.links)
       .enter()
       .append('line')
-      .attr('stroke', 'var(--color-text-muted)')
+      .attr('stroke', 'var(--color-graph-edge)')
       .attr('stroke-opacity', 0.8)
       .attr('stroke-width', 1.5)
       .attr('marker-end', 'url(#arrowhead-global)');
@@ -579,14 +639,20 @@ class GraphView {
         .on('end', dragEnded));
     
     nodes.append('circle')
-      .attr('r', d => Math.max(5, Math.min(15, 5 + d.degree * 2)))
-      .attr('fill', d => this.getNodeColor(d.group))
+      .attr('r', d => {
+        const degree = typeof d.degree === 'number' && !isNaN(d.degree) ? d.degree : 0;
+        return Math.max(5, Math.min(15, 5 + degree * 2));
+      })
+      .attr('fill', d => d.group === 'tag' ? 'var(--color-graph-tag)' : 'var(--color-graph-node)')
       .attr('stroke', 'var(--color-bg-primary)')
       .attr('stroke-width', 2);
     
     nodes.append('text')
       .text(d => d.title.length > 15 ? d.title.substring(0, 15) + '...' : d.title)
-      .attr('dx', d => Math.max(5, Math.min(15, 5 + d.degree * 2)) + 5)
+      .attr('dx', d => {
+        const degree = typeof d.degree === 'number' && !isNaN(d.degree) ? d.degree : 0;
+        return Math.max(5, Math.min(15, 5 + degree * 2)) + 5;
+      })
       .attr('dy', '.35em')
       .style('font-size', '11px')
       .style('fill', 'var(--color-text-secondary)');
@@ -606,39 +672,60 @@ class GraphView {
       d3.select(this).select('circle')
         .transition().duration(200)
         .attr('r', d => {
-          const baseRadius = Math.max(5, Math.min(15, 5 + d.degree * 2));
+          const degree = typeof d.degree === 'number' && !isNaN(d.degree) ? d.degree : 0;
+          const baseRadius = Math.max(5, Math.min(15, 5 + degree * 2));
           return baseRadius + 2;
         });
       
-      // Highlight connected edges
+      // Highlight connected edges and nodes, fade others
       graphContent.selectAll('line')
         .attr('stroke-opacity', edge => {
           const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
           const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
           return (sourceId === d.id || targetId === d.id) ? 1.0 : 0.2;
         })
-        .attr('stroke-width', edge => {
+        .attr('marker-opacity', edge => {
           const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
           const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
-          return (sourceId === d.id || targetId === d.id) ? 2.5 : 1.5;
+          return (sourceId === d.id || targetId === d.id) ? 1.0 : 0.2;
         })
         .attr('stroke', edge => {
           const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
           const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
-          return (sourceId === d.id || targetId === d.id) ? 'var(--color-primary)' : 'var(--color-text-muted)';
+          return (sourceId === d.id || targetId === d.id) ? 'var(--color-graph-highlight)' : 'var(--color-graph-edge)';
+        });
+      
+      // Fade non-connected nodes
+      graphContent.selectAll('.node-group')
+        .style('opacity', node => {
+          if (node.id === d.id) return 1.0; // Keep hovered node fully visible
+          // Check if this node is directly connected to the hovered node
+          const isDirectlyConnected = this.links.some(link => {
+            const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+            const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+            return (sourceId === d.id && targetId === node.id) || (targetId === d.id && sourceId === node.id);
+          });
+          return isDirectlyConnected ? 1.0 : 0.2;
         });
     })
     .on('mouseout', function(event, d) {
       // Reset node size
       d3.select(this).select('circle')
         .transition().duration(200)
-        .attr('r', d => Math.max(5, Math.min(15, 5 + d.degree * 2)));
+        .attr('r', d => {
+          const degree = typeof d.degree === 'number' && !isNaN(d.degree) ? d.degree : 0;
+          return Math.max(5, Math.min(15, 5 + degree * 2));
+        });
       
       // Reset edge highlighting
       graphContent.selectAll('line')
         .attr('stroke-opacity', 0.8)
-        .attr('stroke-width', 1.5)
-        .attr('stroke', 'var(--color-text-muted)');
+        .attr('marker-opacity', 0.8)
+        .attr('stroke', 'var(--color-graph-edge)');
+      
+      // Reset node opacity
+      graphContent.selectAll('.node-group')
+        .style('opacity', 1.0);
     });
     
     // Update simulation
@@ -676,11 +763,14 @@ class GraphView {
     // Use the same local graph computation as mini graph
     const connectedNodeIds = this.getLocalGraphNodes(currentNodeId);
     
-    const localNodes = this.nodes.filter(node => connectedNodeIds.has(node.id));
+    const localNodes = this.nodes.filter(node => 
+      connectedNodeIds.has(node.id) && !node.id.startsWith('tag:')
+    );
     const localLinks = this.links.filter(link => {
       const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
       const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-      return connectedNodeIds.has(sourceId) && connectedNodeIds.has(targetId);
+      return connectedNodeIds.has(sourceId) && connectedNodeIds.has(targetId) && 
+             !sourceId.startsWith('tag:') && !targetId.startsWith('tag:');
     });
     
     const width = 1000;
@@ -726,7 +816,9 @@ class GraphView {
       .force('link', d3.forceLink(localLinks).id(d => d.id).distance(80))
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(20));
+      .force('collision', d3.forceCollide().radius(20))
+      .alphaDecay(0.05) // Faster simulation decay
+      .alphaMin(0.01);  // Lower alpha minimum for quicker end
     
     // Create links
     const links = graphContent.append('g')
@@ -735,7 +827,7 @@ class GraphView {
       .data(localLinks)
       .enter()
       .append('line')
-      .attr('stroke', 'var(--color-text-muted)')
+      .attr('stroke', 'var(--color-graph-edge)')
       .attr('stroke-opacity', 0.8)
       .attr('stroke-width', 2)
       .attr('marker-end', 'url(#arrowhead-local)');
@@ -756,18 +848,28 @@ class GraphView {
         .on('end', dragEnded));
     
     nodes.append('circle')
-      .attr('r', d => d.id === currentNodeId ? 20 : Math.max(8, Math.min(18, 8 + d.degree * 2)))
-      .attr('fill', d => d.id === currentNodeId ? 'var(--color-primary)' : this.getNodeColor(d.group))
+      .attr('r', d => {
+        if (d.id === currentNodeId) return 20;
+        const degree = typeof d.degree === 'number' && !isNaN(d.degree) ? d.degree : 0;
+        return Math.max(8, Math.min(18, 8 + degree * 2));
+      })
+      .attr('fill', d => {
+        if (d.id === currentNodeId) return 'var(--color-graph-highlight)';
+        return d.group === 'tag' ? 'var(--color-graph-tag)' : 'var(--color-graph-node)';
+      })
       .attr('stroke', 'var(--color-bg-primary)')
       .attr('stroke-width', 3);
     
     nodes.append('text')
       .text(d => d.title.length > 20 ? d.title.substring(0, 20) + '...' : d.title)
-      .attr('dx', d => (d.id === currentNodeId ? 20 : Math.max(8, Math.min(18, 8 + d.degree * 2))) + 8)
+      .attr('dx', d => {
+        const degree = typeof d.degree === 'number' && !isNaN(d.degree) ? d.degree : 0;
+        return (d.id === currentNodeId ? 20 : Math.max(8, Math.min(18, 8 + degree * 2))) + 8;
+      })
       .attr('dy', '.35em')
       .style('font-size', '12px')
       .style('font-weight', d => d.id === currentNodeId ? 'bold' : 'normal')
-      .style('fill', d => d.id === currentNodeId ? 'var(--color-primary)' : 'var(--color-text-secondary)');
+      .style('fill', d => d.id === currentNodeId ? 'var(--color-graph-highlight)' : 'var(--color-text-secondary)');
     
     nodes.on('click', (event, d) => {
       if (window.app && typeof window.app.loadNote === 'function') {
@@ -784,39 +886,60 @@ class GraphView {
       d3.select(this).select('circle')
         .transition().duration(200)
         .attr('r', d => {
-          const baseRadius = d.id === currentNodeId ? 20 : Math.max(8, Math.min(18, 8 + d.degree * 2));
+          const degree = typeof d.degree === 'number' && !isNaN(d.degree) ? d.degree : 0;
+          const baseRadius = d.id === currentNodeId ? 20 : Math.max(8, Math.min(18, 8 + degree * 2));
           return baseRadius + 2;
         });
       
-      // Highlight connected edges
+      // Highlight connected edges and nodes, fade others
       graphContent.selectAll('line')
         .attr('stroke-opacity', edge => {
           const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
           const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
-          return (sourceId === d.id || targetId === d.id) ? 1.0 : 0.3;
+          return (sourceId === d.id || targetId === d.id) ? 1.0 : 0.2;
         })
-        .attr('stroke-width', edge => {
+        .attr('marker-opacity', edge => {
           const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
           const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
-          return (sourceId === d.id || targetId === d.id) ? 3 : 2;
+          return (sourceId === d.id || targetId === d.id) ? 1.0 : 0.2;
         })
         .attr('stroke', edge => {
           const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
           const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
-          return (sourceId === d.id || targetId === d.id) ? 'var(--color-primary)' : 'var(--color-text-muted)';
+          return (sourceId === d.id || targetId === d.id) ? 'var(--color-graph-highlight)' : 'var(--color-graph-edge)';
+        });
+      
+      // Fade non-connected nodes  
+      graphContent.selectAll('.node-group')
+        .style('opacity', node => {
+          if (node.id === d.id) return 1.0; // Keep hovered node fully visible
+          // Check if this node is directly connected to the hovered node
+          const isDirectlyConnected = localLinks.some(link => {
+            const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+            const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+            return (sourceId === d.id && targetId === node.id) || (targetId === d.id && sourceId === node.id);
+          });
+          return isDirectlyConnected ? 1.0 : 0.2;
         });
     })
     .on('mouseout', function(event, d) {
       // Reset node size
       d3.select(this).select('circle')
         .transition().duration(200)
-        .attr('r', d => d.id === currentNodeId ? 20 : Math.max(8, Math.min(18, 8 + d.degree * 2)));
+        .attr('r', d => {
+          const degree = typeof d.degree === 'number' && !isNaN(d.degree) ? d.degree : 0;
+          return d.id === currentNodeId ? 20 : Math.max(8, Math.min(18, 8 + degree * 2));
+        });
       
       // Reset edge highlighting
       graphContent.selectAll('line')
         .attr('stroke-opacity', 0.8)
-        .attr('stroke-width', 2)
-        .attr('stroke', 'var(--color-text-muted)');
+        .attr('marker-opacity', 0.8)
+        .attr('stroke', 'var(--color-graph-edge)');
+      
+      // Reset node opacity
+      graphContent.selectAll('.node-group')
+        .style('opacity', 1.0);
     });
     
     // Update simulation

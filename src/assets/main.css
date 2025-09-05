@@ -100,6 +100,12 @@
   
   --color-selection: rgba(124, 58, 237, 0.1);
   --color-highlight: #b08d00;
+  
+  /* Graph colors */
+  --color-graph-node: #72648b;
+  --color-graph-highlight: #8b5cf6;
+  --color-graph-tag: #a6e3a1;
+  --color-graph-edge: #cecece;
 }
 
 /* Dark Theme */
@@ -130,6 +136,12 @@
   
   --color-selection: rgba(124, 58, 237, 0.1);
   --color-highlight: #fef3c7;
+  
+  /* Graph colors */
+  --color-graph-node: #f1f1f1;
+  --color-graph-highlight: #8b5cf6;
+  --color-graph-tag: #a6e3a1;
+  --color-graph-edge: #6b7280;
 }
 
 /* Reset and base styles */

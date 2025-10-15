@@ -23,7 +23,7 @@ export class MermaidProcessor {
     // Create a container that will be processed by mermaid.js on the client side
     // Store the original diagram code in data attribute for theme switching (escaped for attribute safety)
     const escapedDiagram = this.escapeHtml(this.diagram);
-    
+
     return `
       <div class="mermaid-container" id="${this.containerId}-container">
         <pre class="mermaid" id="${this.containerId}" data-diagram="${escapedDiagram}">${this.diagram}</pre>
@@ -35,7 +35,7 @@ export class MermaidProcessor {
    * Escape HTML special characters
    */
   private escapeHtml(text: string): string {
-    const map: { [key: string]: string } = {
+    const map: { [key: string]: string; } = {
       '&': '&amp;',
       '<': '&lt;',
       '>': '&gt;',

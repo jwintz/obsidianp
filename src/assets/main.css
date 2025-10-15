@@ -1076,6 +1076,72 @@ mark {
   -moz-tab-size: 4;
 }
 
+/* Tables in markdown content */
+.note-body table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: var(--space-lg) 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+}
+
+.note-body table thead tr:first-child th:first-child {
+  border-top-left-radius: var(--border-radius);
+}
+
+.note-body table thead tr:first-child th:last-child {
+  border-top-right-radius: var(--border-radius);
+}
+
+.note-body table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: var(--border-radius);
+}
+
+.note-body table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: var(--border-radius);
+}
+
+.note-body table th {
+  background-color: var(--color-bg-tertiary);
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.note-body table th:not(:last-child) {
+  border-right: 1px solid var(--color-border);
+}
+
+.note-body table td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.note-body table td:not(:last-child) {
+  border-right: 1px solid var(--color-border);
+}
+
+.note-body table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.note-body table tbody tr:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+/* Horizontal rules */
+.note-body hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: var(--space-xl) 0;
+}
+
 /* Links */
 .internal-link {
   color: var(--color-link);
@@ -2256,6 +2322,25 @@ body.menu-open {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--font-size-sm);
+  border-radius: var(--border-radius);
+  overflow: hidden; /* Ensure rounded corners are visible */
+}
+
+/* Round the external corners of the table */
+.base-table thead tr:first-child th:first-child {
+  border-top-left-radius: var(--border-radius);
+}
+
+.base-table thead tr:first-child th:last-child {
+  border-top-right-radius: var(--border-radius);
+}
+
+.base-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: var(--border-radius);
+}
+
+.base-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: var(--border-radius);
 }
 
 .base-table th {

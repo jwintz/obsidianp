@@ -104,11 +104,11 @@
   --color-selection: rgba(124, 58, 237, 0.1);
   --color-highlight: #b08d00;
   
-  /* Graph colors */
-  --color-graph-node: #e5e7eb;
-  --color-graph-highlight: #8b5cf6;
+  /* Graph colors - Light theme */
+  --color-graph-node: #9ca3af;
+  --color-graph-highlight: #7c3aed;
   --color-graph-tag: #10b981;
-  --color-graph-edge: #a1a1aa;
+  --color-graph-edge: #d1d5db;
 }
 
 /* Dark Theme */
@@ -141,11 +141,11 @@
   --color-selection: rgba(124, 58, 237, 0.1);
   --color-highlight: #fef3c7;
   
-  /* Graph colors */
-  --color-graph-node: #374151;
-  --color-graph-highlight: #8b5cf6;
+  /* Graph colors - Dark theme */
+  --color-graph-node: #6b7280;
+  --color-graph-highlight: #a78bfa;
   --color-graph-tag: #10b981;
-  --color-graph-edge: #9ca3af;
+  --color-graph-edge: #52525b;
 }
 
 /* Reset and base styles */

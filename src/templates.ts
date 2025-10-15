@@ -19,7 +19,7 @@ export function getLucideIcon(iconName: string, size = 16, className = ''): stri
         .replace(/<svg/, className && !iconSvg.includes('class=') ? `<svg class="${className}"` : '<svg');
 }
 
-export function generateMainTemplate(title: string = "Obsidian Vault"): string {
+export function generateMainTemplate(title: string = "Vault"): string {
     return generateTemplate(title, `
         <article class="note-content" id="note-content">
             <h1>Welcome to your Obsidian vault</h1>
@@ -32,17 +32,23 @@ export function generateMainTemplate(title: string = "Obsidian Vault"): string {
     `);
 }
 
-export function generateBaseHTML(base: Base, title: string = "Obsidian Vault", markdownProcessor?: any): string {
+export function generateBaseHTML(base: Base, vaultTitle: string = "Vault", markdownProcessor?: any): string {
     const baseContent = generateBaseTemplate(base, markdownProcessor);
-    return generateTemplate(title, `
+    // Generate page title as "Base Title - Vault Title"
+    const pageTitle = `${base.title} - ${vaultTitle}`;
+
+    return generateTemplate(pageTitle, `
         <article class="note-content base-page" id="note-content">
             ${baseContent}
         </article>
     `);
 }
 
-export function generateNoteHTML(noteContent: string, title: string = "Note"): string {
-    return generateTemplate(title, `
+export function generateNoteHTML(noteContent: string, vaultTitle: string = "Vault", noteTitle?: string): string {
+    // Generate page title as "Note Title - Vault Title" or just "Vault Title" if no note title
+    const pageTitle = noteTitle ? `${noteTitle} - ${vaultTitle}` : vaultTitle;
+
+    return generateTemplate(pageTitle, `
         <article class="note-content" id="note-content">
             ${noteContent}
         </article>

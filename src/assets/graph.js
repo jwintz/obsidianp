@@ -96,14 +96,15 @@ class GraphView {
     defs.append('marker')
       .attr('id', svgProperty === 'miniSvg' ? 'arrowhead-mini' : 'arrowhead')
       .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 14)
+      .attr('refX', svgProperty === 'miniSvg' ? 10 : 12)
       .attr('refY', 0)
-      .attr('markerWidth', 8)
-      .attr('markerHeight', 8)
+      .attr('markerWidth', svgProperty === 'miniSvg' ? 3 : 4) // Reduced from 4/8 to 3/4
+      .attr('markerHeight', svgProperty === 'miniSvg' ? 3 : 4)
       .attr('orient', 'auto')
       .append('path')
-      .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', 'var(--color-graph-edge)');
+      .attr('d', svgProperty === 'miniSvg' ? 'M0,-3L6,0L0,3' : 'M0,-3L6,0L0,3') // Same small arrow for both
+      .attr('fill', 'var(--color-graph-edge)')
+      .attr('opacity', 0.7);
     
     this[svgProperty] = svg;
   }
@@ -317,7 +318,11 @@ class GraphView {
   initializeLocalGraphControls(containerElement) {
     if (!containerElement) return;
     
-    // Always reinitialize controls to ensure they work with the current container
+    // Check if already initialized for this container to avoid duplicate listeners
+    if (this.localGraphControlsInitialized && this.localGraphControlElements) {
+      return;
+    }
+    
     const panel = containerElement.querySelector('#local-graph-parameters');
     if (!panel) return;
 
@@ -434,6 +439,11 @@ class GraphView {
 
   initializeGlobalGraphControls(containerElement) {
     if (!containerElement) return;
+    
+    // Check if already initialized to avoid duplicate listeners
+    if (this.globalGraphControlsInitialized && this.globalGraphControlElements) {
+      return;
+    }
 
     const panel = containerElement.querySelector('.graph-parameter-panel--global');
     if (!panel) return;
@@ -725,7 +735,20 @@ class GraphView {
 
       if (settings.includeOutgoing && Array.isArray(note.links)) {
         note.links.forEach(targetId => {
-          if (!this.notes.has(targetId) || targetId === id) return;
+          if (!this.notes.has(targetId)) {
+            // Try to find with case-insensitive match
+            const lowerTargetId = targetId.toLowerCase();
+            const matchingId = Array.from(this.notes.keys()).find(noteId => 
+              noteId.toLowerCase() === lowerTargetId || 
+              noteId.toLowerCase().replace(/-/g, '') === lowerTargetId.replace(/\//g, '')
+            );
+            if (matchingId) {
+              enqueue(matchingId, nextDepth, id, 'outgoing');
+              return;
+            }
+            return;
+          }
+          if (targetId === id) return;
           enqueue(targetId, nextDepth, id, 'outgoing');
         });
       }
@@ -1056,19 +1079,23 @@ class GraphView {
       const isTagLink = sourceId.startsWith('tag:') || targetId.startsWith('tag:');
       if (isTagLink && !includeTags) return;
       
-      // For non-tag links, check if we should include based on direction
+      // For non-tag links, check if we should include based on settings
       if (!isTagLink) {
         const isOutgoingEnabled = settings.includeOutgoing !== false;
         const isBacklinksEnabled = settings.includeBacklinks !== false;
         
-        // For global graph, we include all note-to-note links if either direction is enabled
-        if (isOutgoingEnabled || isBacklinksEnabled) {
-          filteredLinks.push({
-            source: sourceId,
-            target: targetId,
-            type: isTagLink ? 'tag' : 'note'
-          });
-        }
+        // If both are disabled, skip all links
+        if (!isOutgoingEnabled && !isBacklinksEnabled) return;
+        
+        // If only one direction is enabled, we still show the link
+        // (In a global graph, link direction isn't always clear without a focal node)
+        // So if either is enabled, show the link
+        
+        filteredLinks.push({
+          source: sourceId,
+          target: targetId,
+          type: 'note'
+        });
       } else {
         // Tag links
         filteredLinks.push({
@@ -1102,6 +1129,18 @@ class GraphView {
       .scaleExtent([0.05, 6])
       .on('zoom', event => {
         graphContent.attr('transform', event.transform);
+        
+        // Adaptive label sizing based on zoom
+        const scale = event.transform.k;
+        graphContent.selectAll('.node-group text')
+          .style('font-size', `${Math.max(7, Math.min(12, 9 / scale))}px`)
+          .style('opacity', d => {
+            // Show labels based on zoom level and node importance
+            const degree = d.degree || 0;
+            if (scale > 1.5) return 0.9; // Show all labels when zoomed in
+            if (scale > 0.8) return degree >= 2 ? 0.7 : 0; // Show connected nodes at medium zoom
+            return degree >= 4 ? 0.6 : 0; // Only major nodes when zoomed out
+          });
       });
 
     svg.call(zoom);
@@ -1112,35 +1151,65 @@ class GraphView {
     const arrowMarker = defs.append('marker')
       .attr('id', 'arrowhead-global')
       .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 15)
+      .attr('refX', 15) // Position to clear nodes
       .attr('refY', 0)
-      .attr('markerWidth', 9)
-      .attr('markerHeight', 9)
+      .attr('markerWidth', 6) // Bigger for visibility
+      .attr('markerHeight', 6)
       .attr('orient', 'auto');
 
     arrowMarker.append('path')
-      .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', 'var(--color-graph-edge)');
+      .attr('d', 'M0,-5L10,0L0,5') // Visible arrow
+      .attr('fill', 'var(--color-graph-edge)')
+      .attr('fill-opacity', 0.6);
 
     const radiusForNode = node => {
       const degree = typeof node.degree === 'number' && !Number.isNaN(node.degree) ? node.degree : 0;
-      const base = Math.max(6, Math.min(18, 6 + degree * 1.8));
-      return node.group === 'tag' ? Math.max(4, base - 4) : base;
+      // Smaller, more consistent node sizes like Obsidian
+      const base = Math.max(4, Math.min(10, 4 + Math.sqrt(degree) * 1.5));
+      return node.group === 'tag' ? Math.max(3, base - 2) : base;
     };
 
     const edgeColor = edge => edge.type === 'tag' ? 'var(--color-graph-tag)' : 'var(--color-graph-edge)';
-    const edgeOpacity = edge => edge.type === 'tag' ? 0.6 : 0.85;
-    const edgeWidth = edge => edge.type === 'tag' ? 1.5 : 2;
-    const edgeDashArray = edge => edge.type === 'tag' ? '4 4' : null;
+    const edgeOpacity = edge => edge.type === 'tag' ? 0.4 : 0.5;
+    const edgeWidth = edge => edge.type === 'tag' ? 0.8 : 1;
+    const edgeDashArray = edge => edge.type === 'tag' ? '2 2' : null;
     const edgeMarker = edge => (showArrows && edge.type !== 'tag' ? 'url(#arrowhead-global)' : null);
 
+    // Obsidian-style force simulation - more organic and brain-like
     const simulation = d3.forceSimulation(globalNodes)
-      .force('link', d3.forceLink(globalLinks).id(d => d.id).distance(70))
-      .force('charge', d3.forceManyBody().strength(-220))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(d => radiusForNode(d) + 6))
-      .alphaDecay(0.045)
-      .alphaMin(0.01);
+      .force('link', d3.forceLink(globalLinks)
+        .id(d => d.id)
+        .distance(d => {
+          // Vary link distance for more organic layout
+          const sourceNode = globalNodes.find(n => n.id === (d.source.id || d.source));
+          const targetNode = globalNodes.find(n => n.id === (d.target.id || d.target));
+          const avgDegree = ((sourceNode?.degree || 0) + (targetNode?.degree || 0)) / 2;
+          return 50 + avgDegree * 3; // Distance increases with connectivity
+        })
+        .strength(0.3))
+      .force('charge', d3.forceManyBody()
+        .strength(d => {
+          // Stronger repulsion for highly connected nodes creates clustering
+          const degree = d.degree || 0;
+          return -120 - degree * 8;
+        }))
+      .force('center', d3.forceCenter(width / 2, height / 2).strength(0.05))
+      .force('collision', d3.forceCollide()
+        .radius(d => radiusForNode(d) + 10)
+        .strength(0.7))
+      // Add radial force for circular layout
+      .force('radial', d3.forceRadial(
+        d => {
+          const degree = d.degree || 0;
+          // More connected nodes closer to center
+          return Math.max(80, Math.min(300, 250 - degree * 10));
+        },
+        width / 2,
+        height / 2
+      ).strength(0.1))
+      .alphaDecay(0.02) // Slower settling for organic movement
+      .alphaMin(0.001)
+      .velocityDecay(0.3); // Lower velocity decay for smoother movement
 
     const links = graphContent.append('g')
       .attr('class', 'links-group')
@@ -1169,16 +1238,34 @@ class GraphView {
 
     nodes.append('circle')
       .attr('r', d => radiusForNode(d))
-      .attr('fill', d => d.group === 'tag' ? 'var(--color-graph-tag)' : 'var(--color-graph-node)')
-      .attr('stroke', 'var(--color-bg-primary)')
-      .attr('stroke-width', 2);
+      .attr('fill', d => {
+        // Only tags have color (green), all other nodes are gray
+        if (d.group === 'tag' || d.id.startsWith('tag:')) return 'var(--color-graph-tag)';
+        return 'var(--color-graph-node)';
+      })
+      .attr('fill-opacity', 0.9)
+      .attr('stroke', d => {
+        // Lighter stroke for better visibility
+        if (d.group === 'tag' || d.id.startsWith('tag:')) return 'var(--color-graph-tag)';
+        return 'var(--color-graph-node)';
+      })
+      .attr('stroke-width', 1.5)
+      .attr('stroke-opacity', 0.8);
 
+    // Only show labels on hover or for important nodes
     nodes.append('text')
-      .text(d => d.title.length > 18 ? `${d.title.substring(0, 18)}…` : d.title)
-      .attr('dx', d => radiusForNode(d) + 8)
+      .text(d => {
+        // Show labels only for highly connected nodes
+        const degree = d.degree || 0;
+        if (degree < 3 && !d.id.startsWith('tag:')) return '';
+        return d.title.length > 15 ? `${d.title.substring(0, 15)}…` : d.title;
+      })
+      .attr('dx', d => radiusForNode(d) + 6)
       .attr('dy', '.35em')
-      .style('font-size', '11px')
-      .style('fill', 'var(--color-text-secondary)');
+      .style('font-size', '9px')
+      .style('fill', 'var(--color-text-secondary)')
+      .style('opacity', 0.7)
+      .style('pointer-events', 'none');
 
     nodes.append('title').text(d => d.title);
 
@@ -1194,54 +1281,69 @@ class GraphView {
       }
     })
     .on('mouseover', function(event, d) {
+      // Show label on hover
+      d3.select(this).select('text')
+        .text(d.title.length > 20 ? `${d.title.substring(0, 20)}…` : d.title)
+        .style('opacity', 1)
+        .style('font-size', '10px')
+        .style('font-weight', '500');
+      
       d3.select(this).select('circle')
-        .transition().duration(200)
-        .attr('r', radiusForNode(d) + 2)
-        .attr('stroke-width', 3);
+        .transition().duration(150)
+        .attr('r', radiusForNode(d) * 1.3)
+        .attr('stroke-width', 2.5)
+        .attr('fill-opacity', 1);
 
+      // Highlight connected edges
       graphContent.selectAll('.links-group line')
         .attr('stroke-opacity', edge => {
           const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
           const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
-          return (sourceId === d.id || targetId === d.id) ? 1.0 : 0.15;
+          return (sourceId === d.id || targetId === d.id) ? 0.9 : 0.1;
         })
-        .attr('marker-opacity', edge => {
+        .attr('stroke-width', edge => {
           const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
           const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
-          return (sourceId === d.id || targetId === d.id) ? 1.0 : 0.15;
-        })
-        .attr('stroke', edge => {
-          const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source;
-          const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target;
-          return (sourceId === d.id || targetId === d.id) ? 'var(--color-graph-highlight)' : edgeColor(edge);
+          return (sourceId === d.id || targetId === d.id) ? 2 : edgeWidth(edge);
         });
 
+      // Highlight connected nodes
       graphContent.selectAll('.node-group')
         .style('opacity', node => {
           if (node.id === d.id) return 1.0;
-          const isDirectlyConnected = globalLinks.some(link => {
+          const isConnected = globalLinks.some(link => {
             const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
             const targetId = typeof link.target === 'object' ? link.target.id : link.target;
             return (sourceId === d.id && targetId === node.id) || (targetId === d.id && sourceId === node.id);
           });
-          return isDirectlyConnected ? 1.0 : 0.2;
+          return isConnected ? 1.0 : 0.15;
         });
     })
-    .on('mouseout', function() {
+    .on('mouseout', function(event, d) {
+      // Hide label unless it's a major node
+      const degree = d.degree || 0;
+      d3.select(this).select('text')
+        .text(degree >= 3 || d.id.startsWith('tag:') 
+          ? (d.title.length > 15 ? `${d.title.substring(0, 15)}…` : d.title)
+          : '')
+        .style('opacity', 0.7)
+        .style('font-size', '9px')
+        .style('font-weight', 'normal');
+      
       graphContent.selectAll('.links-group line')
         .attr('stroke', edgeColor)
         .attr('stroke-opacity', edgeOpacity)
         .attr('stroke-dasharray', edgeDashArray)
         .attr('stroke-width', edgeWidth)
-        .attr('marker-end', edgeMarker)
-        .attr('marker-opacity', 0.8);
+        .attr('marker-end', edgeMarker);
 
       graphContent.selectAll('.node-group')
         .style('opacity', 1.0)
         .select('circle')
-        .transition().duration(180)
+        .transition().duration(150)
         .attr('r', d => radiusForNode(d))
-        .attr('stroke-width', 2);
+        .attr('stroke-width', 1.5)
+        .attr('fill-opacity', 0.9);
     });
 
     simulation.on('tick', () => {
@@ -1254,12 +1356,10 @@ class GraphView {
       nodes.attr('transform', d => `translate(${d.x},${d.y})`);
     });
 
-    simulation.on('end', () => {
-      this.zoomToFitGlobalGraph(graphContent, width, height);
-    });
+    // No zoom-to-fit animation - let graph settle naturally
 
     function dragStarted(event, d) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
+      if (!event.active) simulation.alphaTarget(0.1).restart(); // Reduced from 0.3 for smoother animation
       d.fx = d.x;
       d.fy = d.y;
     }
@@ -1322,22 +1422,24 @@ class GraphView {
     defs.append('marker')
       .attr('id', 'arrowhead-local')
       .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 14)
+      .attr('refX', 15)
       .attr('refY', 0)
-      .attr('markerWidth', 10)
-      .attr('markerHeight', 10)
+      .attr('markerWidth', 6) // Visible size
+      .attr('markerHeight', 6)
       .attr('orient', 'auto')
       .append('path')
-      .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', 'var(--color-graph-edge)');
+      .attr('d', 'M0,-5L10,0L0,5') // Standard arrow
+      .attr('fill', 'var(--color-graph-edge)')
+      .attr('fill-opacity', 0.6);
 
     const showArrows = this.localGraphSettings.showArrows !== false;
 
     const radiusForNode = node => {
-      if (node.id === currentNodeId) return 22;
+      if (node.id === currentNodeId) return 12; // Central node slightly larger but not huge
       const degree = typeof node.degree === 'number' && !Number.isNaN(node.degree) ? node.degree : 0;
-      const base = Math.max(9, Math.min(20, 9 + degree * 2));
-      return node.id.startsWith('tag:') ? Math.max(6, base - 5) : base;
+      // Better scaling: logarithmic for large degrees
+      const base = Math.max(4, Math.min(8, 4 + Math.log(degree + 1) * 2));
+      return node.id.startsWith('tag:') ? Math.max(3, base - 1) : base;
     };
 
     const edgeColor = edge => {
@@ -1346,26 +1448,44 @@ class GraphView {
       return 'var(--color-graph-edge)';
     };
 
-    const edgeOpacity = edge => edge.type === 'tag' ? 0.7 : 0.9;
+    const edgeOpacity = edge => edge.type === 'tag' ? 0.4 : 0.6;
     const edgeWidth = edge => {
-      if (edge.type === 'neighbor') return 3.5;
-      if (edge.type === 'tag') return 2.2;
-      return 2.8;
+      if (edge.type === 'neighbor') return 1.5;
+      if (edge.type === 'tag') return 1;
+      return 1.2;
     };
     const edgeDashArray = edge => {
-      if (edge.type === 'neighbor') return '8 5';
-      if (edge.type === 'tag') return '4 4';
+      if (edge.type === 'neighbor') return '4 3';
+      if (edge.type === 'tag') return '2 2';
       return null;
     };
     const edgeMarker = edge => (showArrows && edge.type !== 'tag' ? 'url(#arrowhead-local)' : null);
 
+    // Better force simulation with collision detection
     const simulation = d3.forceSimulation(localNodes)
-      .force('link', d3.forceLink(localLinks).id(d => d.id).distance(95))
-      .force('charge', d3.forceManyBody().strength(-340))
+      .force('link', d3.forceLink(localLinks)
+        .id(d => d.id)
+        .distance(d => {
+          // Adaptive link distance based on node types
+          const source = localNodes.find(n => n.id === (d.source.id || d.source));
+          const target = localNodes.find(n => n.id === (d.target.id || d.target));
+          if (d.type === 'tag') return 40;
+          if (source?.id === currentNodeId || target?.id === currentNodeId) return 60;
+          return 50;
+        })
+        .strength(0.5))
+      .force('charge', d3.forceManyBody()
+        .strength(d => {
+          // Less repulsion for a tighter layout
+          if (d.id === currentNodeId) return -200;
+          return -80;
+        }))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(d => radiusForNode(d) + 8))
-      .alphaDecay(0.05)
-      .alphaMin(0.01);
+      .force('collision', d3.forceCollide()
+        .radius(d => radiusForNode(d) + 20) // More spacing between nodes
+        .strength(0.8))
+      .alphaDecay(0.02) // Slower settling
+      .alphaMin(0.001);
 
     const links = graphContent.append('g')
       .attr('class', 'links-group')
@@ -1399,15 +1519,26 @@ class GraphView {
         return d.group === 'tag' ? 'var(--color-graph-tag)' : 'var(--color-graph-node)';
       })
       .attr('stroke', 'var(--color-bg-primary)')
-      .attr('stroke-width', d => (d.id === currentNodeId ? 4 : 2));
+      .attr('stroke-width', d => (d.id === currentNodeId ? 3 : 1.5));
 
+    // Smart label rendering
     nodes.append('text')
-      .text(d => d.title.length > 24 ? `${d.title.substring(0, 24)}…` : d.title)
-      .attr('dx', d => radiusForNode(d) + 12)
+      .text(d => {
+        if (d.id === currentNodeId) {
+          return d.title.length > 20 ? `${d.title.substring(0, 20)}…` : d.title;
+        }
+        const degree = d.degree || 0;
+        if (degree >= 3) {
+          return d.title.length > 18 ? `${d.title.substring(0, 18)}…` : d.title;
+        }
+        return '';
+      })
+      .attr('dx', d => radiusForNode(d) + 6)
       .attr('dy', '.35em')
-      .style('font-size', d => (d.id === currentNodeId ? '14px' : '12px'))
-      .style('font-weight', d => (d.id === currentNodeId ? '700' : '500'))
-      .style('fill', d => (d.id === currentNodeId ? 'var(--color-graph-highlight)' : 'var(--color-text-secondary)'));
+      .style('font-size', d => d.id === currentNodeId ? '11px' : '9px')
+      .style('font-weight', d => d.id === currentNodeId ? '600' : 'normal')
+      .style('fill', 'var(--color-text-secondary)')
+      .style('pointer-events', 'none');
 
     nodes.append('title').text(d => d.title);
 
@@ -1423,10 +1554,16 @@ class GraphView {
       }
     })
     .on('mouseover', function(event, d) {
+      // Show label on hover
+      d3.select(this).select('text')
+        .text(d.title.length > 20 ? `${d.title.substring(0, 20)}…` : d.title)
+        .style('font-size', '10px')
+        .style('font-weight', '500');
+      
       d3.select(this).select('circle')
-        .transition().duration(180)
+        .transition().duration(150)
         .attr('r', radiusForNode(d) + 2)
-        .attr('stroke-width', d.id === currentNodeId ? 5 : 3);
+        .attr('stroke-width', d.id === currentNodeId ? 4 : 2.5);
 
       graphContent.selectAll('.links-group line')
         .attr('stroke-opacity', edge => {
@@ -1456,7 +1593,22 @@ class GraphView {
           return isDirectlyConnected ? 1.0 : 0.2;
         });
     })
-    .on('mouseout', function() {
+    .on('mouseout', function(event, d) {
+      // Hide label unless it's a major node or current node
+      const degree = d.degree || 0;
+      d3.select(this).select('text')
+        .text(() => {
+          if (d.id === currentNodeId) {
+            return d.title.length > 20 ? `${d.title.substring(0, 20)}…` : d.title;
+          }
+          if (degree >= 3) {
+            return d.title.length > 18 ? `${d.title.substring(0, 18)}…` : d.title;
+          }
+          return '';
+        })
+        .style('font-size', d.id === currentNodeId ? '11px' : '9px')
+        .style('font-weight', d.id === currentNodeId ? '600' : 'normal');
+      
       graphContent.selectAll('.links-group line')
         .attr('stroke', edgeColor)
         .attr('stroke-dasharray', edgeDashArray)
@@ -1468,9 +1620,9 @@ class GraphView {
       graphContent.selectAll('.node-group')
         .style('opacity', 1.0)
         .select('circle')
-        .transition().duration(180)
+        .transition().duration(150)
         .attr('r', d => radiusForNode(d))
-        .attr('stroke-width', d => (d.id === currentNodeId ? 4 : 2));
+        .attr('stroke-width', d => d.id === currentNodeId ? 3 : 1.5);
     });
 
     simulation.on('tick', () => {

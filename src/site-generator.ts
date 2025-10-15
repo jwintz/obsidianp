@@ -125,6 +125,14 @@ export class SiteGenerator {
     const d3Target = path.join(outputAssetsDir, 'd3.min.js');
     await fs.copyFile(d3JS, d3Target);
 
+    // Copy Mermaid.js for diagram rendering
+    const mermaidJS = path.join(
+      process.cwd(),
+      'node_modules/mermaid/dist/mermaid.min.js'
+    );
+    const mermaidTarget = path.join(outputAssetsDir, 'mermaid.min.js');
+    await fs.copyFile(mermaidJS, mermaidTarget);
+
     // Copy KaTeX fonts to the existing fonts directory
     const katexFontsSource = path.join(
       process.cwd(),

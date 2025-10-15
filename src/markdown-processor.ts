@@ -8,6 +8,7 @@ import { getLucideIcon } from './templates';
 import { BaseProcessor } from './base-processor';
 import { generateCardHtml, getUsedProperties } from './card-renderer';
 import { AbcProcessor } from './abc-processor';
+import { MermaidProcessor } from './mermaid-processor';
 
 export class MarkdownProcessor {
   private linkPattern = /\[\[([^\]]+)\]\]/g;
@@ -74,6 +75,21 @@ export class MarkdownProcessor {
           } catch (error) {
             console.log(`⚠️  ABC rendering failed, falling back to plain text:`, error);
             return `<pre><code class="language-abc">${text}</code></pre>`;
+          }
+        }
+
+        // Handle Mermaid diagrams
+        if (lang === 'mermaid') {
+          try {
+            console.log(`🎨 Processing Mermaid diagram with ${text.length} characters`);
+            // Unescape HTML entities if the text was escaped by marked
+            const unescapedText = this.unescapeHtml(text);
+            const mermaidProcessor = new MermaidProcessor(unescapedText);
+            const result = mermaidProcessor.generateHtml();
+            return result;
+          } catch (error) {
+            console.log(`⚠️  Mermaid rendering failed, falling back to plain text:`, error);
+            return `<pre><code class="language-mermaid">${text}</code></pre>`;
           }
         }
 
@@ -986,6 +1002,18 @@ export class MarkdownProcessor {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  /**
+   * Unescape HTML entities back to original characters
+   */
+  private unescapeHtml(text: string): string {
+    return text
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
   }
 
   /**

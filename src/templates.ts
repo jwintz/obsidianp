@@ -164,7 +164,60 @@ function generateTemplate(title: string, mainContent: string): string {
                         ${getLucideIcon('X', 16)}
                     </button>
                 </div>
-                <div class="graph-modal-container" id="global-graph-container"></div>
+                <div class="graph-modal-container" id="global-graph-container">
+                    <div class="graph-parameter-panel graph-parameter-panel--global" aria-label="Graph display options (global view)">
+                        <div class="graph-parameter-header">
+                            <span class="graph-parameter-title">Display options</span>
+                            <button type="button" class="graph-parameter-reset" id="global-graph-reset" title="Reset to defaults">
+                                ${getLucideIcon('RotateCcw', 14)}
+                                <span>Reset</span>
+                            </button>
+                        </div>
+                        <div class="graph-parameter-section" aria-label="Link types">
+                            <span class="graph-parameter-section-title">Link types</span>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="global-graph-links-toggle" checked>
+                                <span>
+                                    <strong>Links</strong>
+                                    <small>(outgoing)</small>
+                                </span>
+                            </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="global-graph-backlinks-toggle" checked>
+                                <span>
+                                    <strong>Backlinks</strong>
+                                    <small>(incoming)</small>
+                                </span>
+                            </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="global-graph-neighbors-toggle">
+                                <span>
+                                    <strong>Neighbors</strong>
+                                    <small>(siblings)</small>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="graph-parameter-section" aria-label="Additional nodes">
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="global-graph-tags-toggle" checked>
+                                <span>
+                                    <strong>Tags</strong>
+                                    <small>Include tag clusters</small>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="graph-parameter-section" aria-label="Link styling">
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="global-graph-arrows-toggle" checked>
+                                <span>
+                                    <strong>Arrows</strong>
+                                    <small>Show direction of note links</small>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="graph-canvas" id="global-graph-canvas"></div>
+                </div>
             </div>
         </div>
         
@@ -189,13 +242,421 @@ function generateTemplate(title: string, mainContent: string): string {
                         ${getLucideIcon('X', 16)}
                     </button>
                 </div>
-                <div class="graph-modal-container" id="local-graph-container"></div>
+                <div class="graph-modal-container" id="local-graph-container">
+                    <div class="graph-parameter-panel" id="local-graph-parameters" aria-label="Local graph display options">
+                        <div class="graph-parameter-header">
+                            <span class="graph-parameter-title">Display options</span>
+                            <button type="button" class="graph-parameter-reset" id="local-graph-reset" title="Reset to defaults">
+                                ${getLucideIcon('RotateCcw', 14)}
+                                <span>Reset</span>
+                            </button>
+                        </div>
+                        <div class="graph-parameter-section" aria-label="Link types">
+                            <span class="graph-parameter-section-title">Link types</span>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="local-graph-links-toggle" checked>
+                                <span>
+                                    <strong>Links</strong>
+                                    <small>(outgoing)</small>
+                                </span>
+                            </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="local-graph-backlinks-toggle">
+                                <span>
+                                    <strong>Backlinks</strong>
+                                    <small>(incoming)</small>
+                                </span>
+                            </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="local-graph-neighbors-toggle" checked>
+                                <span>
+                                    <strong>Neighbors</strong>
+                                    <small>(siblings)</small>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="graph-parameter-section" aria-label="Traversal depth">
+                            <span class="graph-parameter-section-title">Depth</span>
+                            <div class="graph-parameter-depth">
+                                <input type="range" id="local-graph-depth" min="1" max="5" step="1" value="1" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1">
+                                <span class="graph-parameter-depth-value" id="local-graph-depth-value">1</span>
+                            </div>
+                        </div>
+                        <div class="graph-parameter-section" aria-label="Additional nodes">
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="local-graph-tags-toggle" checked>
+                                <span>
+                                    <strong>Tags</strong>
+                                    <small>(shared tag groups)</small>
+                                </span>
+                            </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="local-graph-arrows-toggle" checked>
+                                <span>
+                                    <strong>Arrows</strong>
+                                    <small>(show direction)</small>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="graph-canvas" id="local-graph-canvas"></div>
+                </div>
             </div>
         </div>
     </div>
     
     <script src="/assets/abcjs-basic-min.js"></script>
+    <script src="/assets/mermaid.min.js"></script>
     <script>
+        // Global Mermaid Diagram Initialization
+        
+        window.initializeMermaid = function() {
+            console.log('=== MERMAID INIT STARTED ===');
+            console.log('typeof mermaid:', typeof mermaid);
+            console.log('document.readyState:', document.readyState);
+            
+            if (typeof mermaid === 'undefined') {
+                console.error('Mermaid library not available');
+                return;
+            }
+            
+            // Get current theme - check BOTH body and documentElement
+            const isDarkTheme = document.body.getAttribute('data-theme') === 'dark' || 
+                               document.documentElement.getAttribute('data-theme') === 'dark';
+            console.log('=== THEME DETECTION ===');
+            console.log('isDarkTheme:', isDarkTheme);
+            console.log('body data-theme:', document.body.getAttribute('data-theme'));
+            console.log('documentElement data-theme:', document.documentElement.getAttribute('data-theme'));
+            
+            // Configure Mermaid with BASE theme for full control
+            const themeConfig = isDarkTheme ? {
+                theme: 'base',
+                themeVariables: {
+                    // CRITICAL: Set dark mode flag
+                    darkMode: true,
+                    
+                    // Base colors - use dark backgrounds
+                    primaryColor: '#374151',
+                    primaryTextColor: '#ffffff',
+                    primaryBorderColor: '#8b5cf6',
+                    
+                    secondaryColor: '#4b5563',
+                    secondaryTextColor: '#ffffff',
+                    secondaryBorderColor: '#8b5cf6',
+                    
+                    tertiaryColor: '#1f2937',
+                    tertiaryTextColor: '#ffffff',
+                    tertiaryBorderColor: '#6b7280',
+                    
+                    // Critical: Main backgrounds
+                    background: '#1e1e1e',
+                    mainBkg: '#374151',
+                    secondBkg: '#4b5563',
+                    tertiaryBkg: '#1f2937',
+                    
+                    // Lines and text
+                    lineColor: '#9ca3af',
+                    textColor: '#ffffff',
+                    
+                    // Borders
+                    border1: '#6b7280',
+                    border2: '#9ca3af',
+                    
+                    // Arrows
+                    arrowheadColor: '#9ca3af',
+                    
+                    // Flowchart
+                    nodeBkg: '#374151',
+                    nodeTextColor: '#ffffff',
+                    nodeBorder: '#8b5cf6',
+                    clusterBkg: '#1f2937',
+                    clusterBorder: '#6b7280',
+                    defaultLinkColor: '#9ca3af',
+                    titleColor: '#ffffff',
+                    edgeLabelBackground: '#1e1e1e',
+                    
+                    // Class diagram - CRITICAL
+                    classText: '#ffffff',
+                    
+                    // State diagram
+                    labelColor: '#ffffff',
+                    
+                    // Sequence diagram
+                    actorBkg: '#374151',
+                    actorBorder: '#8b5cf6',
+                    actorTextColor: '#ffffff',
+                    actorLineColor: '#6b7280',
+                    signalColor: '#9ca3af',
+                    signalTextColor: '#ffffff',
+                    labelBoxBkgColor: '#1e1e1e',
+                    labelBoxBorderColor: '#6b7280',
+                    labelTextColor: '#ffffff',
+                    loopTextColor: '#ffffff',
+                    noteBkgColor: '#4b5563',
+                    noteTextColor: '#ffffff',
+                    noteBorderColor: '#8b5cf6',
+                    activationBkgColor: '#8b5cf6',
+                    activationBorderColor: '#a78bfa',
+                    sequenceNumberColor: '#ffffff',
+                    
+                    // Gantt
+                    gridColor: '#4b5563',
+                    doneTaskBkgColor: '#6b7280',
+                    doneTaskBorderColor: '#9ca3af',
+                    activeTaskBkgColor: '#8b5cf6',
+                    activeTaskBorderColor: '#a78bfa',
+                    taskTextColor: '#ffffff',
+                    taskTextOutsideColor: '#ffffff',
+                    taskTextLightColor: '#ffffff',
+                    taskTextDarkColor: '#ffffff',
+                    taskTextClickableColor: '#ffffff',
+                    todayLineColor: '#ef4444',
+                    sectionBkgColor: '#262626',
+                    sectionBkgColor2: '#374151',
+                    altSectionBkgColor: '#1f2937',
+                    altBackgroundColor: '#1f2937',
+                    
+                    // ER diagram
+                    attributeBackgroundColorOdd: '#374151',
+                    attributeBackgroundColorEven: '#1f2937',
+                    
+                    // Git
+                    git0: '#8b5cf6',
+                    git1: '#a78bfa',
+                    git2: '#c4b5fd',
+                    git3: '#ddd6fe',
+                    gitInv0: '#ffffff',
+                    gitInv1: '#ffffff',
+                    gitInv2: '#1e1e1e',
+                    gitInv3: '#1e1e1e',
+                    commitLabelColor: '#ffffff',
+                    commitLabelBackground: '#374151',
+                    tagLabelColor: '#ffffff',
+                    tagLabelBackground: '#8b5cf6',
+                    tagLabelBorder: '#a78bfa',
+                    
+                    // Font
+                    fontFamily: 'var(--font-family-main)',
+                    fontSize: '14px',
+                }
+            } : {
+                theme: 'base',
+                themeVariables: {
+                    // Base colors  
+                    primaryColor: '#f9fafb',
+                    primaryTextColor: '#1e1e1e',
+                    primaryBorderColor: '#8b5cf6',
+                    
+                    secondaryColor: '#f3f4f6',
+                    secondaryTextColor: '#1e1e1e',
+                    secondaryBorderColor: '#8b5cf6',
+                    
+                    tertiaryColor: '#e5e7eb',
+                    tertiaryTextColor: '#1e1e1e',
+                    tertiaryBorderColor: '#9ca3af',
+                    
+                    // Critical: Main backgrounds
+                    background: '#ffffff',
+                    mainBkg: '#f9fafb',
+                    secondBkg: '#f3f4f6',
+                    tertiaryBkg: '#e5e7eb',
+                    
+                    // Lines and text
+                    lineColor: '#9ca3af',
+                    textColor: '#1e1e1e',
+                    
+                    // Borders
+                    border1: '#d1d5db',
+                    border2: '#9ca3af',
+                    
+                    // Arrows
+                    arrowheadColor: '#6b7280',
+                    
+                    // Flowchart
+                    nodeBkg: '#f9fafb',
+                    nodeTextColor: '#1e1e1e',
+                    nodeBorder: '#8b5cf6',
+                    clusterBkg: '#f3f4f6',
+                    clusterBorder: '#9ca3af',
+                    defaultLinkColor: '#6b7280',
+                    titleColor: '#1e1e1e',
+                    edgeLabelBackground: '#ffffff',
+                    
+                    // Class diagram
+                    classText: '#1e1e1e',
+                    
+                    // State diagram
+                    labelColor: '#1e1e1e',
+                    
+                    // Sequence diagram
+                    actorBkg: '#f3f4f6',
+                    actorBorder: '#8b5cf6',
+                    actorTextColor: '#1e1e1e',
+                    actorLineColor: '#d1d5db',
+                    signalColor: '#6b7280',
+                    signalTextColor: '#1e1e1e',
+                    labelBoxBkgColor: '#ffffff',
+                    labelBoxBorderColor: '#d1d5db',
+                    labelTextColor: '#1e1e1e',
+                    loopTextColor: '#1e1e1e',
+                    noteBkgColor: '#fef3c7',
+                    noteTextColor: '#1e1e1e',
+                    noteBorderColor: '#d97706',
+                    activationBkgColor: '#8b5cf6',
+                    activationBorderColor: '#a78bfa',
+                    sequenceNumberColor: '#ffffff',
+                    
+                    // Gantt
+                    gridColor: '#d1d5db',
+                    doneTaskBkgColor: '#d1d5db',
+                    doneTaskBorderColor: '#9ca3af',
+                    activeTaskBkgColor: '#8b5cf6',
+                    activeTaskBorderColor: '#a78bfa',
+                    taskTextColor: '#1e1e1e',
+                    taskTextOutsideColor: '#1e1e1e',
+                    taskTextLightColor: '#1e1e1e',
+                    taskTextDarkColor: '#ffffff',
+                    taskTextClickableColor: '#1e1e1e',
+                    todayLineColor: '#ef4444',
+                    sectionBkgColor: '#ffffff',
+                    sectionBkgColor2: '#f3f4f6',
+                    altSectionBkgColor: '#f9fafb',
+                    altBackgroundColor: '#f9fafb',
+                    
+                    // ER diagram
+                    attributeBackgroundColorOdd: '#f9fafb',
+                    attributeBackgroundColorEven: '#f3f4f6',
+                    
+                    // Git
+                    git0: '#8b5cf6',
+                    git1: '#a78bfa',
+                    git2: '#c4b5fd',
+                    git3: '#ddd6fe',
+                    gitInv0: '#ffffff',
+                    gitInv1: '#ffffff',
+                    gitInv2: '#1e1e1e',
+                    gitInv3: '#1e1e1e',
+                    commitLabelColor: '#1e1e1e',
+                    commitLabelBackground: '#f3f4f6',
+                    tagLabelColor: '#ffffff',
+                    tagLabelBackground: '#8b5cf6',
+                    tagLabelBorder: '#a78bfa',
+                    
+                    // Font
+                    fontFamily: 'var(--font-family-main)',
+                    fontSize: '14px',
+                }
+            };
+            
+            mermaid.initialize({
+                startOnLoad: false,
+                ...themeConfig,
+                flowchart: {
+                    useMaxWidth: true,
+                    htmlLabels: true,
+                    curve: 'basis',
+                    padding: 20,
+                },
+                sequence: {
+                    useMaxWidth: true,
+                    wrap: true,
+                    diagramMarginX: 50,
+                    diagramMarginY: 10,
+                    boxMargin: 10,
+                    boxTextMargin: 5,
+                    noteMargin: 10,
+                    messageMargin: 35,
+                },
+                gantt: {
+                    useMaxWidth: true,
+                    leftPadding: 75,
+                    gridLineStartPadding: 35,
+                    fontSize: 14,
+                    numberSectionStyles: 4,
+                },
+                class: {
+                    useMaxWidth: true,
+                },
+                state: {
+                    useMaxWidth: true,
+                },
+                er: {
+                    useMaxWidth: true,
+                },
+                pie: {
+                    useMaxWidth: true,
+                },
+                git: {
+                    useMaxWidth: true,
+                },
+                securityLevel: 'loose',
+            });
+            console.log('Mermaid initialized with', isDarkTheme ? 'dark' : 'light', 'theme');
+            
+            // Find all mermaid diagrams
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            console.log('Found', mermaidElements.length, 'Mermaid diagram elements');
+            
+            // Render all diagrams
+            if (mermaidElements.length > 0) {
+                console.log('Calling mermaid.run()...');
+                mermaid.run({
+                    querySelector: '.mermaid'
+                }).then(() => {
+                    console.log('Mermaid rendering completed successfully');
+                }).catch(error => {
+                    console.error('Mermaid rendering error:', error);
+                });
+            } else {
+                console.warn('No Mermaid elements found to render!');
+            }
+        };
+        
+        // Re-initialize Mermaid when theme changes
+        window.addEventListener('themechange', function() {
+            console.log('=== THEME CHANGE EVENT ===');
+            console.log('Theme changed, re-initializing Mermaid diagrams');
+            
+            // Helper function to decode HTML entities
+            function decodeHtml(html) {
+                const txt = document.createElement('textarea');
+                txt.innerHTML = html;
+                return txt.value;
+            }
+            
+            // Clear all existing SVG renders and restore original code
+            document.querySelectorAll('.mermaid').forEach(el => {
+                // Find and remove the SVG
+                const svg = el.querySelector('svg');
+                if (svg) {
+                    console.log('Removing SVG from element:', el.id);
+                    svg.remove();
+                }
+                
+                // Remove Mermaid-added attributes to force complete re-render
+                el.removeAttribute('data-processed');
+                
+                // Restore original Mermaid code from data attribute (decode HTML entities)
+                const encodedContent = el.getAttribute('data-diagram');
+                if (encodedContent) {
+                    const decodedContent = decodeHtml(encodedContent);
+                    console.log('Restoring original content for:', el.id);
+                    el.textContent = decodedContent;
+                } else {
+                    console.warn('No original content found for:', el.id);
+                }
+            });
+            
+            // CRITICAL: Wait for DOM cleanup and theme application
+            setTimeout(() => {
+                console.log('Calling initializeMermaid after theme change');
+                window.initializeMermaid();
+            }, 150);
+        });
+        
+        // Wait for window load event to ensure all DOM is parsed
+        window.addEventListener('load', window.initializeMermaid);
+        
         // Global ABC Music Notation Initialization
         
         window.initializeABCNotation = function(containerId) {

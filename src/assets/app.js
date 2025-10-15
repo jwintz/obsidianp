@@ -180,6 +180,9 @@ class ObsidianSSGApp {
     document.body.setAttribute('data-theme', theme);
     document.body.className = `theme-${theme}`;
     localStorage.setItem('obsidian-theme', theme);
+    
+    // Dispatch custom event for theme change
+    window.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
   }
   
   initializeSearch() {
@@ -820,6 +823,11 @@ class ObsidianSSGApp {
       if (window.initializeAllABCNotation) {
         window.initializeAllABCNotation();
       }
+      
+      // Initialize Mermaid diagrams after content is loaded
+      if (window.initializeMermaid) {
+        window.initializeMermaid();
+      }
     }
     
     // Update backlinks
@@ -884,6 +892,11 @@ class ObsidianSSGApp {
       
       // Initialize base interactions
       this.initializeBaseInteractions(base);
+      
+      // Initialize Mermaid diagrams if any
+      if (window.initializeMermaid) {
+        window.initializeMermaid();
+      }
     }
     
     // Update active state in sidebar and expand hierarchy

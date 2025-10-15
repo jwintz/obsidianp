@@ -5,7 +5,7 @@ Convert your Obsidian vault into a beautiful, interactive static website with wi
 ## Features
 
 - **Wiki-link Support**: `[[Note Name]]` and `[[Note Name|Display Text]]` links
-- **Interactive Graph View**: Visualize note relationships
+- **Interactive Graph View**: Visualize note relationships with configurable local graph controls (toggle outgoing/backlinks/sibling links, adjust traversal depth, and show/hide tags)
 - **Full-text Search**: Fast client-side search
 - **Light/Dark Theme**: Automatic theme switching
 - **Math Rendering**: Server-side KaTeX processing

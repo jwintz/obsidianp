@@ -52,6 +52,7 @@
   --font-size-3xl: 32px;
   
   /* Spacing */
+  --space-2xs: 2px;
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
@@ -64,6 +65,7 @@
   --right-sidebar-width: 300px;
   --border-radius: 6px;
   --border-radius-sm: 4px;
+  --border-radius-lg: 12px;
   
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -91,6 +93,7 @@
   --color-text-faint: #9f94b8;
   
   --color-border: #e9e9e9;
+  --color-border-subtle: #f4f4f4;
   --color-border-hover: #a9a9a9;
   --color-border-focus: #8b5cf6;
 
@@ -102,10 +105,10 @@
   --color-highlight: #b08d00;
   
   /* Graph colors */
-  --color-graph-node: #72648b;
+  --color-graph-node: #e5e7eb;
   --color-graph-highlight: #8b5cf6;
-  --color-graph-tag: #a6e3a1;
-  --color-graph-edge: #cecece;
+  --color-graph-tag: #10b981;
+  --color-graph-edge: #a1a1aa;
 }
 
 /* Dark Theme */
@@ -127,6 +130,7 @@
   --color-text-faint: #9f94b8;
   
   --color-border: #565656;
+  --color-border-subtle: #2e2e2e;
   --color-border-hover: #868686;
   --color-border-focus: #8b5cf6;
 
@@ -138,10 +142,10 @@
   --color-highlight: #fef3c7;
   
   /* Graph colors */
-  --color-graph-node: #f1f1f1;
+  --color-graph-node: #374151;
   --color-graph-highlight: #8b5cf6;
-  --color-graph-tag: #a6e3a1;
-  --color-graph-edge: #6b7280;
+  --color-graph-tag: #10b981;
+  --color-graph-edge: #9ca3af;
 }
 
 /* Reset and base styles */
@@ -635,7 +639,7 @@ mark {
   width: 90vw;
   height: 85vh;
   max-width: 1200px;
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-secondary);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
   display: flex;
@@ -743,6 +747,206 @@ mark {
   flex: 1;
   overflow: hidden;
   position: relative;
+  display: flex;
+}
+
+.graph-canvas {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  flex: 1;
+  background: var(--color-bg-primary);
+  border-radius: 8px;
+}
+
+.graph-empty-state {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-lg);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  opacity: 0.75;
+}
+
+.graph-parameter-panel {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  width: min(280px, 32vw);
+  max-height: calc(100% - 2 * var(--space-md));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: color-mix(in srgb, var(--color-bg-secondary) 80%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+}
+
+.graph-parameter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.graph-parameter-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.graph-parameter-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs) var(--space-xs);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border: none;
+  border-radius: calc(var(--border-radius) - 2px);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.graph-parameter-reset svg {
+  width: 14px;
+  height: 14px;
+}
+
+.graph-parameter-reset:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-elevated);
+}
+
+.graph-parameter-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.graph-parameter-section-title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.graph-parameter-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.graph-parameter-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  margin: 0;
+}
+
+.graph-parameter-toggle strong {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  display: block;
+}
+
+.graph-parameter-toggle small {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  display: block;
+}
+
+.graph-parameter-toggle:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.graph-parameter-depth {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.graph-parameter-depth input[type="range"] {
+  flex: 1;
+  accent-color: var(--color-primary);
+}
+
+.graph-parameter-depth-value {
+  min-width: 2ch;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-align: right;
+}
+
+.graph-parameter-description {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.graph-parameter-toggle--disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.graph-parameter-toggle--disabled input {
+  cursor: not-allowed;
+}
+
+.graph-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-lg);
+  min-height: 280px;
+  border-radius: var(--border-radius-lg);
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-bg-secondary) 70%, transparent);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .graph-parameter-panel {
+    position: static;
+    width: 100%;
+    max-height: none;
+    margin-bottom: var(--space-md);
+    backdrop-filter: none;
+  }
+
+  .graph-modal-container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .graph-canvas {
+    flex: 1;
+  }
 }
 
 .breadcrumb {
@@ -2881,4 +3085,273 @@ body.menu-open {
 /* Hide abcjs warning messages */
 .abcjs-css-warning {
   display: none;
+}
+
+/* ================================================ Mermaid Diagram Styles ================================================ */
+
+/* Mermaid container styling */
+.mermaid-container {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  overflow: visible;
+}
+
+/* Mermaid diagram itself */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100px;
+  font-family: var(--font-family-main);
+}
+
+/* Override Mermaid's default SVG styles */
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* FORCE all text to be visible with high contrast */
+.mermaid text,
+.mermaid .nodeLabel,
+.mermaid .edgeLabel,
+.mermaid .label,
+.mermaid tspan {
+  fill: var(--color-text-primary) !important;
+  font-family: var(--font-family-main) !important;
+  font-size: 14px !important;
+}
+
+/* Dark theme - ensure white text on ALL elements */
+[data-theme="dark"] .mermaid text,
+[data-theme="dark"] .mermaid .nodeLabel,
+[data-theme="dark"] .mermaid .edgeLabel,
+[data-theme="dark"] .mermaid .label,
+[data-theme="dark"] .mermaid tspan,
+[data-theme="dark"] .mermaid .labelText,
+[data-theme="dark"] .mermaid .classLabel text,
+[data-theme="dark"] .mermaid .stateLabel text,
+[data-theme="dark"] .mermaid foreignObject div {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* Light theme - ensure dark text on ALL elements */
+[data-theme="light"] .mermaid text,
+[data-theme="light"] .mermaid .nodeLabel,
+[data-theme="light"] .mermaid .edgeLabel,
+[data-theme="light"] .mermaid .label,
+[data-theme="light"] .mermaid tspan,
+[data-theme="light"] .mermaid .labelText,
+[data-theme="light"] .mermaid .classLabel text,
+[data-theme="light"] .mermaid .stateLabel text,
+[data-theme="light"] .mermaid foreignObject div {
+  fill: #1e1e1e !important;
+  color: #1e1e1e !important;
+}
+
+/* DO NOT override rect fills - let Mermaid handle them */
+
+/* DO NOT override rect fills - let Mermaid handle them */
+
+/* Node styling with borders only */
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon,
+.mermaid .node path {
+  stroke-width: 2.5px !important;
+}
+
+/* Edge/Line styling - thicker for visibility */
+.mermaid .edgePath path,
+.mermaid .flowchart-link,
+.mermaid path.path {
+  stroke-width: 2.5px !important;
+}
+
+/* Edge labels - ensure background contrast */
+.mermaid .edgeLabel {
+  background-color: var(--color-bg-secondary) !important;
+  padding: 6px 10px !important;
+  border-radius: 4px !important;
+}
+
+.mermaid .edgeLabel rect {
+  fill: var(--color-bg-secondary) !important;
+  stroke: var(--color-border) !important;
+  stroke-width: 1px !important;
+}
+
+/* Class diagram - let Mermaid theme handle fills, only enforce text */
+/* Force class diagram labels to be visible */
+[data-theme="dark"] .mermaid .classLabel .label,
+[data-theme="dark"] .mermaid .classLabel text,
+[data-theme="dark"] .mermaid .classGroup text {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .mermaid .classLabel .label,
+[data-theme="light"] .mermaid .classLabel text,
+[data-theme="light"] .mermaid .classGroup text {
+  fill: #1e1e1e !important;
+  color: #1e1e1e !important;
+}
+
+/* Class label backgrounds should not obscure text */
+.mermaid .classLabel .box {
+  fill: transparent !important;
+  stroke: none !important;
+}
+
+/* ER diagram - let Mermaid theme handle fills */
+/* ER diagram labels */
+[data-theme="dark"] .mermaid .er .entityLabel,
+[data-theme="dark"] .mermaid .er.attributeBoxOdd text,
+[data-theme="dark"] .mermaid .er.attributeBoxEven text {
+  fill: #ffffff !important;
+}
+
+[data-theme="light"] .mermaid .er .entityLabel,
+[data-theme="light"] .mermaid .er.attributeBoxOdd text,
+[data-theme="light"] .mermaid .er.attributeBoxEven text {
+  fill: #1e1e1e !important;
+}
+
+/* State diagram - let Mermaid theme handle fills */
+/* State diagram labels */
+[data-theme="dark"] .mermaid .stateLabel text,
+[data-theme="dark"] .mermaid .stateGroup text {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .mermaid .stateLabel text,
+[data-theme="light"] .mermaid .stateGroup text {
+  fill: #1e1e1e !important;
+  color: #1e1e1e !important;
+}
+
+/* Sequence diagram */
+[data-theme="dark"] .mermaid .actor {
+  fill: #374151 !important;
+  stroke: #8b5cf6 !important;
+  stroke-width: 2px !important;
+}
+
+[data-theme="light"] .mermaid .actor {
+  fill: #f3f4f6 !important;
+  stroke: #8b5cf6 !important;
+  stroke-width: 2px !important;
+}
+
+.mermaid .actor-line {
+  stroke: var(--color-border) !important;
+  stroke-width: 2px !important;
+}
+
+.mermaid .messageLine0,
+.mermaid .messageLine1 {
+  stroke-width: 2px !important;
+  stroke: #6b7280 !important;
+}
+
+/* Gantt chart - ensure all text is visible */
+.mermaid .grid .tick text,
+.mermaid .taskText,
+.mermaid .sectionTitle,
+.mermaid .titleText {
+  fill: var(--color-text-primary) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+[data-theme="dark"] .mermaid .grid .tick text,
+[data-theme="dark"] .mermaid .taskText,
+[data-theme="dark"] .mermaid .sectionTitle,
+[data-theme="dark"] .mermaid .titleText {
+  fill: #ffffff !important;
+}
+
+[data-theme="light"] .mermaid .grid .tick text,
+[data-theme="light"] .mermaid .taskText,
+[data-theme="light"] .mermaid .sectionTitle,
+[data-theme="light"] .mermaid .titleText {
+  fill: #1e1e1e !important;
+}
+
+/* Git graph - larger, more visible labels */
+.mermaid .commit-id,
+.mermaid .commit-msg,
+.mermaid .branch-label {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  fill: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .mermaid .commit-id,
+[data-theme="dark"] .mermaid .commit-msg,
+[data-theme="dark"] .mermaid .branch-label {
+  fill: #ffffff !important;
+}
+
+[data-theme="light"] .mermaid .commit-id,
+[data-theme="light"] .mermaid .commit-msg,
+[data-theme="light"] .mermaid .branch-label {
+  fill: #1e1e1e !important;
+}
+
+/* Pie chart */
+.mermaid .pieTitleText,
+.mermaid .legendText {
+  fill: var(--color-text-primary) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+/* Cluster/Subgraph styling with proper contrast */
+[data-theme="dark"] .mermaid .cluster rect {
+  fill: #1f2937 !important;
+  stroke: #6b7280 !important;
+  stroke-width: 2px !important;
+}
+
+[data-theme="light"] .mermaid .cluster rect {
+  fill: #f3f4f6 !important;
+  stroke: #9ca3af !important;
+  stroke-width: 2px !important;
+}
+
+/* Flowchart - let Mermaid theme handle node fills */
+
+/* Mermaid error state */
+.mermaid-error {
+  background-color: #ef4444;
+  color: white;
+  padding: var(--space-md);
+  text-align: center;
+  font-weight: 500;
+  border-radius: var(--border-radius);
+  margin: var(--space-md) 0;
+}
+
+/* Interactive feedback */
+.mermaid-container:hover {
+  border-color: var(--color-border-hover);
+}
+
+/* Ensure diagrams are responsive */
+@media (max-width: 768px) {
+  .mermaid-container {
+    padding: 0;
+  }
+  
+  .mermaid svg {
+    max-width: 100%;
+  }
 }

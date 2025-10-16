@@ -1578,15 +1578,13 @@ class ObsidianSSGApp {
     if (!imageConfig || !note) return null;
     
     // Derive folderPath from note ID if not present
-    // e.g., "benchmarks/six_hump_camel/six_hump_camel" -> "Benchmarks/six_hump_camel"
+    // e.g., "benchmarks/six_hump_camel/six_hump_camel" -> "benchmarks/six_hump_camel"
     let folderPath = note.folderPath;
     if (!folderPath && note.id) {
       const parts = note.id.split('/');
       if (parts.length > 1) {
-        // Remove the last part (filename) and capitalize first letter of each part
-        folderPath = parts.slice(0, -1).map(part => 
-          part.charAt(0).toUpperCase() + part.slice(1)
-        ).join('/');
+        // Remove the last part (filename) - preserve exact case from note ID
+        folderPath = parts.slice(0, -1).join('/');
       }
     }
     

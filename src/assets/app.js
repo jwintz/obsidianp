@@ -43,15 +43,8 @@ class ObsidianSSGApp {
         pathId = pathId.substring(0, pathId.length - 5);
       }
       
-      // Check if it's a base path (starts with "bases/")
-      if (pathId.startsWith('bases/')) {
-        // Extract base ID by removing "bases/" prefix
-        const basePath = pathId.substring(6); // Remove "bases/"
-        // Keep base ID as lowercase to match the base ID generation
-        noteId = basePath.toLowerCase();
-      } else {
-        noteId = pathId;
-      }
+      // Don't check for "bases/" prefix anymore since bases are in their folders
+      noteId = pathId;
     }
     
     // Fall back to query parameter for backwards compatibility
@@ -71,10 +64,22 @@ class ObsidianSSGApp {
     // Render initial content - expand to the note that will be loaded
     this.renderSidebar(noteId);
     
+    // Check if noteId is a base - try exact match first, then try last path segment
+    let baseId = null;
+    if (this.bases.has(noteId)) {
+      baseId = noteId;
+    } else if (noteId.includes('/')) {
+      // Try the last segment of the path (e.g., "benchmarks/benchmarks" -> "benchmarks")
+      const lastSegment = noteId.split('/').pop();
+      if (this.bases.has(lastSegment)) {
+        baseId = lastSegment;
+      }
+    }
+    
     if (noteId) {
       // Check if it's a base first
-      if (this.bases.has(noteId)) {
-        this.loadBase(noteId);
+      if (baseId) {
+        this.loadBase(baseId);
       } else {
         this.loadNote(noteId);
       }
@@ -250,23 +255,40 @@ class ObsidianSSGApp {
     });
     
     // Render embedded cards using client-side code for consistency
+    // This handles both embedded cards and standalone base page cards
     this.renderEmbeddedCards();
   }
   
   renderEmbeddedCards() {
     // Find all cards-view elements with data-base-cards attribute
     const embeddedCardsViews = document.querySelectorAll('.cards-view[data-base-cards]');
-    embeddedCardsViews.forEach(cardsView => {
+    
+    embeddedCardsViews.forEach((cardsView, index) => {
       try {
         const baseData = JSON.parse(cardsView.dataset.baseCards);
-        const { notes, view, filters } = baseData;
+        const { noteIds, notes: legacyNotes, view, filters, properties } = baseData;  // Include properties
+        
+        // Retrieve full note objects from this.notes using the IDs
+        let notes;
+        if (noteIds) {
+          notes = noteIds.map(id => this.notes.get(id)).filter(note => note);
+        } else if (legacyNotes) {
+          // Fallback for server-rendered HTML with old format
+          notes = legacyNotes.map(legacyNote => {
+            // Try to get full note from this.notes, or use legacy note as fallback
+            return this.notes.get(legacyNote.id) || legacyNote;
+          });
+        } else {
+          console.error('No noteIds or notes found in base data');
+          return;
+        }
         
         // Use the same rendering logic as standalone bases
         const cardsContainer = cardsView.querySelector('.cards-container');
         if (cardsContainer) {
-          const usedProperties = this.getUsedProperties(view, filters);
+          const usedProperties = this.getUsedProperties(view, filters, properties);  // Pass properties
           const cardsHtml = notes.map(note => {
-            return this.generateCardHtml(note, usedProperties, 150, view); // Pass view parameter
+            return this.generateCardHtml(note, usedProperties, 150, view, properties);  // Pass properties to card generation
           }).join('');
           cardsContainer.innerHTML = cardsHtml;
         }
@@ -869,9 +891,12 @@ class ObsidianSSGApp {
     this.currentBase = base;
     this.currentNote = null; // Clear current note
     
-    // Update URL and history - use proper base path
+    // Update URL and history - use the base's folder path, not "bases/"
     if (addToHistory) {
-      const basePath = `/bases/${baseId.toLowerCase()}`;
+      // Construct path from base's folder path and file name
+      const basePath = base.folderPath 
+        ? `/${base.folderPath.toLowerCase()}/${baseId.toLowerCase()}`
+        : `/${baseId.toLowerCase()}`;
       const baseUrl = `${window.location.origin}${basePath}`;
       window.history.pushState({ baseId }, base.title, baseUrl);
     }
@@ -888,10 +913,20 @@ class ObsidianSSGApp {
     // Update main content with base view
     const noteContent = document.getElementById('note-content');
     if (noteContent) {
-      noteContent.innerHTML = this.renderBaseView(base);
+      // Only re-render if navigating (addToHistory=true) or if content is different
+      // On initial page load with addToHistory=false, the content is already rendered by server
+      const hasBaseHeader = noteContent.querySelector('.base-header');
+      const shouldRender = addToHistory || !hasBaseHeader;
       
-      // Initialize base interactions
+      if (shouldRender) {
+        noteContent.innerHTML = this.renderBaseView(base);
+      }
+      
+      // Always initialize base interactions (buttons, etc)
       this.initializeBaseInteractions(base);
+      
+      // Always render cards to ensure they display correctly
+      this.renderEmbeddedCards();
       
       // Initialize Mermaid diagrams if any
       if (window.initializeMermaid) {
@@ -1250,8 +1285,18 @@ class ObsidianSSGApp {
   /**
    * Determine which properties are used for filtering and sorting
    */
-  getUsedProperties(baseView, baseFilters) {
+  getUsedProperties(baseView, baseFilters, baseProperties = null) {
     const usedProperties = new Set();
+    
+    // First, add properties explicitly defined in the base configuration
+    if (baseProperties) {
+      Object.keys(baseProperties).forEach(propName => {
+        // Skip the cover_image property as it's used for the card image
+        if (propName !== 'cover_image' && !propName.startsWith('file.')) {
+          usedProperties.add(propName);
+        }
+      });
+    }
     
     // Add properties used in filtering from the base configuration
     if (baseFilters) {
@@ -1269,8 +1314,7 @@ class ObsidianSSGApp {
       });
     }
     
-    // If no specific filtering/sorting properties are identified, fall back to showing tags only
-    // since most bases use tags for filtering
+    // If no specific properties are identified, fall back to showing tags only
     if (usedProperties.size === 0) {
       usedProperties.add('file.tags');
     }
@@ -1330,7 +1374,7 @@ class ObsidianSSGApp {
   /**
    * Generate card HTML for a single note
    */
-  generateCardHtml(note, usedProperties, contentPreviewLength = 150, view = null) {
+  generateCardHtml(note, usedProperties, contentPreviewLength = 150, view = null, baseProperties = null) {
     // Generate top section (image or skeleton)
     const topSectionHtml = this.generateCardTopSection(note, view);
 
@@ -1342,7 +1386,7 @@ class ObsidianSSGApp {
     </div>`;
 
     // Generate properties table for filtering/sorting fields
-    const propertiesTableHtml = this.generateCardPropertiesTable(usedProperties, note);
+    const propertiesTableHtml = this.generateCardPropertiesTable(usedProperties, note, baseProperties);
 
     return `<div class="card" data-note-id="${note.id}">
         ${topSectionHtml}
@@ -1533,13 +1577,38 @@ class ObsidianSSGApp {
   getImageFromNote(note, imageConfig) {
     if (!imageConfig || !note) return null;
     
+    // Derive folderPath from note ID if not present
+    // e.g., "benchmarks/six_hump_camel/six_hump_camel" -> "Benchmarks/six_hump_camel"
+    let folderPath = note.folderPath;
+    if (!folderPath && note.id) {
+      const parts = note.id.split('/');
+      if (parts.length > 1) {
+        // Remove the last part (filename) and capitalize first letter of each part
+        folderPath = parts.slice(0, -1).map(part => 
+          part.charAt(0).toUpperCase() + part.slice(1)
+        ).join('/');
+      }
+    }
+    
     // Handle note.cover or similar property references
     if (imageConfig.startsWith('note.')) {
       const property = imageConfig.substring(5); // Remove 'note.' prefix
       
       // Try frontmatter first
       if (note.frontMatter && note.frontMatter[property]) {
-        return note.frontMatter[property];
+        let imagePath = note.frontMatter[property];
+        
+        // If it's a relative path, prepend the note's folder path
+        if (imagePath && !imagePath.startsWith('/') && !imagePath.startsWith('http')) {
+          const noteFolderPath = folderPath || '';
+          if (noteFolderPath !== '') {
+            imagePath = `/${noteFolderPath}/${imagePath}`;
+          } else {
+            imagePath = `/${imagePath}`;
+          }
+        }
+        
+        return imagePath;
       }
       
       // Try other note properties
@@ -1554,7 +1623,7 @@ class ObsidianSSGApp {
   /**
    * Generate properties table for filtering and sorting fields
    */
-  generateCardPropertiesTable(usedProperties, note) {
+  generateCardPropertiesTable(usedProperties, note, baseProperties = null) {
     if (!usedProperties || usedProperties.length === 0) {
       return '';
     }
@@ -1565,7 +1634,7 @@ class ObsidianSSGApp {
         const value = this.getColumnValue(note, property);
         if (!value) return '';
 
-        const label = this.getPropertyLabel(property);
+        const label = this.getPropertyLabel(property, baseProperties);
         
         // Special handling for different property types
         let valueHtml = '';
@@ -1601,7 +1670,13 @@ class ObsidianSSGApp {
   /**
    * Get human-readable label for property
    */
-  getPropertyLabel(property) {
+  getPropertyLabel(property, baseProperties = null) {
+    // First check if there's a displayName in the base properties configuration
+    if (baseProperties && baseProperties[property]?.displayName) {
+      return baseProperties[property].displayName;
+    }
+    
+    // Fall back to built-in property names
     switch (property) {
       case 'file.tags': return 'file tags';
       case 'file.mtime': return 'modified time';
@@ -1613,17 +1688,20 @@ class ObsidianSSGApp {
   }
   
   renderCardsView(notes, view, base = null) {
-    // Use the same logic for both embedded and standalone
+    // Use client-side rendering for consistency
     const filters = base?.filters || null;
-    const usedProperties = this.getUsedProperties(view, filters);
-    
-    const cardsHtml = notes.map(note => {
-      return this.generateCardHtml(note, usedProperties, 150, view); // Pass view parameter
-    }).join('');
+    const baseProperties = base?.properties || null;  // Include base properties for card display
+    const baseData = {
+      noteIds: notes.map(note => note.id),  // Store only IDs, not full note objects
+      view: view,
+      filters: filters,
+      properties: baseProperties  // Pass properties to client-side
+    };
 
-    return `<div class="cards-view">
+    // Return a placeholder that will be rendered client-side
+    return `<div class="cards-view" data-base-cards='${JSON.stringify(baseData).replace(/'/g, "&apos;")}'>
         <div class="cards-container">
-            ${cardsHtml}
+            <!-- Cards will be rendered by client-side JavaScript -->
         </div>
     </div>`;
   }  renderTableView(notes, view) {
@@ -1816,47 +1894,35 @@ class ObsidianSSGApp {
     
     // Embed view buttons for embedded bases
     const embedViewButtons = document.querySelectorAll('.embed-view-button');
-    console.log(`Found ${embedViewButtons.length} embed view buttons`);
     embedViewButtons.forEach(button => {
       button.addEventListener('click', (e) => {
-        console.log('Embed view button clicked:', e.currentTarget);
         e.stopPropagation();
         const viewType = e.currentTarget.dataset.viewType;
         const viewName = e.currentTarget.dataset.viewName;
-        console.log(`View type: ${viewType}, view name: ${viewName}`);
         
         // Find the embed container and get the base ID
         const embedContainer = e.currentTarget.closest('.embed-base');
-        console.log('Embed container:', embedContainer);
         if (embedContainer) {
           const baseId = embedContainer.dataset.baseId;
-          console.log(`Base ID: ${baseId}`);
-          console.log('Available bases:', Array.from(this.bases.keys()));
           if (baseId && this.bases.has(baseId)) {
             const base = this.bases.get(baseId);
-            console.log('Found base:', base);
             
             // Find the view
             const view = base.views.find(v => v.type === viewType && v.name === viewName);
-            console.log('Found view:', view);
             if (view) {
               const embedContent = embedContainer.querySelector('.embed-content');
-              console.log('Embed content container:', embedContent);
               if (embedContent) {
                 // Update content
                 embedContent.innerHTML = this.renderBaseViewContent(base, view);
-                console.log('Updated embed content with new view');
                 
                 // Update active button within this embed
                 const embedButtons = embedContainer.querySelectorAll('.embed-view-button');
                 embedButtons.forEach(btn => btn.classList.remove('active'));
                 e.currentTarget.classList.add('active');
-                console.log('Updated active button');
                 
                 // Re-initialize interactions for the new content
                 this.initializeBaseInteractions(base);
                 this.initializeEmbeddedBaseInteractions();
-                console.log('Re-initialized base interactions');
               }
             }
           }
@@ -1965,6 +2031,9 @@ class ObsidianSSGApp {
       baseContent.innerHTML = this.renderBaseViewContent(base, view);
       this.initializeBaseInteractions(base);
       
+      // Render cards if this is a cards view
+      this.renderEmbeddedCards();
+      
       // Update sort and filter button indicators for the new view
       this.updateActionButtonIndicators(base, view);
     }
@@ -1994,8 +2063,7 @@ class ObsidianSSGApp {
   sortBaseByColumn(base, column) {
     // This is a simplified version - in a full implementation,
     // you'd maintain sort state and update the backend data
-    console.log(`Sorting base by column: ${column}`);
-    // For now, just log the action
+    // For now, just handle the action silently
   }
   
   showSortPopup(base, button) {

@@ -1779,6 +1779,32 @@ body.menu-open {
   overflow: hidden;
 }
 
+/* Embedded images - similar styling to embedded notes */
+.embed-image {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  margin: var(--space-md) 0;
+  overflow: hidden;
+  padding: var(--space-sm);
+}
+
+.embed-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: calc(var(--border-radius) - 2px);
+}
+
+/* Remove embed-image styling when inside base cards view */
+.cards-view .embed-image,
+.base-content .embed-image {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  margin: var(--space-xs) 0;
+}
+
 .embed-header {
   display: flex;
   align-items: center;
@@ -2404,6 +2430,8 @@ body.menu-open {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: var(--space-md);
+  grid-auto-rows: auto;
+  align-items: start;
 }
 
 .card {
@@ -2415,6 +2443,17 @@ body.menu-open {
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  height: auto;
+}
+
+.card-top-image,
+.card-top-skeleton {
+  flex-shrink: 0;
+}
+
+.card-title-section,
+.card-properties-table {
+  flex-shrink: 0;
 }
 
 .card:hover {
@@ -2566,7 +2605,7 @@ body.menu-open {
 }
 
 .card-properties-table {
-  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  padding: var(--space-sm) var(--space-md);
 }
 
 .properties-table {
@@ -2584,18 +2623,21 @@ body.menu-open {
 }
 
 .card-property-label {
-  padding: var(--space-sm) var(--space-xs) var(--space-sm) 0;
-  font-size: var(--font-size-xs);
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) 0;
+  font-size: 10px;
   color: var(--color-text-muted);
-  text-transform: lowercase;
   font-weight: 500;
-  vertical-align: top;
+  vertical-align: baseline;
   width: 30%;
+  text-align: right;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .card-property-value-cell {
-  padding: var(--space-sm) 0;
-  vertical-align: top;
+  padding: var(--space-xs) 0 var(--space-xs) var(--space-sm);
+  vertical-align: baseline;
   width: 70%;
 }
 
@@ -2953,7 +2995,7 @@ body.menu-open {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
-  z-index: 100;
+  z-index: 9999;
   padding: var(--space-md);
   font-size: var(--font-size-sm);
 }

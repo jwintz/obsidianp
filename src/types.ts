@@ -126,11 +126,13 @@ export interface BaseView {
   limit?: number;
   filter?: BaseFilter; // View-specific filters
   group?: string; // Group by property
+  image?: string; // Property to use for card images
 }
 
 export interface BaseProperty {
-  name: string;
-  type: 'text' | 'number' | 'date' | 'datetime' | 'checkbox' | 'select' | 'multiselect' | 'url' | 'email' | 'file' | 'person';
+  name?: string;
+  displayName?: string;
+  type?: 'text' | 'number' | 'date' | 'datetime' | 'checkbox' | 'select' | 'multiselect' | 'url' | 'email' | 'file' | 'person';
   options?: string[];
   default?: any;
   required?: boolean;
@@ -153,8 +155,8 @@ export interface Base {
   folderPath: string;
   description?: string;
   views: BaseView[];
-  filters?: BaseFilter[];
-  properties?: BaseProperty[];
+  filters?: BaseFilter[] | BaseFilter | string;
+  properties?: Record<string, BaseProperty> | BaseProperty[];
   formulas?: BaseFormula[];
   matchedNotes?: Note[];
   items?: any[];

@@ -1,6 +1,6 @@
 import yaml from 'js-yaml';
 import path from 'path';
-import { Base, BaseFilter, BaseFormula, Note } from './types';
+import { Base, BaseFilter, BaseFormula, BaseProperty, Note } from './types';
 
 export class BaseProcessor {
     /**
@@ -34,6 +34,25 @@ export class BaseProcessor {
             const relativePath = path.relative(vaultPath, filePath);
             const folderPath = path.dirname(relativePath);
 
+            // Normalize properties - handle both object and array formats
+            let properties: Record<string, BaseProperty> | BaseProperty[] | undefined;
+            if (data.properties) {
+                if (Array.isArray(data.properties)) {
+                    properties = data.properties;
+                } else if (typeof data.properties === 'object') {
+                    // Convert object format to proper format with names
+                    properties = {};
+                    for (const [key, value] of Object.entries(data.properties)) {
+                        if (typeof value === 'object' && value !== null) {
+                            properties[key] = {
+                                name: key,
+                                ...value as BaseProperty
+                            };
+                        }
+                    }
+                }
+            }
+
             const base: Base = {
                 id,
                 title: data.title || title,
@@ -44,7 +63,7 @@ export class BaseProcessor {
                 description: description || data.description || '',
                 filters: data.filters,
                 views: data.views || [],
-                properties: data.properties || [],
+                properties,
                 formulas: data.formulas || [],
                 matchedNotes: [] as Note[]
             };
@@ -67,7 +86,21 @@ export class BaseProcessor {
         const filteredNotes: Note[] = [];
 
         for (const note of allNotes.values()) {
-            if (this.evaluateFilter(base.filters, note)) {
+            // Handle different filter formats
+            let shouldInclude = false;
+
+            if (typeof base.filters === 'string') {
+                // Single string filter like "benchmark_type != null"
+                shouldInclude = this.evaluateStringFilter(base.filters, note);
+            } else if (Array.isArray(base.filters)) {
+                // Array of filters - all must match (AND logic)
+                shouldInclude = base.filters.every(filter => this.evaluateFilter(filter, note));
+            } else {
+                // Single filter object
+                shouldInclude = this.evaluateFilter(base.filters, note);
+            }
+
+            if (shouldInclude) {
                 filteredNotes.push(note);
             }
         }
@@ -180,9 +213,23 @@ export class BaseProcessor {
     }
 
     /**
-     * Evaluate a string-based filter like 'file.hasTag("project")'
+     * Evaluate a string-based filter like 'file.hasTag("project")' or 'benchmark_type != null'
      */
     private evaluateStringFilter(filter: string, note: Note): boolean {
+        // Handle null/undefined checks for custom properties
+        const nullCheckMatch = filter.match(/^(\w+)\s*(!=|==)\s*null$/);
+        if (nullCheckMatch) {
+            const propertyName = nullCheckMatch[1];
+            const operator = nullCheckMatch[2];
+            const propertyValue = note.frontMatter[propertyName];
+
+            if (operator === '!=') {
+                return propertyValue !== null && propertyValue !== undefined;
+            } else {
+                return propertyValue === null || propertyValue === undefined;
+            }
+        }
+
         // Parse function-like filters
         const hasTagMatch = filter.match(/file\.hasTag\("([^"]+)"\)/);
         if (hasTagMatch) {

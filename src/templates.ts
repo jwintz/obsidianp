@@ -317,10 +317,6 @@ function generateTemplate(title: string, mainContent: string): string {
         // Global Mermaid Diagram Initialization
         
         window.initializeMermaid = function() {
-            console.log('=== MERMAID INIT STARTED ===');
-            console.log('typeof mermaid:', typeof mermaid);
-            console.log('document.readyState:', document.readyState);
-            
             if (typeof mermaid === 'undefined') {
                 console.error('Mermaid library not available');
                 return;
@@ -329,10 +325,6 @@ function generateTemplate(title: string, mainContent: string): string {
             // Get current theme - check BOTH body and documentElement
             const isDarkTheme = document.body.getAttribute('data-theme') === 'dark' || 
                                document.documentElement.getAttribute('data-theme') === 'dark';
-            console.log('=== THEME DETECTION ===');
-            console.log('isDarkTheme:', isDarkTheme);
-            console.log('body data-theme:', document.body.getAttribute('data-theme'));
-            console.log('documentElement data-theme:', document.documentElement.getAttribute('data-theme'));
             
             // Configure Mermaid with BASE theme for full control
             const themeConfig = isDarkTheme ? {
@@ -597,32 +589,22 @@ function generateTemplate(title: string, mainContent: string): string {
                 },
                 securityLevel: 'loose',
             });
-            console.log('Mermaid initialized with', isDarkTheme ? 'dark' : 'light', 'theme');
             
             // Find all mermaid diagrams
             const mermaidElements = document.querySelectorAll('.mermaid');
-            console.log('Found', mermaidElements.length, 'Mermaid diagram elements');
             
             // Render all diagrams
             if (mermaidElements.length > 0) {
-                console.log('Calling mermaid.run()...');
                 mermaid.run({
                     querySelector: '.mermaid'
-                }).then(() => {
-                    console.log('Mermaid rendering completed successfully');
                 }).catch(error => {
                     console.error('Mermaid rendering error:', error);
                 });
-            } else {
-                console.warn('No Mermaid elements found to render!');
             }
         };
         
         // Re-initialize Mermaid when theme changes
         window.addEventListener('themechange', function() {
-            console.log('=== THEME CHANGE EVENT ===');
-            console.log('Theme changed, re-initializing Mermaid diagrams');
-            
             // Helper function to decode HTML entities
             function decodeHtml(html) {
                 const txt = document.createElement('textarea');
@@ -635,7 +617,6 @@ function generateTemplate(title: string, mainContent: string): string {
                 // Find and remove the SVG
                 const svg = el.querySelector('svg');
                 if (svg) {
-                    console.log('Removing SVG from element:', el.id);
                     svg.remove();
                 }
                 
@@ -646,16 +627,12 @@ function generateTemplate(title: string, mainContent: string): string {
                 const encodedContent = el.getAttribute('data-diagram');
                 if (encodedContent) {
                     const decodedContent = decodeHtml(encodedContent);
-                    console.log('Restoring original content for:', el.id);
                     el.textContent = decodedContent;
-                } else {
-                    console.warn('No original content found for:', el.id);
                 }
             });
             
             // CRITICAL: Wait for DOM cleanup and theme application
             setTimeout(() => {
-                console.log('Calling initializeMermaid after theme change');
                 window.initializeMermaid();
             }, 150);
         });
@@ -706,8 +683,6 @@ function generateTemplate(title: string, mainContent: string): string {
                 }
             }
             
-            console.log('Initializing ABC notation for container:', containerId);
-            
             // Clear loading message
             container.innerHTML = '';
             
@@ -719,7 +694,6 @@ function generateTemplate(title: string, mainContent: string): string {
             try {
                 // Render the ABC notation (source is already parsed from JSON)
                 const renderResp = ABCJS.renderAbc(container, source, Object.assign({}, defaultOptions, options));
-                console.log('ABC rendered successfully for container:', containerId);
                 
                 // Set up MIDI playback if available
                 if (renderResp && renderResp[0] && ABCJS.synth && ABCJS.synth.supportsAudio && ABCJS.synth.supportsAudio()) {
@@ -775,7 +749,6 @@ function generateTemplate(title: string, mainContent: string): string {
                         options: {}
                     }).then(function() {
                         synthController.setTune(renderResp[0], false, { qpm: 120 });
-                        console.log('MIDI initialized for container:', containerId);
                     }).catch(function(error) {
                         console.warn('Failed to initialize MIDI for container:', containerId, error);
                     });

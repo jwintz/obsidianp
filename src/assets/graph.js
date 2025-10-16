@@ -235,8 +235,6 @@ class GraphView {
         }
       });
     }
-
-    console.log(`Graph: Processed ${this.nodes.length} nodes and ${this.links.length} links`);
   }
   
   categorizeNode(note) {

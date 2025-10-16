@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { glob } from 'glob';
 import { VaultProcessor } from './vault-processor';
 import { generateMainTemplate, generateNoteTemplate, generateBaseHTML, generateNoteHTML } from './templates';
 import { VaultStructure, SiteConfig, Note, Base } from './types';
@@ -152,14 +153,37 @@ export class SiteGenerator {
   }
 
   /**
-   * Copy attachment files (images, etc.)
+   * Copy attachment files (images, etc.) from the entire vault
    */
   private async copyAttachments(vaultPath: string, outputPath: string): Promise<void> {
+    // Copy traditional Attachments folder if it exists
     const attachmentsPath = path.join(vaultPath, 'Attachments');
     const outputAttachmentsPath = path.join(outputPath, 'attachments');
 
     if (await fs.pathExists(attachmentsPath)) {
       await fs.copy(attachmentsPath, outputAttachmentsPath);
+    }
+
+    // Also copy all image files from the vault, preserving folder structure
+    const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'];
+
+    for (const ext of imageExtensions) {
+      const imageFiles = await glob(`**/*${ext}`, {
+        cwd: vaultPath,
+        absolute: false,
+        nodir: true
+      });
+
+      for (const imageFile of imageFiles) {
+        const sourcePath = path.join(vaultPath, imageFile);
+        const destPath = path.join(outputPath, imageFile);
+
+        // Ensure destination directory exists
+        await fs.ensureDir(path.dirname(destPath));
+
+        // Copy the image file
+        await fs.copy(sourcePath, destPath);
+      }
     }
   }
 

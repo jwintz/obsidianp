@@ -149,7 +149,7 @@ export class MarkdownProcessor {
     const links = this.extractLinks(markdownContent);
 
     // Process Obsidian-specific syntax
-    let processedContent = this.processObsidianSyntax(markdownContent, allNotes);
+    let processedContent = this.processObsidianSyntax(markdownContent, allNotes, folderPath);
 
     // Preserve math expressions before markdown processing
     processedContent = this.preserveMathExpressions(processedContent);
@@ -335,7 +335,7 @@ export class MarkdownProcessor {
                     ${getLucideIcon('Filter', 16)}
                     Filter
                 </button>
-                ${base.properties && base.properties.length > 0 ?
+                ${base.properties && (Array.isArray(base.properties) ? base.properties.length > 0 : Object.keys(base.properties).length > 0) ?
         `<button class="action-button" id="properties-button">
                         ${getLucideIcon('Settings', 16)}
                         Properties
@@ -458,7 +458,8 @@ export class MarkdownProcessor {
         title: note.title,
         content: note.content,
         frontMatter: note.frontMatter,
-        fileStats: note.fileStats
+        fileStats: note.fileStats,
+        folderPath: note.folderPath
       })),
       view: baseView,
       filters: base?.filters || null
@@ -583,13 +584,28 @@ export class MarkdownProcessor {
   /**
    * Process Obsidian-specific syntax and convert to HTML-friendly format
    */
-  private processObsidianSyntax(content: string, allNotes?: Map<string, Note>): string {
+  private processObsidianSyntax(content: string, allNotes?: Map<string, Note>, noteFolderPath?: string): string {
     let processed = content;
 
     // Process embeds first (images, other notes)
     processed = processed.replace(this.embedPattern, (match, link, viewHash, viewName, displayPipe, displayText) => {
       if (this.isImageFile(link)) {
-        return `![${link}](attachments/${link})`;
+        // Build the correct path for the image
+        // If the link is relative (like "figs/image.png"), prepend the note's folder path
+        let imagePath = link;
+        if (noteFolderPath && !link.startsWith('/')) {
+          // Relative path - combine with note folder and make absolute
+          imagePath = `/${noteFolderPath}/${link}`;
+        } else if (!link.startsWith('/') && !link.startsWith('http')) {
+          // Make it absolute if it's not already
+          imagePath = `/${link}`;
+        }
+
+        // Create an embed-style container for images (will be styled like embedded notes)
+        const imageAlt = displayText || path.basename(link);
+        return `<div class="embed-image">
+          <img src="${imagePath}" alt="${imageAlt}" />
+        </div>`;
       } else {
         // Create placeholder that will be resolved later with actual content
         return `<div class="embed-placeholder" data-embed-target="${link}" data-embed-view="${viewName || ''}" data-embed-display="${displayText || ''}"></div>`;

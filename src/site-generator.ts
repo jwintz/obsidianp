@@ -261,7 +261,8 @@ export class SiteGenerator {
         links: note.links,
         backlinks: note.backlinks,
         frontMatter: note.frontMatter,
-        fileStats: note.fileStats // Include file statistics
+        fileStats: note.fileStats, // Include file statistics
+        folderPath: note.folderPath // Include folder path for image resolution
       };
     });
 

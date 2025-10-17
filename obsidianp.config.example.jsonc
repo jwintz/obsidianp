@@ -2,6 +2,9 @@
     // Site metadata - WORKS
     "title": "Obsidian Vault - Customization Example",
 
+    // Base path for hosting in subfolders
+    "basePath": "",
+
     // Font customization - WORKS
     "fonts": {
         "main": "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",

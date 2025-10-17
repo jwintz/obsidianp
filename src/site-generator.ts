@@ -34,7 +34,7 @@ export class SiteGenerator {
 
     // Copy assets
     console.log('📋 Copying assets...');
-    await this.copyAssets(outputPath);
+    await this.copyAssets(outputPath, config);
 
     // Apply custom CSS
     await this.applyCustomCSS(outputPath, config);
@@ -70,7 +70,7 @@ export class SiteGenerator {
   /**
    * Copy CSS and JavaScript assets
    */
-  private async copyAssets(outputDir: string): Promise<void> {
+  private async copyAssets(outputDir: string, config: SiteConfig = { title: 'Obsidian Vault' }): Promise<void> {
     const assetsDir = path.join(process.cwd(), 'src', 'assets');
     const outputAssetsDir = path.join(outputDir, 'assets');
 
@@ -80,10 +80,20 @@ export class SiteGenerator {
     // Copy main assets
     const files = await fs.readdir(assetsDir);
     for (const file of files) {
-      await fs.copyFile(
-        path.join(assetsDir, file),
-        path.join(outputAssetsDir, file)
-      );
+      const sourcePath = path.join(assetsDir, file);
+      const targetPath = path.join(outputAssetsDir, file);
+
+      // Read the file
+      let content = await fs.readFile(sourcePath, 'utf-8');
+
+      // If it's main.css and we have a basePath, update font URLs
+      if (file === 'main.css' && config.basePath) {
+        content = content.replace(/url\('\/assets\//g, `url('${config.basePath}/assets/`);
+        content = content.replace(/url\("\/assets\//g, `url("${config.basePath}/assets/`);
+        content = content.replace(/url\(\/assets\//g, `url(${config.basePath}/assets/`);
+      }
+
+      await fs.writeFile(targetPath, content);
     }
 
     // Create fonts directory
@@ -196,9 +206,10 @@ export class SiteGenerator {
     config: SiteConfig
   ): Promise<void> {
     const { notes, bases } = vaultStructure;
+    const basePath = config.basePath || '';
 
     // Generate index.html (main page)
-    const indexHtml = generateMainTemplate(config.title);
+    const indexHtml = generateMainTemplate(config.title, basePath);
     await fs.writeFile(path.join(outputPath, 'index.html'), indexHtml);
 
     // Generate individual note pages
@@ -211,7 +222,7 @@ export class SiteGenerator {
       // Use generateNoteTemplate with the actual note content
       const noteContent = generateNoteTemplate(note.title, note.html, note.frontMatterHtml, backlinks);
       // Wrap the note content in a proper HTML structure - pass both vault title and note title
-      const noteHtml = generateNoteHTML(noteContent, config.title, note.title);
+      const noteHtml = generateNoteHTML(noteContent, config.title, basePath, note.title);
       const noteFileName = `${note.id}.html`;
 
       // Create nested directory structure if needed  
@@ -224,7 +235,7 @@ export class SiteGenerator {
 
     // Generate individual base pages
     for (const base of bases.values()) {
-      const baseHtml = generateBaseHTML(base, config.title, this.vaultProcessor.getMarkdownProcessor());
+      const baseHtml = generateBaseHTML(base, config.title, basePath, this.vaultProcessor.getMarkdownProcessor());
 
       // Create proper folder structure for bases, just like notes
       const baseDir = path.join(outputPath, base.folderPath.toLowerCase());

@@ -27,6 +27,7 @@ program
   .argument('<vault-path>', 'Path to the Obsidian vault directory')
   .argument('<output-path>', 'Path to the output directory')
   .option('-t, --title <title>', 'Site title (overrides config file)')
+  .option('-b, --base-path <path>', 'Base path for hosting in subfolders (e.g., "/poseidon")')
   .option('-c, --config <config-file>', 'Path to configuration file')
   .action(async (vaultPath: string, outputPath: string, options: any) => {
     try {
@@ -68,6 +69,11 @@ program
         console.log(`📝 Using title from command line: "${options.title}"`);
       }
 
+      if (options.basePath !== undefined) {
+        config.basePath = options.basePath;
+        console.log(`📝 Using base path from command line: "${options.basePath}"`);
+      }
+
       console.log('');
       console.log('🔮 Obsidian Static Site Generator');
       console.log('================================');
@@ -99,6 +105,7 @@ program
   .argument('<vault-path>', 'Path to the Obsidian vault directory')
   .option('-p, --port <port>', 'Port to serve on', '8000')
   .option('-t, --title <title>', 'Site title (overrides config file)')
+  .option('-b, --base-path <path>', 'Base path for hosting in subfolders (e.g., "/poseidon")')
   .option('-c, --config <config-file>', 'Path to configuration file')
   .option('--no-watch', 'Disable file watching')
   .action(async (vaultPath: string, options: any) => {
@@ -143,6 +150,10 @@ program
         // Override config with command line options
         if (options.title) {
           config.title = options.title;
+        }
+
+        if (options.basePath !== undefined) {
+          config.basePath = options.basePath;
         }
       };
 
@@ -281,6 +292,7 @@ program
       console.log('You can now edit this file to customize your site appearance.');
       console.log('Available options:');
       console.log('  - title: Site title');
+      console.log('  - basePath: Base path for hosting in subfolders (e.g., "/poseidon")');
       console.log('  - theme: Default theme (light, dark, auto)');
       console.log('  - fonts: Custom font families');
       console.log('  - customization: Theme-aware CSS variables (common, light, dark)');

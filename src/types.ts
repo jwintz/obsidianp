@@ -49,6 +49,7 @@ export interface VaultStructure {
 
 export interface SiteConfig {
   title: string;
+  basePath?: string; // Base path for hosting in subfolders (e.g., "/poseidon" or ""). Defaults to ""
   fonts?: {
     main?: string;
     heading?: string;

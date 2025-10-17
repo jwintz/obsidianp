@@ -56,12 +56,19 @@ Example:
 ```bash
 obsidianp generate ./my-vault ./public
 obsidianp generate ./vault ./site --title "My Blog"
+obsidianp generate ./vault ./site --base-path "/poseidon"
 ```
+
+**Options:**
+- `--title` / `-t`: Override site title
+- `--base-path` / `-b`: Base path for hosting in subfolders (e.g., "/poseidon")
+- `--config` / `-c`: Use custom config file path
 
 ### Serve Locally
 
 ```bash
 obsidianp serve ./vault -p 8000
+obsidianp serve ./vault -p 8000 --base-path "/poseidon"
 ```
 
 ### Initialize Configuration
@@ -78,6 +85,7 @@ ObsidianP automatically detects `obsidianp.config.jsonc` or `obsidianp.config.js
 ```jsonc
 {
   "title": "My Knowledge Base",
+  "basePath": "",  // For subfolder hosting (e.g., "/poseidon"), leave empty for root
   "fonts": {
     "main": "Inter, system-ui, sans-serif",
     "code": "JetBrains Mono, monospace"
@@ -99,7 +107,13 @@ ObsidianP automatically detects `obsidianp.config.jsonc` or `obsidianp.config.js
 }
 ```
 
-**Options:**
+**Configuration Options:**
+- `title`: Site title displayed in the header
+- `basePath`: Base path for hosting in subfolders
+- `fonts`: Custom font families for main text, headings, and code
+- `customization`: Theme-aware CSS variables (common, light, dark themes)
+
+**Command Line Options:**
 - `--title`: Override site title
 - `--config`: Use custom config file path
 

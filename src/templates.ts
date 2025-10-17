@@ -19,8 +19,8 @@ export function getLucideIcon(iconName: string, size = 16, className = ''): stri
         .replace(/<svg/, className && !iconSvg.includes('class=') ? `<svg class="${className}"` : '<svg');
 }
 
-export function generateMainTemplate(title: string = "Vault"): string {
-    return generateTemplate(title, `
+export function generateMainTemplate(title: string = "Vault", basePath: string = ""): string {
+    return generateTemplate(title, title, basePath, `
         <article class="note-content" id="note-content">
             <h1>Welcome to your Obsidian vault</h1>
             <p>Select a note from the sidebar to get started.</p>
@@ -32,39 +32,39 @@ export function generateMainTemplate(title: string = "Vault"): string {
     `);
 }
 
-export function generateBaseHTML(base: Base, vaultTitle: string = "Vault", markdownProcessor?: any): string {
+export function generateBaseHTML(base: Base, vaultTitle: string = "Vault", basePath: string = "", markdownProcessor?: any): string {
     const baseContent = generateBaseTemplate(base, markdownProcessor);
     // Generate page title as "Base Title - Vault Title"
     const pageTitle = `${base.title} - ${vaultTitle}`;
 
-    return generateTemplate(pageTitle, `
+    return generateTemplate(pageTitle, vaultTitle, basePath, `
         <article class="note-content base-page" id="note-content">
             ${baseContent}
         </article>
     `);
 }
 
-export function generateNoteHTML(noteContent: string, vaultTitle: string = "Vault", noteTitle?: string): string {
+export function generateNoteHTML(noteContent: string, vaultTitle: string = "Vault", basePath: string = "", noteTitle?: string): string {
     // Generate page title as "Note Title - Vault Title" or just "Vault Title" if no note title
     const pageTitle = noteTitle ? `${noteTitle} - ${vaultTitle}` : vaultTitle;
 
-    return generateTemplate(pageTitle, `
+    return generateTemplate(pageTitle, vaultTitle, basePath, `
         <article class="note-content" id="note-content">
             ${noteContent}
         </article>
     `);
 }
 
-function generateTemplate(title: string, mainContent: string): string {
+function generateTemplate(pageTitle: string, vaultTitle: string, basePath: string = "", mainContent: string): string {
     // const timestamp = Date.now(); // Cache busting disabled for development
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title}</title>
-    <link rel="stylesheet" href="/assets/main.css">
-    <link rel="stylesheet" href="/assets/katex.min.css">
+    <title>${pageTitle}</title>
+    <link rel="stylesheet" href="${basePath}/assets/main.css">
+    <link rel="stylesheet" href="${basePath}/assets/katex.min.css">
 </head>
 
 <body class="theme-light" data-theme="light">
@@ -81,7 +81,7 @@ function generateTemplate(title: string, mainContent: string): string {
                         <line x1="3" y1="18" x2="21" y2="18"></line>
                     </svg>
                 </button>
-                <h1 class="vault-title">${title}</h1>
+                <h1 class="vault-title">${vaultTitle}</h1>
                 <div class="mobile-header-controls">
                     <button id="theme-toggle" class="icon-button" title="Toggle theme">
                         ${getLucideIcon('Sun', 16)}
@@ -93,7 +93,7 @@ function generateTemplate(title: string, mainContent: string): string {
         <nav class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-title-section">
-                    <h1 class="vault-title">${title}</h1>
+                    <h1 class="vault-title">${vaultTitle}</h1>
                 </div>
                 <div class="sidebar-controls">
                     <button id="theme-toggle-desktop" class="icon-button" title="Toggle theme">
@@ -311,8 +311,8 @@ function generateTemplate(title: string, mainContent: string): string {
         </div>
     </div>
     
-    <script src="/assets/abcjs-basic-min.js"></script>
-    <script src="/assets/mermaid.min.js"></script>
+    <script src="${basePath}/assets/abcjs-basic-min.js"></script>
+    <script src="${basePath}/assets/mermaid.min.js"></script>
     <script>
         // Global Mermaid Diagram Initialization
         
@@ -809,11 +809,11 @@ function generateTemplate(title: string, mainContent: string): string {
             window.initializeAllABCNotation();
         }
     </script>
-    <script src="/assets/d3.min.js"></script>
-    <script src="/assets/search.js"></script>
-    <script src="/assets/table-of-contents.js"></script>
-    <script src="/assets/graph.js"></script>
-    <script src="/assets/app.js"></script>
+    <script src="${basePath}/assets/d3.min.js"></script>
+    <script src="${basePath}/assets/search.js"></script>
+    <script src="${basePath}/assets/table-of-contents.js"></script>
+    <script src="${basePath}/assets/graph.js"></script>
+    <script src="${basePath}/assets/app.js"></script>
 </body>
 </html>`;
 }

@@ -46,6 +46,9 @@ ObsidianP is a TypeScript-based static site generator specifically designed for 
 3. [[Getting-Started/Building Sites|Building Sites]] - Generate your static site
 4. [[Getting-Started/Deployment|Deployment]] - Deploy to hosting services
 
+**Additional Resources:**
+- [[Getting-Started/AI-Assisted Documentation|AI-Assisted Documentation]] - Maintain docs with AI
+
 ## Architecture
 
 - [[Architecture/Core Components|Core Components]] - Main system components

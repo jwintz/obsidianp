@@ -64,10 +64,14 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${pageTitle}</title>
     <link rel="stylesheet" href="${basePath}/assets/main.css">
+    <link rel="stylesheet" href="${basePath}/assets/adaptive-nav.css">
     <link rel="stylesheet" href="${basePath}/assets/katex.min.css">
 </head>
 
 <body class="theme-light" data-theme="light">
+    <!-- Skip to content link for accessibility -->
+    <a href="#note-content" class="skip-to-content">Skip to content</a>
+    
     <div class="app-container">
         <div class="sidebar-overlay" id="sidebar-overlay"></div>
         
@@ -90,7 +94,29 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
             </div>
         </header>
         
-        <nav class="sidebar">
+        <!-- Adaptive Pill Navigation (Mobile/Tablet) -->
+        <nav class="nav-pills-container" id="nav-pills-container" role="navigation" aria-label="Main navigation">
+            <h1 class="vault-title">${vaultTitle}</h1>
+            <div class="nav-pills-scroll">
+                <div class="nav-pills-wrapper" id="nav-pills-wrapper">
+                    <!-- Pills will be dynamically populated by JavaScript -->
+                </div>
+            </div>
+            <div class="nav-pills-actions">
+                <button id="nav-graph-btn" class="nav-pill-action icon-only" title="Open graph view">
+                    ${getLucideIcon('Network', 16)}
+                </button>
+                <button id="theme-toggle-pills" class="nav-pill-action icon-only" title="Toggle theme">
+                    ${getLucideIcon('Sun', 16)}
+                </button>
+            </div>
+        </nav>
+        
+        <nav class="sidebar" role="navigation" aria-label="Sidebar navigation">
+            <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar" title="Toggle sidebar">
+                ${getLucideIcon('ChevronLeft', 16)}
+            </button>
+            
             <div class="sidebar-header">
                 <div class="sidebar-title-section">
                     <h1 class="vault-title">${vaultTitle}</h1>
@@ -871,6 +897,7 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
     <script src="${basePath}/assets/search.js"></script>
     <script src="${basePath}/assets/table-of-contents.js"></script>
     <script src="${basePath}/assets/graph.js"></script>
+    <script src="${basePath}/assets/adaptive-nav.js"></script>
     <script src="${basePath}/assets/app.js"></script>
 </body>
 </html>`;

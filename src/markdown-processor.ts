@@ -104,11 +104,14 @@ export class MarkdownProcessor {
               theme: 'github-dark'
             });
 
-            // Wrap in theme-specific containers
+            // Wrap in theme-specific containers with floating language label
             return `
-              <div class="shiki-container">
-                <div class="shiki-light" data-theme="light">${lightHtml}</div>
-                <div class="shiki-dark" data-theme="dark" style="display: none;">${darkHtml}</div>
+              <div class="code-block-wrapper">
+                <span class="code-block-language">${lang}</span>
+                <div class="shiki-container">
+                  <div class="shiki-light" data-theme="light">${lightHtml}</div>
+                  <div class="shiki-dark" data-theme="dark" style="display: none;">${darkHtml}</div>
+                </div>
               </div>
             `;
           } catch (error) {

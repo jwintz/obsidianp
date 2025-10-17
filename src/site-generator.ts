@@ -51,6 +51,9 @@ export class SiteGenerator {
     console.log('💾 Generating data files...');
     await this.generateDataFiles(vaultStructure, outputPath);
 
+    // Create .nojekyll file for GitHub Pages
+    await fs.writeFile(path.join(outputPath, '.nojekyll'), '');
+
     console.log('✅ Site generation complete!');
   }
 

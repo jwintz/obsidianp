@@ -223,7 +223,7 @@ export class SiteGenerator {
         .map(n => n.title);
 
       // Use generateNoteTemplate with the actual note content
-      const noteContent = generateNoteTemplate(note.title, note.html, note.frontMatterHtml, backlinks);
+      const noteContent = generateNoteTemplate(note.title, note.html, note.frontMatterHtml, backlinks, basePath);
       // Wrap the note content in a proper HTML structure - pass both vault title and note title
       const noteHtml = generateNoteHTML(noteContent, config.title, basePath, note.title);
       const noteFileName = `${note.id}.html`;

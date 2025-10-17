@@ -12,8 +12,14 @@ class ObsidianSSGApp {
     this.currentBase = null;
     this.search = null;
     this.graph = null;
+    this.basePath = this.getBasePath();
     
     this.init();
+  }
+  
+  getBasePath() {
+    // Get the base path from the HTML data attribute
+    return document.querySelector('html').getAttribute('data-base-path') || '';
   }
   
   async init() {
@@ -89,9 +95,8 @@ class ObsidianSSGApp {
   
   async loadData() {
     try {
-      // Get the base path from the HTML base tag or data attribute
-      const basePath = document.querySelector('html').getAttribute('data-base-path') || '';
-      const dataPath = basePath ? `${basePath}/data/notes.json` : '/data/notes.json';
+      // Use the basePath from constructor
+      const dataPath = this.basePath ? `${this.basePath}/data/notes.json` : '/data/notes.json';
       
       const response = await fetch(dataPath);
       if (response.ok) {
@@ -822,7 +827,7 @@ class ObsidianSSGApp {
     
     // Update URL and history with clean URLs
     if (addToHistory) {
-      const cleanUrl = `${window.location.origin}/${noteId}`;
+      const cleanUrl = this.basePath ? `${window.location.origin}${this.basePath}/${noteId}` : `${window.location.origin}/${noteId}`;
       window.history.pushState({ noteId }, note.title, cleanUrl);
     }
     
@@ -1941,7 +1946,8 @@ class ObsidianSSGApp {
       row.addEventListener('click', (e) => {
         const noteId = e.currentTarget.dataset.noteId;
         if (noteId) {
-          window.location.href = `/${noteId}`;
+          const url = this.basePath ? `${this.basePath}/${noteId}` : `/${noteId}`;
+          window.location.href = url;
         }
       });
     });
@@ -1999,7 +2005,8 @@ class ObsidianSSGApp {
         e.stopPropagation(); // Prevent day click
         const noteId = e.currentTarget.dataset.noteId;
         if (noteId) {
-          window.location.href = `/${noteId}`;
+          const url = this.basePath ? `${this.basePath}/${noteId}` : `/${noteId}`;
+          window.location.href = url;
         }
       });
     });

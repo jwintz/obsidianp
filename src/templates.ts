@@ -876,12 +876,12 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
 </html>`;
 }
 
-export function generateNoteTemplate(title: string, content: string, frontMatterHtml: string = '', backlinks: string[] = []): string {
+export function generateNoteTemplate(title: string, content: string, frontMatterHtml: string = '', backlinks: string[] = [], basePath: string = ''): string {
     const backlinksHtml = backlinks.length > 0
         ? `<div class="backlinks">
          <h4>Backlinks</h4>
          <ul>
-           ${backlinks.map(link => `<li><a href="/${link}" class="internal-link">${link}</a></li>`).join('')}
+           ${backlinks.map(link => `<li><a href="${basePath}/${link}" class="internal-link">${link}</a></li>`).join('')}
          </ul>
        </div>`
         : '';
@@ -907,7 +907,7 @@ export function generateBaseTemplate(base: Base, markdownProcessor: any): string
     </div>`;
 }
 
-function generateBaseViewContent(base: Base, view: BaseView): string {
+function generateBaseViewContent(base: Base, view: BaseView, basePath: string = ''): string {
     const notes = base.matchedNotes || [];
 
     if (notes.length === 0) {
@@ -916,13 +916,13 @@ function generateBaseViewContent(base: Base, view: BaseView): string {
 
     switch (view.type) {
         case 'table':
-            return generateTableView(notes, view);
+            return generateTableView(notes, view, basePath);
         case 'cards':
             return generateCardsView(notes, view);
         case 'calendar':
             return generateCalendarView(notes, view);
         default:
-            return generateTableView(notes, view);
+            return generateTableView(notes, view, basePath);
     }
 }
 
@@ -948,7 +948,7 @@ function generateCardsView(notes: Note[], view: BaseView): string {
     </div>`;
 }
 
-function generateTableView(notes: Note[], view: BaseView): string {
+function generateTableView(notes: Note[], view: BaseView, basePath: string = ''): string {
     if (notes.length === 0) {
         return '<div class="table-view"><p class="empty-state">No notes match the current filters.</p></div>';
     }
@@ -965,7 +965,7 @@ function generateTableView(notes: Note[], view: BaseView): string {
 
     const rowsHtml = notes.map(note => {
         const cellsHtml = columns.map(col => {
-            const value = getColumnValue(note, col);
+            const value = getColumnValue(note, col, basePath);
             return `<td data-column="${col}">${value}</td>`;
         }).join('');
 
@@ -1061,10 +1061,10 @@ function getColumnDisplayName(column: string): string {
     return displayNames[column] || column;
 }
 
-function getColumnValue(note: Note, column: string): string {
+function getColumnValue(note: Note, column: string, basePath: string = ''): string {
     switch (column) {
         case 'file.name':
-            return `<a href="/${note.id}" class="internal-link">${note.title}</a>`;
+            return `<a href="${basePath}/${note.id}" class="internal-link">${note.title}</a>`;
 
         case 'file.path':
             return note.relativePath;

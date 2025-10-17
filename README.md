@@ -123,35 +123,86 @@ The generated site is pure HTML/CSS/JS. Deploy to any static host:
 
 An example Github Actions deployment taks:
 
+1. **Enable GitHub Pages** in your repository settings:
+   - Go to Settings → Pages
+   - Set Source to "GitHub Actions"
+
+2. **Create workflow file** `.github/workflows/deploy.yml`:
+
 ```yaml
-name: Deploy
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-    
-    - name: Generate site
-      run: |
-        npx obsidianp generate ./vault ./site
-    
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./site
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build ObsidianP
+        run: npm run build
+      
+      - name: Generate site
+        run: |
+          # For root domain: yourname.github.io
+          npx obsidianp generate ./vault ./site
+          
+          # For project pages: yourname.github.io/repo-name
+          # npx obsidianp generate ./vault ./site --base-path "/repo-name"
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 ```
+
+3. **Configure base path**:
+   - For **user/org sites** (yourname.github.io): Use `--base-path ""`
+   - For **project sites** (yourname.github.io/repo-name): Use `--base-path "/repo-name"`
+
+4. **Push to trigger deployment**:
+```bash
+git add .github/workflows/deploy.yml
+git commit -m "Add GitHub Pages workflow"
+git push
+```
+
+The site will be available at:
+- User/org site: `https://yourname.github.io`
+- Project site: `https://yourname.github.io/repo-name`
 
 ## License
 

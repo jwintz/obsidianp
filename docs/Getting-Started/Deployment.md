@@ -21,7 +21,7 @@ prerequisites:
 
 # Deployment
 
-Deploy your ObsidianP-generated site to various hosting platforms.
+Deploy your ObsidianP-generated site to GitHub Pages or GitLab Pages.
 
 ## GitHub Pages
 
@@ -37,151 +37,142 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+          cache: 'npm'
       
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       
-      - name: Build site
+      - name: Build ObsidianP
         run: npm run build
       
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Generate site
+        run: |
+          # For root domain: yourname.github.io
+          node dist/cli.js generate ./vault ./site
+          
+          # For project pages: yourname.github.io/repo-name
+          # node dist/cli.js generate ./vault ./site --base-path "/repo-name"
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-```
+          path: ./site
 
-### Configuration
-
-Update `obsidianp.config.jsonc`:
-
-```jsonc
-{
-  "baseUrl": "/repository-name/",  // Your GitHub repo name
-  "outputPath": "./dist"
-}
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 ```
 
 ### Enable GitHub Pages
 
-1. Go to repository Settings
-2. Navigate to Pages
-3. Select "gh-pages" branch
-4. Save
+1. Go to repository **Settings** → **Pages**
+2. Under "Source", select **GitHub Actions**
+3. Push the workflow file to trigger deployment
+4. Your site will be available at:
+   - User/org site: `https://yourname.github.io`
+   - Project site: `https://yourname.github.io/repo-name`
 
-## Netlify
+### Configuration for Base Path
 
-### Deploy with Drag & Drop
-
-1. Build locally: `npm run build`
-2. Go to [Netlify](https://app.netlify.com)
-3. Drag `dist` folder to deploy
-
-### Deploy with Git
-
-Create `netlify.toml`:
-
-```toml
-[build]
-  command = "npm run build"
-  publish = "dist"
-
-# Netlify redirects configuration
-# [[redirects]] is TOML array syntax, not a wiki link
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-```
-
-Connect your repository:
-1. New site from Git
-2. Select repository
-3. Deploy!
-
-### Configuration
+For project pages (repos other than `username.github.io`), configure the base path:
 
 ```jsonc
 {
-  "baseUrl": "/",
-  "outputPath": "./dist"
+  "title": "My Knowledge Base",
+  "basePath": "/repo-name"  // Must match your repository name
 }
 ```
 
-## Vercel
-
-### Deploy with CLI
-
+Or use the CLI flag:
 ```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Deploy
-vercel
+node dist/cli.js generate ./vault ./site --base-path "/repo-name"
 ```
 
-### Deploy with Git
+## GitLab Pages
 
-Create `vercel.json`:
+### Automatic Deployment with GitLab CI/CD
 
-```json
+Create `.gitlab-ci.yml`:
+
+```yaml
+image: node:20
+
+pages:
+  stage: deploy
+  cache:
+    paths:
+      - node_modules/
+  script:
+    # Install dependencies
+    - npm ci
+    
+    # Build ObsidianP
+    - npm run build
+    
+    # Generate site
+    # For root domain: yourname.gitlab.io
+    - node dist/cli.js generate ./vault ./public
+    
+    # For project pages: yourname.gitlab.io/repo-name
+    # - node dist/cli.js generate ./vault ./public --base-path "/repo-name"
+  
+  artifacts:
+    paths:
+      - public
+  
+  only:
+    - main
+```
+
+### Enable GitLab Pages
+
+1. Commit and push `.gitlab-ci.yml` to your repository
+2. Go to **Settings** → **Pages**
+3. The pipeline will automatically run
+4. Your site will be available at:
+   - User/group site: `https://yourname.gitlab.io`
+   - Project site: `https://yourname.gitlab.io/repo-name`
+
+### Configuration for Base Path
+
+For project pages, configure the base path:
+
+```jsonc
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ]
+  "title": "My Knowledge Base",
+  "basePath": "/repo-name"  // Must match your repository name
 }
 ```
 
-Connect repository via Vercel dashboard.
-
-## Cloudflare Pages
-
-### Deploy via Dashboard
-
-1. Go to [Cloudflare Pages](https://pages.cloudflare.com)
-2. Connect Git repository
-3. Build settings:
-   - Build command: `npm run build`
-   - Build output: `dist`
-4. Deploy
-
-### Deploy with Wrangler
-
+Or use the CLI flag:
 ```bash
-# Install Wrangler
-npm install -g wrangler
-
-# Deploy
-wrangler pages publish dist
-```
-
-### Configuration
-
-Create `wrangler.toml`:
-
-```toml
-name = "my-knowledge-base"
-compatibility_date = "2025-01-01"
-
-[site]
-  bucket = "./dist"
+node dist/cli.js generate ./vault ./public --base-path "/repo-name"
 ```
 
 ## Custom Server
@@ -274,19 +265,23 @@ CNAME   www     yourusername.github.io.
 
 #### GitHub Pages
 
-Create `CNAME` file in `dist`:
+1. Create `CNAME` file in your vault root (will be copied to output):
+   ```
+   yourdomain.com
+   ```
 
-```
-yourdomain.com
-```
+2. Add DNS records:
+   - For apex domain: `A` records to GitHub Pages IPs
+   - For www: `CNAME` record to `yourname.github.io`
 
-Enable HTTPS in repository settings.
+3. Enable "Enforce HTTPS" in repository Settings → Pages
 
-#### Netlify/Vercel
+#### GitLab Pages
 
-1. Add custom domain in dashboard
-2. Update DNS records as instructed
-3. HTTPS enabled automatically
+1. Go to **Settings** → **Pages**
+2. Add your custom domain
+3. Configure DNS records as instructed
+4. HTTPS certificate is automatically provisioned via Let's Encrypt
 
 ## Performance Optimization
 

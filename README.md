@@ -4,13 +4,23 @@ Convert your Obsidian vault into a beautiful, interactive static website with wi
 
 ## Features
 
-- **Wiki-link Support**: `[[Note Name]]` and `[[Note Name|Display Text]]` links
-- **Interactive Graph View**: Visualize note relationships with configurable local graph controls (toggle outgoing/backlinks/sibling links, adjust traversal depth, and show/hide tags)
-- **Full-text Search**: Fast client-side search
-- **Light/Dark Theme**: Automatic theme switching
-- **Math Rendering**: Server-side KaTeX processing
-- **Responsive Design**: Works on all devices
-- **Backlinks**: Automatic bidirectional linking
+### Core Features
+- **Wiki-link Support**: `[[Note Name]]` and `[[Note Name|Display Text]]` links with automatic resolution
+- **Interactive Graph View**: D3.js-powered visualization with local/global views and customizable controls
+- **Full-text Search**: Fast client-side search with Lunr.js
+- **Light/Dark Theme**: Automatic theme switching with customizable colors
+- **Responsive Design**: Mobile-friendly, works on all devices
+- **Backlinks**: Automatic bidirectional linking between notes
+
+### Obsidian Syntax Support
+- **Math Rendering**: LaTeX equations with KaTeX (inline `$...$` and block `$$...$$`)
+- **Mermaid Diagrams**: Flow charts, sequence diagrams, gantt charts, state diagrams, and more
+- **ABC Music Notation**: Musical scores with ABC.js rendering
+- **Code Highlighting**: Syntax highlighting for 100+ languages powered by Shiki
+- **Callouts**: Obsidian-style callouts (`> [!note]`, `> [!warning]`, `> [!tip]`, etc.)
+- **Obsidian Databases**: Native database support with table, card, and calendar views
+- **Embeds**: Image and note embeds (`![[image.png]]`, `![[note]]`)
+- **Tags**: Full tag support with # syntax and filtering
 
 ## Installation
 

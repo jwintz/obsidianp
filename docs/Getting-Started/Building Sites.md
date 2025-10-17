@@ -176,26 +176,30 @@ Press Ctrl+C to stop
 
 ### Production Build
 
+```bash
+# Use command line arguments for vault and output paths
+node dist/cli.js generate ./vault ./dist --title "My Site" --base-path "/my-site"
+```
+
+Or with a config file `obsidianp.config.jsonc`:
+
 ```jsonc
 {
-  "vaultPath": "./vault",
-  "outputPath": "./dist",
-  "minify": true,
-  "optimize": true,
-  "baseUrl": "https://mysite.com"
+  "title": "My Site",
+  "basePath": "/my-site",
+  "customization": {
+    "dark": {
+      "color-primary": "#a78bfa"
+    }
+  }
 }
 ```
 
 ### Development Build
 
-```jsonc
-{
-  "vaultPath": "./vault",
-  "outputPath": "./dev-dist",
-  "minify": false,
-  "sourceMap": true,
-  "baseUrl": "/"
-}
+```bash
+# Generate without base path for local development
+node dist/cli.js generate ./vault ./dev-dist --title "Dev Site"
 ```
 
 ## Output Structure

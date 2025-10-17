@@ -22,11 +22,22 @@ ObsidianP is a TypeScript-based static site generator specifically designed for 
 
 ## Key Features
 
-- [[Features/Interactive Graph Views|Interactive Graph Views]] - Local and global graph visualization
-- [[Features/Search System|Search System]] - Fast, client-side search
-- Full support for Obsidian-flavored markdown
-- ABC notation, Mermaid diagrams, code highlighting
-- Fast, self-contained HTML output
+### Core Features
+- **[[Features/Interactive Graph Views|Interactive Graph Views]]** - Local and global graph visualization with D3.js
+- **[[Features/Search System|Full-Text Search]]** - Fast, client-side search powered by Lunr.js
+- **Wiki-Links** - Full support for `[[Wiki Links]]` with automatic resolution
+- **Backlinks** - Automatic bidirectional linking between notes
+- **Responsive Design** - Mobile-friendly with light/dark theme support
+
+### Obsidian Syntax Support
+- **Math Rendering** - LaTeX equations with KaTeX (inline `$...$` and block `$$...$$`)
+- **Mermaid Diagrams** - Flow charts, sequence diagrams, gantt charts, and more
+- **ABC Music Notation** - Musical scores with ABC.js rendering
+- **Code Highlighting** - Syntax highlighting for 100+ languages with Shiki
+- **Callouts** - Obsidian-style callouts (`> [!note]`, `> [!warning]`, etc.)
+- **Obsidian Databases** - Native database support with table, card, and calendar views
+- **Embeds** - Image and note embeds (`![[image.png]]`, `![[note]]`)
+- **Tags** - Full tag support with # syntax
 
 ## Getting Started
 

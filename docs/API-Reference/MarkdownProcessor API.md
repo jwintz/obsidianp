@@ -96,13 +96,6 @@ processWikiLinks(
 **Example:**
 ```typescript
 const processed = processor.processWikiLinks(
-  'See `[[Other Note]]` for details',
-  notes
-```
-
-**Example:**
-```typescript
-const processed = processor.processWikiLinks(
   'See [[Other Note]] for details',
   notes
 );
@@ -121,7 +114,12 @@ processCodeBlocks(
 ```
 
 **Supported Languages:**
-```markdown
+- TypeScript, JavaScript, Python, JSON, YAML, Bash, and many more
+- Syntax highlighting powered by Shiki
+- Automatic language detection
+
+**Example:**
+````markdown
 ```typescript
 // TypeScript code
 const x: number = 42;
@@ -138,7 +136,7 @@ def hello():
   "key": "value"
 }
 ```
-```
+````
 
 #### processMermaid()
 
@@ -149,13 +147,13 @@ processMermaid(content: string): string
 ```
 
 **Example Input:**
-```markdown
+````markdown
 ```mermaid
 graph LR
     A[Start] --> B[Process]
     B --> C[End]
 ```
-```
+````
 
 **Output:**
 ```html
@@ -175,7 +173,7 @@ processABC(content: string): string
 ```
 
 **Example Input:**
-```markdown
+````markdown
 ```abc
 X:1
 T:Scale
@@ -184,7 +182,7 @@ L:1/4
 K:C
 CDEFGAB
 ```
-```
+````
 
 **Output:**
 ```html

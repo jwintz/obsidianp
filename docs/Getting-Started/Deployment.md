@@ -1,5 +1,5 @@
 ---
-description: Deploy your Obsidian:P site to GitHub Pages, Netlify, Vercel, and other hosting platforms
+description: Deploy your Obsidian:P site to GitHub Pages, and other hosting platforms
 tags:
   - deployment
   - hosting

@@ -89,9 +89,11 @@ class ObsidianSSGApp {
   
   async loadData() {
     try {
-      // In a real implementation, this would load from generated JSON files
-      // For now, we'll use placeholder data structure
-      const response = await fetch('/data/notes.json');
+      // Get the base path from the HTML base tag or data attribute
+      const basePath = document.querySelector('html').getAttribute('data-base-path') || '';
+      const dataPath = basePath ? `${basePath}/data/notes.json` : '/data/notes.json';
+      
+      const response = await fetch(dataPath);
       if (response.ok) {
         const data = await response.json();
         this.notes = new Map(Object.entries(data.notes || {}));

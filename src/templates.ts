@@ -58,7 +58,7 @@ export function generateNoteHTML(noteContent: string, vaultTitle: string = "Vaul
 function generateTemplate(pageTitle: string, vaultTitle: string, basePath: string = "", mainContent: string): string {
     // const timestamp = Date.now(); // Cache busting disabled for development
     return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-base-path="${basePath}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

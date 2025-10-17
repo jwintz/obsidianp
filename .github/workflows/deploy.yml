@@ -36,7 +36,7 @@ jobs:
         run: |
           # Generate site from the docs folder
           # For project pages: jwintz.github.io/obsidianp
-          node dist/cli.js generate ./docs ./site --base-path "/obsidianp" --title "ObsidianP Documentation"
+          node dist/cli.js generate ./docs ./site --base-path "/obsidianp" --title "Obsidian:P"
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

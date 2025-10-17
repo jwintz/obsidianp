@@ -40,7 +40,7 @@ class GraphView {
       existingFilesOnly: false,
       showArrows: true,
       depth: 1,
-      textFadeThreshold: 1,
+      textFadeThreshold: 0.5,
       nodeSize: 0.7,
       linkThickness: 0.5,
       centerForce: 0.3,
@@ -56,7 +56,7 @@ class GraphView {
       includeOrphans: true,
       searchQuery: '',
       showArrows: true,
-      textFadeThreshold: 1,
+      textFadeThreshold: 0.5,
       nodeSize: 0.7,
       linkThickness: 0.5,
       linkForce: 0.3,
@@ -934,24 +934,28 @@ class GraphView {
 
       const nextDepth = depth + 1;
 
-      if (settings.includeOutgoing && Array.isArray(note.links)) {
-        note.links.forEach(targetId => {
-          if (!this.notes.has(targetId)) {
-            // Try to find with case-insensitive match
-            const lowerTargetId = targetId.toLowerCase();
-            const matchingId = Array.from(this.notes.keys()).find(noteId => 
-              noteId.toLowerCase() === lowerTargetId || 
-              noteId.toLowerCase().replace(/-/g, '') === lowerTargetId.replace(/\//g, '')
-            );
-            if (matchingId) {
-              enqueue(matchingId, nextDepth, id, 'outgoing');
+      // Use linkGraph for outgoing links (resolved IDs) instead of note.links (raw text)
+      if (settings.includeOutgoing) {
+        const outgoingLinks = this.outboundMap.get(id);
+        if (outgoingLinks) {
+          outgoingLinks.forEach(targetId => {
+            if (!this.notes.has(targetId)) {
+              // Try to find with case-insensitive match
+              const lowerTargetId = targetId.toLowerCase();
+              const matchingId = Array.from(this.notes.keys()).find(noteId => 
+                noteId.toLowerCase() === lowerTargetId || 
+                noteId.toLowerCase().replace(/-/g, '') === lowerTargetId.replace(/\//g, '')
+              );
+              if (matchingId) {
+                enqueue(matchingId, nextDepth, id, 'outgoing');
+                return;
+              }
               return;
             }
-            return;
-          }
-          if (targetId === id) return;
-          enqueue(targetId, nextDepth, id, 'outgoing');
-        });
+            if (targetId === id) return;
+            enqueue(targetId, nextDepth, id, 'outgoing');
+          });
+        }
       }
 
       if (settings.includeIncoming && Array.isArray(note.backlinks)) {

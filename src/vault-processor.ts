@@ -130,7 +130,7 @@ export class VaultProcessor {
     notes.forEach(note => {
       const resolvedLinks = new Set<string>();
       note.links.forEach(linkText => {
-        const resolvedId = this.resolveLinkToNoteId(linkText, notes);
+        const resolvedId = this.resolveLinkToNoteId(linkText, notes, note);
         if (resolvedId) {
           resolvedLinks.add(resolvedId);
         }
@@ -161,16 +161,34 @@ export class VaultProcessor {
   /**
    * Resolve a link text to an actual note ID by searching through all notes
    */
-  private resolveLinkToNoteId(linkText: string, notes: Map<string, Note>): string | null {
+  private resolveLinkToNoteId(linkText: string, notes: Map<string, Note>, sourceNote?: Note): string | null {
+    // Handle relative paths (e.g., ../Architecture/Core Components)
+    let normalizedLinkText = linkText;
+    if (linkText.includes('../') || linkText.includes('./')) {
+      // If we have source note context, resolve relative to its folder
+      if (sourceNote) {
+        const sourcePath = sourceNote.folderPath || '';
+        // Resolve the relative path
+        const resolvedPath = path.normalize(path.join(sourcePath, linkText));
+        normalizedLinkText = resolvedPath;
+      } else {
+        // Fallback: remove ../ and ./ prefixes
+        normalizedLinkText = linkText.replace(/^(\.\.\/|\.\/)+/, '');
+      }
+    }
+
     // First try exact match with generated ID
-    const directId = this.markdownProcessor.generateNoteId(linkText);
+    const directId = this.markdownProcessor.generateNoteId(normalizedLinkText);
     if (notes.has(directId)) {
       return directId;
     }
 
+    // Extract the actual title from the link (last part of path)
+    const linkTitle = normalizedLinkText.split('/').pop() || normalizedLinkText;
+
     // Try to find by title match
     for (const [noteId, note] of notes) {
-      if (note.title === linkText) {
+      if (note.title === linkTitle) {
         return noteId;
       }
 

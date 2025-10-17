@@ -16,10 +16,9 @@
 
 node_modules/
 dist/
-site/
-hub/
 vault/
-tsconfig.tsbuildinfo
+site/
+docs/.obsidian
 
 ## #############################################################################
 ## Code ends here

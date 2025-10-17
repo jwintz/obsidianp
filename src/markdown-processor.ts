@@ -560,12 +560,24 @@ export class MarkdownProcessor {
   /**
    * Extract [[wiki-style]] links from markdown content
    */
+  /**
+   * Extract [[wiki-style]] links from markdown content
+   */
   private extractLinks(content: string): string[] {
     const links: string[] = [];
-    let match;
 
+    // Remove code blocks (both fenced and indented) to avoid extracting links from examples
+    let contentWithoutCode = content;
+
+    // Remove fenced code blocks (```...```)
+    contentWithoutCode = contentWithoutCode.replace(/```[\s\S]*?```/g, '');
+
+    // Remove inline code (`...`)
+    contentWithoutCode = contentWithoutCode.replace(/`[^`]+`/g, '');
+
+    let match;
     // Extract regular links
-    while ((match = this.linkPattern.exec(content)) !== null) {
+    while ((match = this.linkPattern.exec(contentWithoutCode)) !== null) {
       const link = match[1];
       if (link && !link.startsWith('!')) {
         // Handle display text with pipe separator: extract only the actual link target

@@ -246,4 +246,4 @@ try {
 
 ---
 
-See also: [[MarkdownProcessor API]] • [[../Architecture/Core Components|Core Components]]
+See also: [[MarkdownProcessor API]] • [[Architecture/Core Components|Core Components]]

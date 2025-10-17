@@ -18,7 +18,7 @@ related_apis:
 
 # Interactive Graph Views
 
-ObsidianP provides powerful graph visualization features inspired by Obsidian's graph views.
+Obsidian:P provides powerful graph visualization features inspired by Obsidian's graph views.
 
 ## Overview
 

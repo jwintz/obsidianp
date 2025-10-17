@@ -1,5 +1,5 @@
 ---
-description: Overview of ObsidianP's core components and system architecture
+description: Overview of Obsidian:P's core components and system architecture
 tags:
   - architecture
   - components
@@ -19,7 +19,7 @@ related_components:
 
 # Core Components
 
-ObsidianP consists of several core components that work together to transform your vault into a static website.
+Obsidian:P consists of several core components that work together to transform your vault into a static website.
 
 ## Architecture Overview
 
@@ -63,7 +63,7 @@ The system follows a pipeline architecture:
 }
 ```
 
-See [[../API-Reference/VaultProcessor API|VaultProcessor API]] for detailed API documentation.
+See [[API-Reference/VaultProcessor API|VaultProcessor API]] for detailed API documentation.
 
 ## MarkdownProcessor
 
@@ -80,7 +80,7 @@ See [[../API-Reference/VaultProcessor API|VaultProcessor API]] for detailed API 
 **Input:** Raw markdown string
 **Output:** Processed HTML string
 
-See [[../API-Reference/MarkdownProcessor API|MarkdownProcessor API]] for detailed API documentation.
+See [[API-Reference/MarkdownProcessor API|MarkdownProcessor API]] for detailed API documentation.
 
 ## GraphRenderer
 
@@ -98,7 +98,7 @@ See [[../API-Reference/MarkdownProcessor API|MarkdownProcessor API]] for detaile
 - SVG for rendering
 - Web Workers for large graphs (optional)
 
-See [[../API-Reference/GraphRenderer API|GraphRenderer API]] for detailed API documentation.
+See [[API-Reference/GraphRenderer API|GraphRenderer API]] for detailed API documentation.
 
 ## SiteGenerator
 
@@ -113,7 +113,7 @@ See [[../API-Reference/GraphRenderer API|GraphRenderer API]] for detailed API do
 
 **Output:** Static HTML site in `outputPath`
 
-See [[../API-Reference/SiteGenerator API|SiteGenerator API]] for detailed API documentation.
+See [[API-Reference/SiteGenerator API|SiteGenerator API]] for detailed API documentation.
 
 ## Supporting Components
 
@@ -285,4 +285,4 @@ watcher.on('change', async (path) => {
 
 ---
 
-Read Next: [[../Features/Interactive Graph Views|Interactive Graph Views]]
+Read Next: [[Features/Interactive Graph Views|Interactive Graph Views]]

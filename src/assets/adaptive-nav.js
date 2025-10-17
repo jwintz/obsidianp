@@ -1,7 +1,7 @@
 /**
  * Adaptive Navigation System for ObsidianP
  * Handles responsive navigation transitions between sidebar and pill views
- * Based on Apple-style adaptive navigation patterns
+ * Implements liquid glass design with smooth breakpoint transitions
  */
 
 class AdaptiveNavigation {
@@ -44,7 +44,6 @@ class AdaptiveNavigation {
     
     // Check if already populated
     if (folderTree.children.length > 0) {
-      console.log('AdaptiveNav: Folder tree already populated');
       this.onFolderTreeReady();
       return;
     }
@@ -52,7 +51,6 @@ class AdaptiveNavigation {
     // Wait for it to be populated
     const observer = new MutationObserver((mutations) => {
       if (folderTree.children.length > 0) {
-        console.log('AdaptiveNav: Folder tree populated, initializing navigation');
         observer.disconnect();
         this.onFolderTreeReady();
       }
@@ -113,23 +111,19 @@ class AdaptiveNavigation {
   handleBreakpointChange() {
     const body = document.body;
     
-    console.log('AdaptiveNav: Breakpoint changed to', this.currentBreakpoint);
     
     // Update body classes
     body.classList.remove('nav-mobile', 'nav-tablet', 'nav-desktop');
     
     if (this.currentBreakpoint === 'mobile' || this.currentBreakpoint === 'mobile-sm') {
       body.classList.add('nav-mobile', 'with-pill-nav');
-      console.log('AdaptiveNav: Populating pill navigation for mobile');
       this.populatePillNavigation();
     } else if (this.currentBreakpoint === 'tablet') {
       body.classList.add('nav-tablet');
       body.classList.remove('with-pill-nav');
-      console.log('AdaptiveNav: Tablet mode - collapsed sidebar');
     } else {
       body.classList.add('nav-desktop');
       body.classList.remove('with-pill-nav');
-      console.log('AdaptiveNav: Desktop mode - full sidebar');
     }
     
     // Announce change to screen readers
@@ -206,7 +200,6 @@ class AdaptiveNavigation {
     });
     
     this.navigationItems = items;
-    console.log('AdaptiveNav: Found', items.length, 'navigation items:', items);
   }
   
   /**

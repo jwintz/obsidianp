@@ -1,5 +1,5 @@
 ---
-description: Deploy your ObsidianP site to GitHub Pages, Netlify, Vercel, and other hosting platforms
+description: Deploy your Obsidian:P site to GitHub Pages, Netlify, Vercel, and other hosting platforms
 tags:
   - deployment
   - hosting
@@ -20,7 +20,7 @@ prerequisites:
 
 # Deployment
 
-Deploy your ObsidianP-generated site to GitHub Pages or GitLab Pages.
+Deploy your Obsidian:P-generated site to GitHub Pages or GitLab Pages.
 
 ## GitHub Pages
 
@@ -60,7 +60,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build ObsidianP
+      - name: Build Obsidian:P
         run: npm run build
       
       - name: Generate site
@@ -131,7 +131,7 @@ pages:
     # Install dependencies
     - npm ci
     
-    # Build ObsidianP
+    # Build Obsidian:P
     - npm run build
     
     # Generate site
@@ -404,4 +404,4 @@ Sitemap: https://example.com/sitemap.xml
 
 ---
 
-Read Next: [[../Architecture/Core Components|Core Components]]
+Read Next: [[Architecture/Core Components|Core Components]]

@@ -445,4 +445,4 @@ async function parallelGenerate(vaultData: VaultData) {
 
 ---
 
-See also: [[../Getting-Started/Building Sites|Building Sites]] • [[../Getting-Started/Deployment|Deployment]] • [[../Architecture/Core Components|Core Components]]
+See also: [[Getting-Started/Building Sites|Building Sites]] • [[Getting-Started/Deployment|Deployment]] • [[Architecture/Core Components|Core Components]]

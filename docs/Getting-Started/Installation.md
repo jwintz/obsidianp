@@ -1,5 +1,5 @@
 ---
-description: Step-by-step guide to install and set up ObsidianP
+description: Step-by-step guide to install and set up Obsidian:P
 tags:
   - installation
   - setup
@@ -15,7 +15,7 @@ last_updated: 2025-10-17
 
 # Installation
 
-Get started with ObsidianP by installing it in your Obsidian vault directory.
+Get started with Obsidian:P by installing it in your Obsidian vault directory.
 
 ## Prerequisites
 
@@ -50,7 +50,7 @@ npm run build
 
 ## Verify Installation
 
-Check that ObsidianP is installed correctly:
+Check that Obsidian:P is installed correctly:
 
 ```bash
 npm run build -- --help

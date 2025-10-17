@@ -1,5 +1,5 @@
 ---
-description: Complete documentation for ObsidianP - a static site generator for Obsidian vaults
+description: Complete documentation for Obsidian:P - a static site generator for Obsidian vaults
 tags:
   - documentation
   - overview
@@ -12,13 +12,13 @@ difficulty: beginner
 last_updated: 2025-10-17
 ---
 
-# ObsidianP Documentation
+# Obsidian:P Documentation
 
-Welcome to the **ObsidianP** documentation vault - a static site generator that transforms your Obsidian vault into a beautiful, interactive website.
+Welcome to the **Obsidian:P** documentation vault - a static site generator that transforms your Obsidian vault into a beautiful, interactive website.
 
 ## Overview
 
-ObsidianP is a TypeScript-based static site generator specifically designed for Obsidian vaults. It preserves the interconnected nature of your notes while adding powerful features like interactive graph views, search, and navigation.
+Obsidian:P is a TypeScript-based static site generator specifically designed for Obsidian vaults. It preserves the interconnected nature of your notes while adding powerful features like interactive graph views, search, and navigation.
 
 ## Key Features
 
@@ -41,7 +41,7 @@ ObsidianP is a TypeScript-based static site generator specifically designed for 
 
 ## Getting Started
 
-1. [[Getting-Started/Installation|Installation]] - Set up ObsidianP
+1. [[Getting-Started/Installation|Installation]] - Set up Obsidian:P
 2. [[Getting-Started/Configuration|Configuration]] - Configure your site
 3. [[Getting-Started/Building Sites|Building Sites]] - Generate your static site
 4. [[Getting-Started/Deployment|Deployment]] - Deploy to hosting services

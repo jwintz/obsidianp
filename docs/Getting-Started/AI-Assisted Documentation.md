@@ -16,7 +16,7 @@ last_updated: 2025-10-17
 
 # AI-Assisted Documentation
 
-Learn how to use AI assistants effectively to create and maintain high-quality documentation for existing codebases using ObsidianP.
+Learn how to use AI assistants effectively to create and maintain high-quality documentation for existing codebases using Obsidian:P.
 
 ## Core Documentation Prompts
 
@@ -613,4 +613,4 @@ page with:
 
 **Meta-Documentation:** This guide is reference material for maintaining documentation, not part of the main learning path.
 
-See also: [[Configuration]] • [[Building Sites]] • [[../Architecture/Core Components|Core Components]]
+See also: [[Configuration]] • [[Building Sites]] • [[Architecture/Core Components|Core Components]]

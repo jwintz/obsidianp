@@ -18,7 +18,7 @@ related_apis:
 
 # Search System
 
-ObsidianP includes a powerful client-side search system built with Lunr.js.
+Obsidian:P includes a powerful client-side search system built with Lunr.js.
 
 ## Features
 

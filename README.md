@@ -90,7 +90,7 @@ obsidianp init -o my-config.jsonc # Custom filename
 
 ## Configuration
 
-ObsidianP automatically detects `obsidianp.config.jsonc` or `obsidianp.config.json` in your project directory:
+Obsidian:P automatically detects `obsidianp.config.jsonc` or `obsidianp.config.json` in your project directory:
 
 ```jsonc
 {
@@ -171,7 +171,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build ObsidianP
+      - name: Build Obsidian:P
         run: npm run build
       
       - name: Generate site

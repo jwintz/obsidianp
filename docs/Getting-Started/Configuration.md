@@ -1,5 +1,5 @@
 ---
-description: Complete guide to configuring ObsidianP for your vault
+description: Complete guide to configuring Obsidian:P for your vault
 tags:
   - configuration
   - setup
@@ -18,7 +18,7 @@ related_apis:
 
 # Configuration
 
-ObsidianP uses a JSON configuration file to customize your site generation.
+Obsidian:P uses a JSON configuration file to customize your site generation.
 
 ## Configuration File
 
@@ -117,7 +117,7 @@ interface SiteConfig {
 }
 ```
 
-See [[../API-Reference/VaultProcessor API|VaultProcessor API]] for programmatic configuration.
+See [[API-Reference/VaultProcessor API|VaultProcessor API]] for programmatic configuration.
 
 ---
 

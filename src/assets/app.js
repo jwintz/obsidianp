@@ -8,6 +8,7 @@ class ObsidianSSGApp {
     this.tags = new Map();
     this.folderStructure = [];
     this.currentNote = null;
+    this.lastViewedNoteId = null; // Track last viewed note for graph switching
     this.currentBase = null;
     this.search = null;
     this.graph = null;
@@ -523,16 +524,17 @@ class ObsidianSSGApp {
     }
   }
   
-  showLocalGraphModal() {
+  showLocalGraphModal(noteId = null) {
     const modal = document.getElementById('local-graph-modal');
     const container = document.getElementById('local-graph-container');
+    const targetNoteId = noteId || this.currentNote?.id;
     
-    if (modal && container && this.graph && this.currentNote) {
+    if (modal && container && this.graph && targetNoteId) {
       modal.classList.remove('hidden');
       document.body.style.overflow = 'hidden'; // Prevent background scrolling
       
       // Render local graph - pass note ID, not note object
-      this.graph.renderLocalGraph(container, this.currentNote.id);
+      this.graph.renderLocalGraph(container, targetNoteId);
       
       // Update toggle states
       this.updateGraphToggleStates('local');
@@ -555,8 +557,10 @@ class ObsidianSSGApp {
   
   switchToLocalGraph() {
     this.hideGlobalGraphModal();
-    if (this.currentNote) {
-      this.showLocalGraphModal();
+    // Use current note or fall back to last viewed note
+    const noteId = this.currentNote?.id || this.lastViewedNoteId;
+    if (noteId) {
+      this.showLocalGraphModal(noteId);
       this.updateGraphToggleStates('local');
     }
   }
@@ -812,6 +816,7 @@ class ObsidianSSGApp {
     }
     
     this.currentNote = note;
+    this.lastViewedNoteId = noteId; // Track for graph view switching
     
     // Update URL and history with clean URLs
     if (addToHistory) {

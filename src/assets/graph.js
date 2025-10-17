@@ -33,21 +33,36 @@ class GraphView {
   getDefaultLocalGraphSettings() {
     return {
       includeOutgoing: true,
-      includeBacklinks: false,
-      includeNeighbors: true,
-      includeTags: true,
+      includeIncoming: true,
+      includeNeighbors: false,
+      includeTags: false,
+      includeAttachments: false,
+      existingFilesOnly: false,
       showArrows: true,
-      depth: 1
+      depth: 1,
+      textFadeThreshold: 1,
+      nodeSize: 0.7,
+      linkThickness: 0.5,
+      centerForce: 0.3,
+      repelForce: 1
     };
   }
 
   getDefaultGlobalGraphSettings() {
     return {
-      includeOutgoing: true,
-      includeBacklinks: true,
-      includeNeighbors: false,
       includeTags: true,
-      showArrows: true
+      includeAttachments: false,
+      existingFilesOnly: false,
+      includeOrphans: true,
+      searchQuery: '',
+      showArrows: true,
+      textFadeThreshold: 1,
+      nodeSize: 0.7,
+      linkThickness: 0.5,
+      linkForce: 0.3,
+      linkDistance: 50,
+      centerForce: 0.05,
+      repelForce: 1
     };
   }
   
@@ -95,16 +110,16 @@ class GraphView {
     const defs = svg.append('defs');
     defs.append('marker')
       .attr('id', svgProperty === 'miniSvg' ? 'arrowhead-mini' : 'arrowhead')
-      .attr('viewBox', '0 -5 10 10')
-      .attr('refX', svgProperty === 'miniSvg' ? 10 : 12)
+      .attr('viewBox', '0 -4 8 8')
+      .attr('refX', 8)
       .attr('refY', 0)
-      .attr('markerWidth', svgProperty === 'miniSvg' ? 3 : 4) // Reduced from 4/8 to 3/4
-      .attr('markerHeight', svgProperty === 'miniSvg' ? 3 : 4)
+      .attr('markerWidth', svgProperty === 'miniSvg' ? 5 : 6)
+      .attr('markerHeight', svgProperty === 'miniSvg' ? 5 : 6)
       .attr('orient', 'auto')
       .append('path')
-      .attr('d', svgProperty === 'miniSvg' ? 'M0,-3L6,0L0,3' : 'M0,-3L6,0L0,3') // Same small arrow for both
-      .attr('fill', 'var(--color-graph-edge)')
-      .attr('opacity', 0.7);
+      .attr('d', 'M0,-3.5L7,0L0,3.5L1,-0Z')
+      .attr('fill', '#9ca3af')
+      .attr('opacity', 1);
     
     this[svgProperty] = svg;
   }
@@ -326,30 +341,43 @@ class GraphView {
 
     const elements = {
       panel,
-      linksToggle: panel.querySelector('#local-graph-links-toggle'),
-      backlinksToggle: panel.querySelector('#local-graph-backlinks-toggle'),
-      neighborsToggle: panel.querySelector('#local-graph-neighbors-toggle'),
+      outgoingToggle: panel.querySelector('#local-graph-outgoing-toggle'),
+      incomingToggle: panel.querySelector('#local-graph-incoming-toggle'),
+      neighborsToggle: panel.querySelector('#local-graph-neighbor-toggle'),
       tagsToggle: panel.querySelector('#local-graph-tags-toggle'),
+      attachmentsToggle: panel.querySelector('#local-graph-attachments-toggle'),
+      existingOnlyToggle: panel.querySelector('#local-graph-existing-only-toggle'),
       arrowsToggle: panel.querySelector('#local-graph-arrows-toggle'),
       depthInput: panel.querySelector('#local-graph-depth'),
       depthValue: panel.querySelector('#local-graph-depth-value'),
+      textFadeSlider: panel.querySelector('#local-graph-text-fade'),
+      nodeSizeSlider: panel.querySelector('#local-graph-node-size'),
+      linkThicknessSlider: panel.querySelector('#local-graph-link-thickness'),
+      centerForceSlider: panel.querySelector('#local-graph-center-force'),
+      repelForceSlider: panel.querySelector('#local-graph-repel-force'),
       resetButton: panel.querySelector('#local-graph-reset')
     };
 
     this.localGraphControlElements = elements;
 
     const handleChange = () => {
-      if (elements.linksToggle) {
-        this.localGraphSettings.includeOutgoing = !!elements.linksToggle.checked;
+      if (elements.outgoingToggle) {
+        this.localGraphSettings.includeOutgoing = !!elements.outgoingToggle.checked;
       }
-      if (elements.backlinksToggle) {
-        this.localGraphSettings.includeBacklinks = !!elements.backlinksToggle.checked;
+      if (elements.incomingToggle) {
+        this.localGraphSettings.includeIncoming = !!elements.incomingToggle.checked;
       }
       if (elements.neighborsToggle) {
         this.localGraphSettings.includeNeighbors = !!elements.neighborsToggle.checked;
       }
       if (elements.tagsToggle) {
         this.localGraphSettings.includeTags = !!elements.tagsToggle.checked;
+      }
+      if (elements.attachmentsToggle) {
+        this.localGraphSettings.includeAttachments = !!elements.attachmentsToggle.checked;
+      }
+      if (elements.existingOnlyToggle) {
+        this.localGraphSettings.existingFilesOnly = !!elements.existingOnlyToggle.checked;
       }
       if (elements.arrowsToggle) {
         this.localGraphSettings.showArrows = !!elements.arrowsToggle.checked;
@@ -358,20 +386,41 @@ class GraphView {
         const depthValue = parseInt(elements.depthInput.value, 10);
         this.localGraphSettings.depth = Number.isNaN(depthValue) ? 1 : Math.max(1, Math.min(5, depthValue));
       }
+      if (elements.textFadeSlider) {
+        this.localGraphSettings.textFadeThreshold = parseFloat(elements.textFadeSlider.value);
+      }
+      if (elements.nodeSizeSlider) {
+        this.localGraphSettings.nodeSize = parseFloat(elements.nodeSizeSlider.value);
+      }
+      if (elements.linkThicknessSlider) {
+        this.localGraphSettings.linkThickness = parseFloat(elements.linkThicknessSlider.value);
+      }
+      if (elements.centerForceSlider) {
+        this.localGraphSettings.centerForce = parseFloat(elements.centerForceSlider.value);
+      }
+      if (elements.repelForceSlider) {
+        this.localGraphSettings.repelForce = parseFloat(elements.repelForceSlider.value);
+      }
       this.applyLocalGraphSettingsChange();
     };
 
-    if (elements.linksToggle) {
-      elements.linksToggle.addEventListener('change', handleChange);
+    if (elements.outgoingToggle) {
+      elements.outgoingToggle.addEventListener('change', handleChange);
     }
-    if (elements.backlinksToggle) {
-      elements.backlinksToggle.addEventListener('change', handleChange);
+    if (elements.incomingToggle) {
+      elements.incomingToggle.addEventListener('change', handleChange);
     }
     if (elements.neighborsToggle) {
       elements.neighborsToggle.addEventListener('change', handleChange);
     }
     if (elements.tagsToggle) {
       elements.tagsToggle.addEventListener('change', handleChange);
+    }
+    if (elements.attachmentsToggle) {
+      elements.attachmentsToggle.addEventListener('change', handleChange);
+    }
+    if (elements.existingOnlyToggle) {
+      elements.existingOnlyToggle.addEventListener('change', handleChange);
     }
     if (elements.arrowsToggle) {
       elements.arrowsToggle.addEventListener('change', handleChange);
@@ -384,6 +433,21 @@ class GraphView {
         elements.depthInput.setAttribute('aria-valuenow', elements.depthInput.value);
       });
       elements.depthInput.addEventListener('change', handleChange);
+    }
+    if (elements.textFadeSlider) {
+      elements.textFadeSlider.addEventListener('input', handleChange);
+    }
+    if (elements.nodeSizeSlider) {
+      elements.nodeSizeSlider.addEventListener('input', handleChange);
+    }
+    if (elements.linkThicknessSlider) {
+      elements.linkThicknessSlider.addEventListener('input', handleChange);
+    }
+    if (elements.centerForceSlider) {
+      elements.centerForceSlider.addEventListener('input', handleChange);
+    }
+    if (elements.repelForceSlider) {
+      elements.repelForceSlider.addEventListener('input', handleChange);
     }
     if (elements.resetButton) {
       elements.resetButton.addEventListener('click', () => {
@@ -402,17 +466,23 @@ class GraphView {
     const elements = this.localGraphControlElements;
     const settings = this.localGraphSettings;
 
-    if (elements.linksToggle) {
-      elements.linksToggle.checked = settings.includeOutgoing;
+    if (elements.outgoingToggle) {
+      elements.outgoingToggle.checked = settings.includeOutgoing;
     }
-    if (elements.backlinksToggle) {
-      elements.backlinksToggle.checked = settings.includeBacklinks;
+    if (elements.incomingToggle) {
+      elements.incomingToggle.checked = settings.includeIncoming;
     }
     if (elements.neighborsToggle) {
       elements.neighborsToggle.checked = settings.includeNeighbors;
     }
     if (elements.tagsToggle) {
       elements.tagsToggle.checked = settings.includeTags;
+    }
+    if (elements.attachmentsToggle) {
+      elements.attachmentsToggle.checked = settings.includeAttachments;
+    }
+    if (elements.existingOnlyToggle) {
+      elements.existingOnlyToggle.checked = settings.existingFilesOnly;
     }
     if (elements.arrowsToggle) {
       elements.arrowsToggle.checked = settings.showArrows !== false;
@@ -424,12 +494,28 @@ class GraphView {
       }
       elements.depthInput.setAttribute('aria-valuenow', `${settings.depth}`);
     }
+    if (elements.textFadeSlider) {
+      elements.textFadeSlider.value = `${settings.textFadeThreshold}`;
+    }
+    if (elements.nodeSizeSlider) {
+      elements.nodeSizeSlider.value = `${settings.nodeSize}`;
+    }
+    if (elements.linkThicknessSlider) {
+      elements.linkThicknessSlider.value = `${settings.linkThickness}`;
+    }
+    if (elements.centerForceSlider) {
+      elements.centerForceSlider.value = `${settings.centerForce}`;
+    }
+    if (elements.repelForceSlider) {
+      elements.repelForceSlider.value = `${settings.repelForce}`;
+    }
   }
 
   applyLocalGraphSettingsChange() {
     if (this.currentLocalContainer && this.currentLocalNodeId) {
       this.renderLocalGraph(this.currentLocalContainer, this.currentLocalNodeId);
     }
+    
     if (this.currentMiniNodeId) {
       this.renderMiniGraph(this.currentMiniNodeId);
     }
@@ -448,49 +534,105 @@ class GraphView {
 
     const elements = {
       panel,
-      linksToggle: panel.querySelector('#global-graph-links-toggle'),
-      backlinksToggle: panel.querySelector('#global-graph-backlinks-toggle'),
-      neighborsToggle: panel.querySelector('#global-graph-neighbors-toggle'),
       tagsToggle: panel.querySelector('#global-graph-tags-toggle'),
+      attachmentsToggle: panel.querySelector('#global-graph-attachments-toggle'),
+      existingOnlyToggle: panel.querySelector('#global-graph-existing-only-toggle'),
+      orphansToggle: panel.querySelector('#global-graph-orphans-toggle'),
+      searchInput: panel.querySelector('#global-graph-search'),
       arrowsToggle: panel.querySelector('#global-graph-arrows-toggle'),
+      textFadeSlider: panel.querySelector('#global-graph-text-fade'),
+      nodeSizeSlider: panel.querySelector('#global-graph-node-size'),
+      linkThicknessSlider: panel.querySelector('#global-graph-link-thickness'),
+      linkForceSlider: panel.querySelector('#global-graph-link-force'),
+      linkDistanceSlider: panel.querySelector('#global-graph-link-distance'),
+      centerForceSlider: panel.querySelector('#global-graph-center-force'),
+      repelForceSlider: panel.querySelector('#global-graph-repel-force'),
       resetButton: panel.querySelector('#global-graph-reset')
     };
 
     this.globalGraphControlElements = elements;
 
     const handleChange = () => {
-      if (elements.linksToggle) {
-        this.globalGraphSettings.includeOutgoing = !!elements.linksToggle.checked;
-      }
-      if (elements.backlinksToggle) {
-        this.globalGraphSettings.includeBacklinks = !!elements.backlinksToggle.checked;
-      }
-      if (elements.neighborsToggle) {
-        this.globalGraphSettings.includeNeighbors = !!elements.neighborsToggle.checked;
-      }
       if (elements.tagsToggle) {
         this.globalGraphSettings.includeTags = !!elements.tagsToggle.checked;
+      }
+      if (elements.attachmentsToggle) {
+        this.globalGraphSettings.includeAttachments = !!elements.attachmentsToggle.checked;
+      }
+      if (elements.existingOnlyToggle) {
+        this.globalGraphSettings.existingFilesOnly = !!elements.existingOnlyToggle.checked;
+      }
+      if (elements.orphansToggle) {
+        this.globalGraphSettings.includeOrphans = !!elements.orphansToggle.checked;
+      }
+      if (elements.searchInput) {
+        this.globalGraphSettings.searchQuery = elements.searchInput.value;
       }
       if (elements.arrowsToggle) {
         this.globalGraphSettings.showArrows = !!elements.arrowsToggle.checked;
       }
+      if (elements.textFadeSlider) {
+        this.globalGraphSettings.textFadeThreshold = parseFloat(elements.textFadeSlider.value);
+      }
+      if (elements.nodeSizeSlider) {
+        this.globalGraphSettings.nodeSize = parseFloat(elements.nodeSizeSlider.value);
+      }
+      if (elements.linkThicknessSlider) {
+        this.globalGraphSettings.linkThickness = parseFloat(elements.linkThicknessSlider.value);
+      }
+      if (elements.linkForceSlider) {
+        this.globalGraphSettings.linkForce = parseFloat(elements.linkForceSlider.value);
+      }
+      if (elements.linkDistanceSlider) {
+        this.globalGraphSettings.linkDistance = parseFloat(elements.linkDistanceSlider.value);
+      }
+      if (elements.centerForceSlider) {
+        this.globalGraphSettings.centerForce = parseFloat(elements.centerForceSlider.value);
+      }
+      if (elements.repelForceSlider) {
+        this.globalGraphSettings.repelForce = parseFloat(elements.repelForceSlider.value);
+      }
       this.applyGlobalGraphSettingsChange();
     };
 
-    if (elements.linksToggle) {
-      elements.linksToggle.addEventListener('change', handleChange);
-    }
-    if (elements.backlinksToggle) {
-      elements.backlinksToggle.addEventListener('change', handleChange);
-    }
-    if (elements.neighborsToggle) {
-      elements.neighborsToggle.addEventListener('change', handleChange);
-    }
     if (elements.tagsToggle) {
       elements.tagsToggle.addEventListener('change', handleChange);
     }
+    if (elements.attachmentsToggle) {
+      elements.attachmentsToggle.addEventListener('change', handleChange);
+    }
+    if (elements.existingOnlyToggle) {
+      elements.existingOnlyToggle.addEventListener('change', handleChange);
+    }
+    if (elements.orphansToggle) {
+      elements.orphansToggle.addEventListener('change', handleChange);
+    }
+    if (elements.searchInput) {
+      elements.searchInput.addEventListener('input', handleChange);
+    }
     if (elements.arrowsToggle) {
       elements.arrowsToggle.addEventListener('change', handleChange);
+    }
+    if (elements.textFadeSlider) {
+      elements.textFadeSlider.addEventListener('input', handleChange);
+    }
+    if (elements.nodeSizeSlider) {
+      elements.nodeSizeSlider.addEventListener('input', handleChange);
+    }
+    if (elements.linkThicknessSlider) {
+      elements.linkThicknessSlider.addEventListener('input', handleChange);
+    }
+    if (elements.linkForceSlider) {
+      elements.linkForceSlider.addEventListener('input', handleChange);
+    }
+    if (elements.linkDistanceSlider) {
+      elements.linkDistanceSlider.addEventListener('input', handleChange);
+    }
+    if (elements.centerForceSlider) {
+      elements.centerForceSlider.addEventListener('input', handleChange);
+    }
+    if (elements.repelForceSlider) {
+      elements.repelForceSlider.addEventListener('input', handleChange);
     }
     if (elements.resetButton) {
       elements.resetButton.addEventListener('click', () => {
@@ -508,20 +650,44 @@ class GraphView {
     const elements = this.globalGraphControlElements;
     const settings = this.globalGraphSettings;
 
-    if (elements.linksToggle) {
-      elements.linksToggle.checked = settings.includeOutgoing !== false;
-    }
-    if (elements.backlinksToggle) {
-      elements.backlinksToggle.checked = settings.includeBacklinks !== false;
-    }
-    if (elements.neighborsToggle) {
-      elements.neighborsToggle.checked = settings.includeNeighbors !== false;
-    }
     if (elements.tagsToggle) {
       elements.tagsToggle.checked = settings.includeTags !== false;
     }
+    if (elements.attachmentsToggle) {
+      elements.attachmentsToggle.checked = settings.includeAttachments !== false;
+    }
+    if (elements.existingOnlyToggle) {
+      elements.existingOnlyToggle.checked = settings.existingFilesOnly !== false;
+    }
+    if (elements.orphansToggle) {
+      elements.orphansToggle.checked = settings.includeOrphans !== false;
+    }
+    if (elements.searchInput) {
+      elements.searchInput.value = settings.searchQuery || '';
+    }
     if (elements.arrowsToggle) {
       elements.arrowsToggle.checked = settings.showArrows !== false;
+    }
+    if (elements.textFadeSlider) {
+      elements.textFadeSlider.value = `${settings.textFadeThreshold}`;
+    }
+    if (elements.nodeSizeSlider) {
+      elements.nodeSizeSlider.value = `${settings.nodeSize}`;
+    }
+    if (elements.linkThicknessSlider) {
+      elements.linkThicknessSlider.value = `${settings.linkThickness}`;
+    }
+    if (elements.linkForceSlider) {
+      elements.linkForceSlider.value = `${settings.linkForce}`;
+    }
+    if (elements.linkDistanceSlider) {
+      elements.linkDistanceSlider.value = `${settings.linkDistance}`;
+    }
+    if (elements.centerForceSlider) {
+      elements.centerForceSlider.value = `${settings.centerForce}`;
+    }
+    if (elements.repelForceSlider) {
+      elements.repelForceSlider.value = `${settings.repelForce}`;
     }
   }
 
@@ -558,7 +724,9 @@ class GraphView {
 
     this.miniSvg.attr('viewBox', `0 0 ${width} ${height}`);
 
-    const showArrows = this.localGraphSettings.showArrows !== false;
+    // Use local graph settings for consistency
+    const settings = this.localGraphSettings;
+    const showArrows = settings.showArrows !== false;
 
     const edgeColor = edge => {
       if (edge.type === 'neighbor') return 'var(--color-primary)';
@@ -566,16 +734,32 @@ class GraphView {
       return 'var(--color-graph-edge)';
     };
 
-    const edgeOpacity = edge => edge.type === 'tag' ? 0.6 : 0.9;
-    const edgeWidth = edge => edge.type === 'neighbor' ? 2.5 : 2;
-    const edgeDashArray = edge => edge.type === 'neighbor' ? '5 3' : null;
+    const edgeOpacity = edge => {
+      if (edge.type === 'neighbor') return 0.5;
+      if (edge.type === 'tag') return 0.35;
+      return 0.45;
+    };
+    
+    const edgeWidth = edge => {
+      const baseWidth = edge.type === 'neighbor' ? 1.5 : edge.type === 'tag' ? 1 : 1.3;
+      return baseWidth * settings.linkThickness;
+    };
+    
+    const edgeDashArray = edge => {
+      if (edge.type === 'neighbor') return '5 3';
+      if (edge.type === 'tag') return '3 2';
+      return null;
+    };
+    
     const edgeMarker = edge => (showArrows && edge.type !== 'tag' ? 'url(#arrowhead-mini)' : null);
 
     const radiusForNode = node => {
-      if (currentNodeId && node.id === currentNodeId) return 9;
-      const degree = typeof node.degree === 'number' && !Number.isNaN(node.degree) ? node.degree : 0;
-      const base = Math.max(3, Math.min(9, 3 + degree));
-      return node.id.startsWith('tag:') ? Math.max(2, base - 2) : base;
+      if (currentNodeId && node.id === currentNodeId) {
+        return 9 * settings.nodeSize;
+      }
+      const degree = node.degree || 0;
+      const base = Math.max(3, Math.min(7, 3 + Math.sqrt(degree)));
+      return base * settings.nodeSize;
     };
 
     this.miniSimulation = d3.forceSimulation(nodesToRender)
@@ -670,8 +854,10 @@ class GraphView {
         }
         return d.group === 'tag' ? 'var(--color-graph-tag)' : 'var(--color-graph-node)';
       })
+      .attr('fill-opacity', 1)
       .attr('stroke', 'var(--color-bg-primary)')
-      .attr('stroke-width', d => (currentNodeId && d.id === currentNodeId ? 2 : 1));
+      .attr('stroke-width', d => (currentNodeId && d.id === currentNodeId ? 2 : 1))
+      .attr('stroke-opacity', 1);
 
     nodes.append('text')
       .text(d => this.truncateTitle(d.title, 12))
@@ -685,11 +871,28 @@ class GraphView {
     nodes.append('title').text(d => d.title);
 
     this.miniSimulation.on('tick', () => {
-      links
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
+      links.each(function(d) {
+        // Calculate the angle between source and target
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const angle = Math.atan2(dy, dx);
+        
+        // Get node radii
+        const sourceRadius = radiusForNode(d.source) + 1; // +1 for stroke
+        const targetRadius = radiusForNode(d.target) + 1;
+        
+        // Adjust line endpoints to stop at node edges
+        const x1 = d.source.x + sourceRadius * Math.cos(angle);
+        const y1 = d.source.y + sourceRadius * Math.sin(angle);
+        const x2 = d.target.x - targetRadius * Math.cos(angle);
+        const y2 = d.target.y - targetRadius * Math.sin(angle);
+        
+        d3.select(this)
+          .attr('x1', x1)
+          .attr('y1', y1)
+          .attr('x2', x2)
+          .attr('y2', y2);
+      });
 
       nodes.attr('transform', d => `translate(${d.x},${d.y})`);
     });
@@ -751,7 +954,7 @@ class GraphView {
         });
       }
 
-      if (settings.includeBacklinks && Array.isArray(note.backlinks)) {
+      if (settings.includeIncoming && Array.isArray(note.backlinks)) {
         note.backlinks.forEach(sourceId => {
           if (!this.notes.has(sourceId) || sourceId === id) return;
           enqueue(sourceId, nextDepth, id, 'backlink');
@@ -797,9 +1000,9 @@ class GraphView {
       if (!noteIdSet.has(info.parentId) || !noteIdSet.has(childId)) return;
 
       if (info.via === 'outgoing') {
-        addLink(info.parentId, childId, 'tree');
-      } else {
-        addLink(childId, info.parentId, 'tree');
+        addLink(info.parentId, childId, 'outgoing');
+      } else if (info.via === 'backlink') {
+        addLink(childId, info.parentId, 'incoming');
       }
     });
 
@@ -1049,23 +1252,75 @@ class GraphView {
 
     const canvasElement = this.ensureGraphCanvas(containerElement) || containerElement;
     const canvasSelection = d3.select(canvasElement);
+    
+    // Store current transform before clearing (only if it exists and has been modified)
+    let currentTransform = null;
+    const existingSvg = canvasSelection.select('svg');
+    if (!existingSvg.empty()) {
+      const existingZoom = existingSvg.node().__zoom;
+      if (existingZoom && (existingZoom.k !== 1 || existingZoom.x !== 0 || existingZoom.y !== 0)) {
+        currentTransform = existingZoom;
+      }
+    }
+    
     canvasSelection.selectAll('*').remove();
 
     const settings = this.globalGraphSettings;
     const includeTags = settings.includeTags !== false;
+    const includeAttachments = settings.includeAttachments === true;
+    const existingFilesOnly = settings.existingFilesOnly !== false;
+    const includeOrphans = settings.includeOrphans === true;
+    const searchQuery = settings.searchQuery || '';
     const showArrows = settings.showArrows !== false;
 
     // Filter nodes based on settings
     let filteredNodes = [...this.nodes];
+    
+    // Filter by type
     if (!includeTags) {
       filteredNodes = filteredNodes.filter(node => !node.id.startsWith('tag:'));
+    }
+    if (!includeAttachments) {
+      filteredNodes = filteredNodes.filter(node => !node.id.startsWith('attachment:'));
+    }
+    
+    // Filter by search query
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      filteredNodes = filteredNodes.filter(node => {
+        // Simple search implementation - can be enhanced with path:, tag:, file: operators
+        if (lowerQuery.startsWith('path:')) {
+          const pathPart = lowerQuery.substring(5).trim();
+          return node.id.toLowerCase().includes(pathPart);
+        } else if (lowerQuery.startsWith('tag:')) {
+          const tagPart = lowerQuery.substring(4).trim();
+          return node.id.startsWith('tag:') && node.title.toLowerCase().includes(tagPart);
+        } else if (lowerQuery.startsWith('file:')) {
+          const filePart = lowerQuery.substring(5).trim();
+          return node.title.toLowerCase().includes(filePart);
+        } else {
+          return node.title.toLowerCase().includes(lowerQuery) || node.id.toLowerCase().includes(lowerQuery);
+        }
+      });
+    }
+    
+    // Filter orphans
+    if (!includeOrphans) {
+      const connectedNodeIds = new Set();
+      this.links.forEach(link => {
+        const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+        const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+        connectedNodeIds.add(sourceId);
+        connectedNodeIds.add(targetId);
+      });
+      filteredNodes = filteredNodes.filter(node => connectedNodeIds.has(node.id));
     }
 
     // Create a comprehensive filtered graph based on global settings
     const nodeIdSet = new Set(filteredNodes.map(node => node.id));
     let filteredLinks = [];
 
-    // Add links based on settings
+    // Add links - in global view, we show all links between visible nodes
     this.links.forEach(link => {
       const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
       const targetId = typeof link.target === 'object' ? link.target.id : link.target;
@@ -1073,35 +1328,18 @@ class GraphView {
       // Skip if nodes aren't in our filtered set
       if (!nodeIdSet.has(sourceId) || !nodeIdSet.has(targetId)) return;
       
-      // Determine link type and whether to include it
+      // Determine link type
       const isTagLink = sourceId.startsWith('tag:') || targetId.startsWith('tag:');
-      if (isTagLink && !includeTags) return;
+      const isAttachmentLink = sourceId.startsWith('attachment:') || targetId.startsWith('attachment:');
       
-      // For non-tag links, check if we should include based on settings
-      if (!isTagLink) {
-        const isOutgoingEnabled = settings.includeOutgoing !== false;
-        const isBacklinksEnabled = settings.includeBacklinks !== false;
-        
-        // If both are disabled, skip all links
-        if (!isOutgoingEnabled && !isBacklinksEnabled) return;
-        
-        // If only one direction is enabled, we still show the link
-        // (In a global graph, link direction isn't always clear without a focal node)
-        // So if either is enabled, show the link
-        
-        filteredLinks.push({
-          source: sourceId,
-          target: targetId,
-          type: 'note'
-        });
-      } else {
-        // Tag links
-        filteredLinks.push({
-          source: sourceId,
-          target: targetId,
-          type: 'tag'
-        });
-      }
+      if (isTagLink && !includeTags) return;
+      if (isAttachmentLink && !includeAttachments) return;
+      
+      filteredLinks.push({
+        source: sourceId,
+        target: targetId,
+        type: isTagLink ? 'tag' : isAttachmentLink ? 'attachment' : 'note'
+      });
     });
 
     const globalNodes = filteredNodes.map(node => ({ ...node }));
@@ -1123,6 +1361,8 @@ class GraphView {
       .attr('height', '100%')
       .attr('viewBox', `0 0 ${width} ${height}`);
 
+    const graphContent = svg.append('g').attr('class', 'graph-content');
+
     const zoom = d3.zoom()
       .scaleExtent([0.05, 6])
       .on('zoom', event => {
@@ -1142,35 +1382,38 @@ class GraphView {
       });
 
     svg.call(zoom);
-
-    const graphContent = svg.append('g').attr('class', 'graph-content');
+    
+    // Restore previous transform to avoid animation from origin (only if we have a saved transform)
+    if (currentTransform) {
+      svg.call(zoom.transform, currentTransform);
+    }
 
     const defs = svg.append('defs');
     const arrowMarker = defs.append('marker')
       .attr('id', 'arrowhead-global')
-      .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 15) // Position to clear nodes
+      .attr('viewBox', '0 -4 8 8')
+      .attr('refX', 8)
       .attr('refY', 0)
-      .attr('markerWidth', 6) // Bigger for visibility
+      .attr('markerWidth', 6)
       .attr('markerHeight', 6)
       .attr('orient', 'auto');
 
     arrowMarker.append('path')
-      .attr('d', 'M0,-5L10,0L0,5') // Visible arrow
-      .attr('fill', 'var(--color-graph-edge)')
-      .attr('fill-opacity', 0.6);
+      .attr('d', 'M0,-3.5L7,0L0,3.5L1,-0Z')
+      .attr('fill', '#9ca3af')
+      .attr('opacity', 1);
 
     const radiusForNode = node => {
       const degree = typeof node.degree === 'number' && !Number.isNaN(node.degree) ? node.degree : 0;
-      // Smaller, more consistent node sizes like Obsidian
-      const base = Math.max(4, Math.min(10, 4 + Math.sqrt(degree) * 1.5));
+      // Apply node size multiplier from settings
+      const base = Math.max(4, Math.min(10, 4 + Math.sqrt(degree) * 1.5)) * settings.nodeSize;
       return node.group === 'tag' ? Math.max(3, base - 2) : base;
     };
 
     const edgeColor = edge => edge.type === 'tag' ? 'var(--color-graph-tag)' : 'var(--color-graph-edge)';
-    const edgeOpacity = edge => edge.type === 'tag' ? 0.4 : 0.5;
-    const edgeWidth = edge => edge.type === 'tag' ? 0.8 : 1;
-    const edgeDashArray = edge => edge.type === 'tag' ? '2 2' : null;
+    const edgeOpacity = edge => edge.type === 'tag' ? 0.35 : 0.4;
+    const edgeWidth = edge => (edge.type === 'tag' ? 1 : 1.2) * settings.linkThickness;
+    const edgeDashArray = edge => edge.type === 'tag' ? '3 2' : null;
     const edgeMarker = edge => (showArrows && edge.type !== 'tag' ? 'url(#arrowhead-global)' : null);
 
     // Obsidian-style force simulation - more organic and brain-like
@@ -1178,20 +1421,21 @@ class GraphView {
       .force('link', d3.forceLink(globalLinks)
         .id(d => d.id)
         .distance(d => {
-          // Vary link distance for more organic layout
+          // Use link distance from settings
+          const baseDistance = settings.linkDistance;
           const sourceNode = globalNodes.find(n => n.id === (d.source.id || d.source));
           const targetNode = globalNodes.find(n => n.id === (d.target.id || d.target));
           const avgDegree = ((sourceNode?.degree || 0) + (targetNode?.degree || 0)) / 2;
-          return 50 + avgDegree * 3; // Distance increases with connectivity
+          return baseDistance + avgDegree * 3;
         })
-        .strength(0.3))
+        .strength(settings.linkForce))
       .force('charge', d3.forceManyBody()
         .strength(d => {
-          // Stronger repulsion for highly connected nodes creates clustering
+          // Use repel force from settings
           const degree = d.degree || 0;
-          return -120 - degree * 8;
+          return (-120 - degree * 8) * settings.repelForce;
         }))
-      .force('center', d3.forceCenter(width / 2, height / 2).strength(0.05))
+      .force('center', d3.forceCenter(width / 2, height / 2).strength(settings.centerForce))
       .force('collision', d3.forceCollide()
         .radius(d => radiusForNode(d) + 10)
         .strength(0.7))
@@ -1237,32 +1481,34 @@ class GraphView {
     nodes.append('circle')
       .attr('r', d => radiusForNode(d))
       .attr('fill', d => {
-        // Only tags have color (green), all other nodes are gray
+        // Tags have distinct color, regular nodes are muted
         if (d.group === 'tag' || d.id.startsWith('tag:')) return 'var(--color-graph-tag)';
         return 'var(--color-graph-node)';
       })
-      .attr('fill-opacity', 0.9)
-      .attr('stroke', d => {
-        // Lighter stroke for better visibility
-        if (d.group === 'tag' || d.id.startsWith('tag:')) return 'var(--color-graph-tag)';
-        return 'var(--color-graph-node)';
-      })
-      .attr('stroke-width', 1.5)
-      .attr('stroke-opacity', 0.8);
+      .attr('fill-opacity', 1)
+      .attr('stroke', 'var(--color-bg-primary)')
+      .attr('stroke-width', 2)
+      .attr('stroke-opacity', 1);
 
     // Only show labels on hover or for important nodes
     nodes.append('text')
       .text(d => {
-        // Show labels only for highly connected nodes
+        // Show labels based on text fade threshold
         const degree = d.degree || 0;
-        if (degree < 3 && !d.id.startsWith('tag:')) return '';
+        const degreeThreshold = Math.max(1, Math.floor(settings.textFadeThreshold * 3));
+        if (degree < degreeThreshold && !d.id.startsWith('tag:')) return '';
         return d.title.length > 15 ? `${d.title.substring(0, 15)}…` : d.title;
       })
       .attr('dx', d => radiusForNode(d) + 6)
       .attr('dy', '.35em')
       .style('font-size', '9px')
       .style('fill', 'var(--color-text-secondary)')
-      .style('opacity', 0.7)
+      .style('opacity', d => {
+        const degree = d.degree || 0;
+        const degreeThreshold = Math.max(1, Math.floor(settings.textFadeThreshold * 3));
+        if (degree < degreeThreshold && !d.id.startsWith('tag:')) return 0;
+        return 0.6 + (settings.textFadeThreshold * 0.2);
+      })
       .style('pointer-events', 'none');
 
     nodes.append('title').text(d => d.title);
@@ -1318,13 +1564,16 @@ class GraphView {
         });
     })
     .on('mouseout', function(event, d) {
-      // Hide label unless it's a major node
+      // Hide label unless it meets threshold
       const degree = d.degree || 0;
+      const degreeThreshold = Math.max(1, Math.floor(settings.textFadeThreshold * 3));
       d3.select(this).select('text')
-        .text(degree >= 3 || d.id.startsWith('tag:') 
+        .text(degree >= degreeThreshold || d.id.startsWith('tag:') 
           ? (d.title.length > 15 ? `${d.title.substring(0, 15)}…` : d.title)
           : '')
-        .style('opacity', 0.7)
+        .style('opacity', degree >= degreeThreshold || d.id.startsWith('tag:') 
+          ? 0.6 + (settings.textFadeThreshold * 0.2) 
+          : 0)
         .style('font-size', '9px')
         .style('font-weight', 'normal');
       
@@ -1340,21 +1589,60 @@ class GraphView {
         .select('circle')
         .transition().duration(150)
         .attr('r', d => radiusForNode(d))
-        .attr('stroke-width', 1.5)
-        .attr('fill-opacity', 0.9);
+        .attr('stroke-width', 2)
+        .attr('fill-opacity', 1);
     });
 
     simulation.on('tick', () => {
-      links
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
+      links.each(function(d) {
+        // Calculate the angle between source and target
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const angle = Math.atan2(dy, dx);
+        
+        // Get node radii
+        const sourceRadius = radiusForNode(d.source) + 2; // +2 for stroke
+        const targetRadius = radiusForNode(d.target) + 2;
+        
+        // Adjust line endpoints to stop at node edges
+        const x1 = d.source.x + sourceRadius * Math.cos(angle);
+        const y1 = d.source.y + sourceRadius * Math.sin(angle);
+        const x2 = d.target.x - targetRadius * Math.cos(angle);
+        const y2 = d.target.y - targetRadius * Math.sin(angle);
+        
+        d3.select(this)
+          .attr('x1', x1)
+          .attr('y1', y1)
+          .attr('x2', x2)
+          .attr('y2', y2);
+      });
 
       nodes.attr('transform', d => `translate(${d.x},${d.y})`);
     });
 
-    // No zoom-to-fit animation - let graph settle naturally
+    // Auto-center on first render (when no previous transform exists)
+    if (!currentTransform) {
+      simulation.on('end', () => {
+        try {
+          const bounds = graphContent.node()?.getBBox();
+          if (!bounds || bounds.width === 0 || bounds.height === 0) return;
+
+          const fullWidth = width;
+          const fullHeight = height;
+          const widthScale = fullWidth / bounds.width;
+          const heightScale = fullHeight / bounds.height;
+          const scale = Math.min(widthScale, heightScale) * 0.85;
+
+          const translateX = (fullWidth - bounds.width * scale) / 2 - bounds.x * scale;
+          const translateY = (fullHeight - bounds.height * scale) / 2 - bounds.y * scale;
+
+          const transform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
+          svg.transition().duration(750).call(zoom.transform, transform);
+        } catch (e) {
+          console.warn('Could not auto-center graph:', e);
+        }
+      });
+    }
 
     function dragStarted(event, d) {
       if (!event.active) simulation.alphaTarget(0.1).restart(); // Reduced from 0.3 for smoother animation
@@ -1386,6 +1674,17 @@ class GraphView {
 
     const canvasElement = this.ensureGraphCanvas(containerElement) || containerElement;
     const canvasSelection = d3.select(canvasElement);
+    
+    // Store current transform before clearing (only if it exists and has been modified)
+    let currentTransform = null;
+    const existingSvg = canvasSelection.select('svg');
+    if (!existingSvg.empty()) {
+      const existingZoom = existingSvg.node().__zoom;
+      if (existingZoom && (existingZoom.k !== 1 || existingZoom.x !== 0 || existingZoom.y !== 0)) {
+        currentTransform = existingZoom;
+      }
+    }
+    
     canvasSelection.selectAll('*').remove();
 
     const { nodes: localNodes, links: localLinks } = this.computeLocalGraph(currentNodeId);
@@ -1406,6 +1705,8 @@ class GraphView {
       .attr('height', '100%')
       .attr('viewBox', `0 0 ${width} ${height}`);
 
+    const graphContent = svg.append('g').attr('class', 'graph-content');
+
     const zoom = d3.zoom()
       .scaleExtent([0.1, 4])
       .on('zoom', (event) => {
@@ -1413,30 +1714,34 @@ class GraphView {
       });
 
     svg.call(zoom);
-
-    const graphContent = svg.append('g').attr('class', 'graph-content');
+    
+    // Restore previous transform to avoid animation from origin (only if we have a saved transform)
+    if (currentTransform) {
+      svg.call(zoom.transform, currentTransform);
+    }
 
     const defs = svg.append('defs');
     defs.append('marker')
       .attr('id', 'arrowhead-local')
-      .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 15)
+      .attr('viewBox', '0 -4 8 8')
+      .attr('refX', 8)
       .attr('refY', 0)
-      .attr('markerWidth', 6) // Visible size
+      .attr('markerWidth', 6)
       .attr('markerHeight', 6)
       .attr('orient', 'auto')
       .append('path')
-      .attr('d', 'M0,-5L10,0L0,5') // Standard arrow
-      .attr('fill', 'var(--color-graph-edge)')
-      .attr('fill-opacity', 0.6);
+      .attr('d', 'M0,-3.5L7,0L0,3.5L1,-0Z')
+      .attr('fill', '#9ca3af')
+      .attr('opacity', 1);
 
-    const showArrows = this.localGraphSettings.showArrows !== false;
+    const settings = this.localGraphSettings;
+    const showArrows = settings.showArrows !== false;
 
     const radiusForNode = node => {
-      if (node.id === currentNodeId) return 12; // Central node slightly larger but not huge
+      const centralBonus = node.id === currentNodeId ? 12 : 0;
       const degree = typeof node.degree === 'number' && !Number.isNaN(node.degree) ? node.degree : 0;
-      // Better scaling: logarithmic for large degrees
-      const base = Math.max(4, Math.min(8, 4 + Math.log(degree + 1) * 2));
+      // Better scaling: logarithmic for large degrees, with node size multiplier
+      const base = (centralBonus || Math.max(4, Math.min(8, 4 + Math.log(degree + 1) * 2))) * settings.nodeSize;
       return node.id.startsWith('tag:') ? Math.max(3, base - 1) : base;
     };
 
@@ -1446,15 +1751,18 @@ class GraphView {
       return 'var(--color-graph-edge)';
     };
 
-    const edgeOpacity = edge => edge.type === 'tag' ? 0.4 : 0.6;
+    const edgeOpacity = edge => {
+      if (edge.type === 'neighbor') return 0.5;
+      if (edge.type === 'tag') return 0.35;
+      return 0.45;
+    };
     const edgeWidth = edge => {
-      if (edge.type === 'neighbor') return 1.5;
-      if (edge.type === 'tag') return 1;
-      return 1.2;
+      const baseWidth = edge.type === 'neighbor' ? 1.5 : edge.type === 'tag' ? 1 : 1.3;
+      return baseWidth * settings.linkThickness;
     };
     const edgeDashArray = edge => {
-      if (edge.type === 'neighbor') return '4 3';
-      if (edge.type === 'tag') return '2 2';
+      if (edge.type === 'neighbor') return '5 3';
+      if (edge.type === 'tag') return '3 2';
       return null;
     };
     const edgeMarker = edge => (showArrows && edge.type !== 'tag' ? 'url(#arrowhead-local)' : null);
@@ -1474,11 +1782,11 @@ class GraphView {
         .strength(0.5))
       .force('charge', d3.forceManyBody()
         .strength(d => {
-          // Less repulsion for a tighter layout
-          if (d.id === currentNodeId) return -200;
-          return -80;
+          // Apply repel force multiplier
+          const baseStrength = d.id === currentNodeId ? -200 : -80;
+          return baseStrength * settings.repelForce;
         }))
-      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('center', d3.forceCenter(width / 2, height / 2).strength(settings.centerForce))
       .force('collision', d3.forceCollide()
         .radius(d => radiusForNode(d) + 20) // More spacing between nodes
         .strength(0.8))
@@ -1516,17 +1824,21 @@ class GraphView {
         if (d.id === currentNodeId) return 'var(--color-graph-highlight)';
         return d.group === 'tag' ? 'var(--color-graph-tag)' : 'var(--color-graph-node)';
       })
+      .attr('fill-opacity', 1)
       .attr('stroke', 'var(--color-bg-primary)')
-      .attr('stroke-width', d => (d.id === currentNodeId ? 3 : 1.5));
+      .attr('stroke-width', d => (d.id === currentNodeId ? 2.5 : 2))
+      .attr('stroke-opacity', 1);
 
-    // Smart label rendering
+    // Smart label rendering with text fade threshold
     nodes.append('text')
       .text(d => {
         if (d.id === currentNodeId) {
           return d.title.length > 20 ? `${d.title.substring(0, 20)}…` : d.title;
         }
         const degree = d.degree || 0;
-        if (degree >= 3) {
+        // Apply text fade threshold - show labels for nodes with degree >= threshold * 3
+        const degreeThreshold = Math.max(1, Math.floor(settings.textFadeThreshold * 3));
+        if (degree >= degreeThreshold) {
           return d.title.length > 18 ? `${d.title.substring(0, 18)}…` : d.title;
         }
         return '';
@@ -1536,6 +1848,13 @@ class GraphView {
       .style('font-size', d => d.id === currentNodeId ? '11px' : '9px')
       .style('font-weight', d => d.id === currentNodeId ? '600' : 'normal')
       .style('fill', 'var(--color-text-secondary)')
+      .style('opacity', d => {
+        // Fade text based on threshold
+        if (d.id === currentNodeId) return 1.0;
+        const degree = d.degree || 0;
+        const degreeThreshold = Math.max(1, Math.floor(settings.textFadeThreshold * 3));
+        return degree >= degreeThreshold ? 0.7 + (settings.textFadeThreshold * 0.15) : 0;
+      })
       .style('pointer-events', 'none');
 
     nodes.append('title').text(d => d.title);
@@ -1592,20 +1911,22 @@ class GraphView {
         });
     })
     .on('mouseout', function(event, d) {
-      // Hide label unless it's a major node or current node
+      // Hide label unless it's a major node or current node, based on threshold
       const degree = d.degree || 0;
+      const degreeThreshold = Math.max(1, Math.floor(settings.textFadeThreshold * 3));
       d3.select(this).select('text')
         .text(() => {
           if (d.id === currentNodeId) {
             return d.title.length > 20 ? `${d.title.substring(0, 20)}…` : d.title;
           }
-          if (degree >= 3) {
+          if (degree >= degreeThreshold) {
             return d.title.length > 18 ? `${d.title.substring(0, 18)}…` : d.title;
           }
           return '';
         })
         .style('font-size', d.id === currentNodeId ? '11px' : '9px')
-        .style('font-weight', d.id === currentNodeId ? '600' : 'normal');
+        .style('font-weight', d.id === currentNodeId ? '600' : 'normal')
+        .style('opacity', d.id === currentNodeId ? 1.0 : (degree >= degreeThreshold ? 0.7 + (settings.textFadeThreshold * 0.15) : 0));
       
       graphContent.selectAll('.links-group line')
         .attr('stroke', edgeColor)
@@ -1624,18 +1945,55 @@ class GraphView {
     });
 
     simulation.on('tick', () => {
-      links
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
+      links.each(function(d) {
+        // Calculate the angle between source and target
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const angle = Math.atan2(dy, dx);
+        
+        // Get node radii
+        const sourceRadius = radiusForNode(d.source) + 2; // +2 for stroke
+        const targetRadius = radiusForNode(d.target) + 2;
+        
+        // Adjust line endpoints to stop at node edges
+        const x1 = d.source.x + sourceRadius * Math.cos(angle);
+        const y1 = d.source.y + sourceRadius * Math.sin(angle);
+        const x2 = d.target.x - targetRadius * Math.cos(angle);
+        const y2 = d.target.y - targetRadius * Math.sin(angle);
+        
+        d3.select(this)
+          .attr('x1', x1)
+          .attr('y1', y1)
+          .attr('x2', x2)
+          .attr('y2', y2);
+      });
 
       nodes.attr('transform', d => `translate(${d.x},${d.y})`);
     });
 
-    simulation.on('end', () => {
-      this.zoomToFitModalGraph(graphContent, width, height);
-    });
+    // Auto-center on first render (when no previous transform exists)
+    if (!currentTransform) {
+      simulation.on('end', () => {
+        try {
+          const bounds = graphContent.node()?.getBBox();
+          if (!bounds || bounds.width === 0 || bounds.height === 0) return;
+
+          const fullWidth = width;
+          const fullHeight = height;
+          const widthScale = fullWidth / bounds.width;
+          const heightScale = fullHeight / bounds.height;
+          const scale = Math.min(widthScale, heightScale) * 0.85;
+
+          const translateX = (fullWidth - bounds.width * scale) / 2 - bounds.x * scale;
+          const translateY = (fullHeight - bounds.height * scale) / 2 - bounds.y * scale;
+
+          const transform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
+          svg.transition().duration(750).call(zoom.transform, transform);
+        } catch (e) {
+          console.warn('Could not auto-center graph:', e);
+        }
+      });
+    }
 
     const self = this;
 

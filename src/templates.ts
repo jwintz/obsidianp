@@ -153,7 +153,6 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
             <div class="graph-modal-overlay" id="global-graph-overlay"></div>
             <div class="graph-modal-content">
                 <div class="graph-modal-header">
-                    <h3 id="global-graph-modal-title">Graph</h3>
                     <div class="graph-modal-controls">
                         <div class="view-switcher">
                             <button id="global-local-graph-toggle" class="view-button" data-mode="local">
@@ -179,47 +178,76 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                                 <span>Reset</span>
                             </button>
                         </div>
-                        <div class="graph-parameter-section" aria-label="Link types">
-                            <span class="graph-parameter-section-title">Link types</span>
-                            <label class="graph-parameter-toggle">
-                                <input type="checkbox" id="global-graph-links-toggle" checked>
-                                <span>
-                                    <strong>Links</strong>
-                                    <small>(outgoing)</small>
-                                </span>
-                            </label>
-                            <label class="graph-parameter-toggle">
-                                <input type="checkbox" id="global-graph-backlinks-toggle" checked>
-                                <span>
-                                    <strong>Backlinks</strong>
-                                    <small>(incoming)</small>
-                                </span>
-                            </label>
-                            <label class="graph-parameter-toggle">
-                                <input type="checkbox" id="global-graph-neighbors-toggle">
-                                <span>
-                                    <strong>Neighbors</strong>
-                                    <small>(siblings)</small>
-                                </span>
-                            </label>
-                        </div>
-                        <div class="graph-parameter-section" aria-label="Additional nodes">
+                        <div class="graph-parameter-section" aria-label="Filters">
+                            <span class="graph-parameter-section-title">Filters</span>
                             <label class="graph-parameter-toggle">
                                 <input type="checkbox" id="global-graph-tags-toggle" checked>
                                 <span>
                                     <strong>Tags</strong>
-                                    <small>Include tag clusters</small>
+                                </span>
+                            </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="global-graph-attachments-toggle">
+                                <span>
+                                    <strong>Attachments</strong>
+                                </span>
+                            </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="global-graph-existing-only-toggle">
+                                <span>
+                                    <strong>Existing files only</strong>
+                                </span>
+                            </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="global-graph-orphans-toggle" checked>
+                                <span>
+                                    <strong>Orphans</strong>
                                 </span>
                             </label>
                         </div>
-                        <div class="graph-parameter-section" aria-label="Link styling">
+                        <div class="graph-parameter-section" aria-label="Search">
+                            <span class="graph-parameter-section-title">Search files</span>
+                            <input type="text" id="global-graph-search" placeholder="path:, tag:, file:" class="graph-search-input">
+                        </div>
+                        <div class="graph-parameter-section" aria-label="Display controls">
+                            <span class="graph-parameter-section-title">Display</span>
                             <label class="graph-parameter-toggle">
                                 <input type="checkbox" id="global-graph-arrows-toggle" checked>
                                 <span>
                                     <strong>Arrows</strong>
-                                    <small>Show direction of note links</small>
                                 </span>
                             </label>
+                            <div class="graph-parameter-slider">
+                                <label for="global-graph-text-fade">Text fade threshold</label>
+                                <input type="range" id="global-graph-text-fade" min="0" max="2" step="0.1" value="1">
+                            </div>
+                            <div class="graph-parameter-slider">
+                                <label for="global-graph-node-size">Node size</label>
+                                <input type="range" id="global-graph-node-size" min="0.5" max="2" step="0.1" value="0.7">
+                            </div>
+                            <div class="graph-parameter-slider">
+                                <label for="global-graph-link-thickness">Link thickness</label>
+                                <input type="range" id="global-graph-link-thickness" min="0.5" max="3" step="0.1" value="0.5">
+                            </div>
+                            <div class="graph-parameter-slider">
+                                <label for="global-graph-link-force">Link force</label>
+                                <input type="range" id="global-graph-link-force" min="0" max="2" step="0.1" value="0.3">
+                            </div>
+                            <div class="graph-parameter-slider">
+                                <label for="global-graph-link-distance">Link distance</label>
+                                <input type="range" id="global-graph-link-distance" min="30" max="250" step="10" value="50">
+                            </div>
+                        </div>
+                        <div class="graph-parameter-section" aria-label="Force controls">
+                            <span class="graph-parameter-section-title">Forces</span>
+                            <div class="graph-parameter-slider">
+                                <label for="global-graph-center-force">Center force</label>
+                                <input type="range" id="global-graph-center-force" min="0" max="1" step="0.05" value="0.05">
+                            </div>
+                            <div class="graph-parameter-slider">
+                                <label for="global-graph-repel-force">Repel force</label>
+                                <input type="range" id="global-graph-repel-force" min="0" max="2" step="0.1" value="1">
+                            </div>
                         </div>
                     </div>
                     <div class="graph-canvas" id="global-graph-canvas"></div>
@@ -231,7 +259,6 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
             <div class="graph-modal-overlay" id="local-graph-overlay"></div>
             <div class="graph-modal-content">
                 <div class="graph-modal-header">
-                    <h3 id="graph-modal-title">Graph</h3>
                     <div class="graph-modal-controls">
                         <div class="view-switcher">
                             <button id="local-graph-toggle" class="view-button active" data-mode="local">
@@ -257,30 +284,6 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                                 <span>Reset</span>
                             </button>
                         </div>
-                        <div class="graph-parameter-section" aria-label="Link types">
-                            <span class="graph-parameter-section-title">Link types</span>
-                            <label class="graph-parameter-toggle">
-                                <input type="checkbox" id="local-graph-links-toggle" checked>
-                                <span>
-                                    <strong>Links</strong>
-                                    <small>(outgoing)</small>
-                                </span>
-                            </label>
-                            <label class="graph-parameter-toggle">
-                                <input type="checkbox" id="local-graph-backlinks-toggle">
-                                <span>
-                                    <strong>Backlinks</strong>
-                                    <small>(incoming)</small>
-                                </span>
-                            </label>
-                            <label class="graph-parameter-toggle">
-                                <input type="checkbox" id="local-graph-neighbors-toggle" checked>
-                                <span>
-                                    <strong>Neighbors</strong>
-                                    <small>(siblings)</small>
-                                </span>
-                            </label>
-                        </div>
                         <div class="graph-parameter-section" aria-label="Traversal depth">
                             <span class="graph-parameter-section-title">Depth</span>
                             <div class="graph-parameter-depth">
@@ -288,21 +291,76 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                                 <span class="graph-parameter-depth-value" id="local-graph-depth-value">1</span>
                             </div>
                         </div>
-                        <div class="graph-parameter-section" aria-label="Additional nodes">
+                        <div class="graph-parameter-section" aria-label="Link types">
+                            <span class="graph-parameter-section-title">Filters</span>
                             <label class="graph-parameter-toggle">
-                                <input type="checkbox" id="local-graph-tags-toggle" checked>
+                                <input type="checkbox" id="local-graph-outgoing-toggle" checked>
                                 <span>
-                                    <strong>Tags</strong>
-                                    <small>(shared tag groups)</small>
+                                    <strong>Outgoing links</strong>
                                 </span>
                             </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="local-graph-incoming-toggle" checked>
+                                <span>
+                                    <strong>Incoming links</strong>
+                                </span>
+                            </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="local-graph-neighbor-toggle">
+                                <span>
+                                    <strong>Neighbor links</strong>
+                                </span>
+                            </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="local-graph-tags-toggle">
+                                <span>
+                                    <strong>Tags</strong>
+                                </span>
+                            </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="local-graph-attachments-toggle">
+                                <span>
+                                    <strong>Attachments</strong>
+                                </span>
+                            </label>
+                            <label class="graph-parameter-toggle">
+                                <input type="checkbox" id="local-graph-existing-only-toggle">
+                                <span>
+                                    <strong>Existing files only</strong>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="graph-parameter-section" aria-label="Display controls">
+                            <span class="graph-parameter-section-title">Display</span>
                             <label class="graph-parameter-toggle">
                                 <input type="checkbox" id="local-graph-arrows-toggle" checked>
                                 <span>
                                     <strong>Arrows</strong>
-                                    <small>(show direction)</small>
                                 </span>
                             </label>
+                            <div class="graph-parameter-slider">
+                                <label for="local-graph-text-fade">Text fade threshold</label>
+                                <input type="range" id="local-graph-text-fade" min="0" max="2" step="0.1" value="1">
+                            </div>
+                            <div class="graph-parameter-slider">
+                                <label for="local-graph-node-size">Node size</label>
+                                <input type="range" id="local-graph-node-size" min="0.5" max="2" step="0.1" value="0.7">
+                            </div>
+                            <div class="graph-parameter-slider">
+                                <label for="local-graph-link-thickness">Link thickness</label>
+                                <input type="range" id="local-graph-link-thickness" min="0.5" max="3" step="0.1" value="0.5">
+                            </div>
+                        </div>
+                        <div class="graph-parameter-section" aria-label="Force controls">
+                            <span class="graph-parameter-section-title">Forces</span>
+                            <div class="graph-parameter-slider">
+                                <label for="local-graph-center-force">Center force</label>
+                                <input type="range" id="local-graph-center-force" min="0" max="1" step="0.05" value="0.3">
+                            </div>
+                            <div class="graph-parameter-slider">
+                                <label for="local-graph-repel-force">Repel force</label>
+                                <input type="range" id="local-graph-repel-force" min="0" max="2" step="0.1" value="1">
+                            </div>
                         </div>
                     </div>
                     <div class="graph-canvas" id="local-graph-canvas"></div>

@@ -105,10 +105,12 @@
   --color-highlight: #b08d00;
   
   /* Graph colors - Light theme */
-  --color-graph-node: #9ca3af;
-  --color-graph-highlight: #7c3aed;
+  --color-graph-node: #d1d5db;
+  --color-graph-node-active: #9ca3af;
+  --color-graph-highlight: #8b5cf6;
   --color-graph-tag: #10b981;
-  --color-graph-edge: #d1d5db;
+  --color-graph-edge: #e5e7eb;
+  --color-graph-edge-active: #8b5cf6;
 }
 
 /* Dark Theme */
@@ -142,10 +144,12 @@
   --color-highlight: #fef3c7;
   
   /* Graph colors - Dark theme */
-  --color-graph-node: #6b7280;
+  --color-graph-node: #9ca3af;
+  --color-graph-node-active: #6b7280;
   --color-graph-highlight: #a78bfa;
   --color-graph-tag: #10b981;
-  --color-graph-edge: #52525b;
+  --color-graph-edge: #6b7280;
+  --color-graph-edge-active: #a78bfa;
 }
 
 /* Reset and base styles */
@@ -847,24 +851,73 @@ mark {
 .graph-parameter-toggle {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-sm);
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--border-radius);
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-subtle);
+  background: transparent;
+  border: none;
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease;
+}
+
+.graph-parameter-toggle:hover {
+  background-color: color-mix(in srgb, var(--color-bg-secondary) 50%, transparent);
 }
 
 .graph-parameter-toggle input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--color-primary);
-  margin: 0;
+  /* Hide default checkbox */
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Custom toggle switch */
+.graph-parameter-toggle input[type="checkbox"] + span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+}
+
+.graph-parameter-toggle input[type="checkbox"] + span::after {
+  content: '';
+  width: 36px;
+  height: 20px;
+  background: var(--color-bg-tertiary);
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.graph-parameter-toggle input[type="checkbox"] + span::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  background: var(--color-text-muted);
+  border-radius: 50%;
+  position: absolute;
+  right: 19px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.graph-parameter-toggle input[type="checkbox"]:checked + span::after {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+.graph-parameter-toggle input[type="checkbox"]:checked + span::before {
+  background: #f3f4f6;
+  right: 3px;
 }
 
 .graph-parameter-toggle strong {
   font-size: var(--font-size-sm);
+  font-weight: 500;
   color: var(--color-text-primary);
   display: block;
 }
@@ -875,20 +928,66 @@ mark {
   display: block;
 }
 
-.graph-parameter-toggle:hover {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 30%, transparent);
-}
-
 .graph-parameter-depth {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  padding: 0 var(--space-sm);
 }
 
 .graph-parameter-depth input[type="range"] {
   flex: 1;
-  accent-color: var(--color-primary);
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.graph-parameter-depth input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+.graph-parameter-depth input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+.graph-parameter-depth input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--color-text-secondary);
+  border-radius: 50%;
+  cursor: pointer;
+  margin-top: -5px;
+  transition: all 0.2s ease;
+}
+
+.graph-parameter-depth input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--color-text-secondary);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.graph-parameter-depth input[type="range"]:hover::-webkit-slider-thumb {
+  background: var(--color-text-primary);
+  transform: scale(1.1);
+}
+
+.graph-parameter-depth input[type="range"]:hover::-moz-range-thumb {
+  background: var(--color-text-primary);
+  transform: scale(1.1);
 }
 
 .graph-parameter-depth-value {
@@ -897,6 +996,112 @@ mark {
   font-weight: 600;
   color: var(--color-text-secondary);
   text-align: right;
+}
+
+.graph-parameter-slider {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-xs) 0;
+  border-radius: var(--border-radius);
+  background: transparent;
+  border: none;
+}
+
+.graph-parameter-slider label {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  padding: 0 var(--space-sm);
+}
+
+.graph-parameter-slider input[type="range"] {
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0 var(--space-sm);
+}
+
+/* Slider track */
+.graph-parameter-slider input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+.graph-parameter-slider input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+/* Slider thumb */
+.graph-parameter-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--color-text-secondary);
+  border-radius: 50%;
+  cursor: pointer;
+  margin-top: -5px;
+  transition: all 0.2s ease;
+}
+
+.graph-parameter-slider input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--color-text-secondary);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Hover and active states */
+.graph-parameter-slider input[type="range"]:hover::-webkit-slider-thumb {
+  background: var(--color-text-primary);
+  transform: scale(1.1);
+}
+
+.graph-parameter-slider input[type="range"]:hover::-moz-range-thumb {
+  background: var(--color-text-primary);
+  transform: scale(1.1);
+}
+
+.graph-parameter-slider input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+.graph-parameter-slider input[type="range"]:active::-moz-range-thumb {
+  transform: scale(1.2);
+}
+
+.graph-search-input {
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.graph-search-input::placeholder {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.graph-search-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 .graph-parameter-description {

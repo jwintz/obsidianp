@@ -4,8 +4,7 @@ tags:
   - deployment
   - hosting
   - github-pages
-  - netlify
-  - vercel
+  - gitlab-pages
   - cdn
   - devops
 type: guide
@@ -405,4 +404,4 @@ Sitemap: https://example.com/sitemap.xml
 
 ---
 
-Read Next: [[../Features/Interactive Graph Views|Interactive Graph Views]] > [[../Architecture/Core Components|Core Components]]
+Read Next: [[../Architecture/Core Components|Core Components]]

@@ -332,4 +332,4 @@ console.log(`MyNote has ${connections.length} direct connections`);
 
 ---
 
-Read Next: [[../Features/Interactive Graph Views|Interactive Graph Views]] > [[SiteGenerator API]] > [[../Architecture/Core Components|Core Components]]
+See also: [[../Features/Interactive Graph Views|Interactive Graph Views]] • [[../Architecture/Core Components|Core Components]]

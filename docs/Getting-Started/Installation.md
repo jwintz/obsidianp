@@ -83,4 +83,4 @@ npm run build
 
 ---
 
-Read Next: [[Configuration]] > [[../Architecture/Core Components|Core Components]]
+Read Next: [[Configuration]]

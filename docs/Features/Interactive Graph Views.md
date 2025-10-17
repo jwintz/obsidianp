@@ -138,4 +138,4 @@ Graph rendering is optimized for large vaults:
 
 ---
 
-Read Next: [[../API-Reference/GraphRenderer API|GraphRenderer API]] > [[Search System]] > [[../Architecture/Core Components|Core Components]]
+Read Next: [[Search System]]

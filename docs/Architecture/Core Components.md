@@ -285,4 +285,4 @@ watcher.on('change', async (path) => {
 
 ---
 
-Read Next: [[../API-Reference/VaultProcessor API|VaultProcessor API]] > [[../Getting-Started/Building Sites|Building Sites]] > [[../Features/Interactive Graph Views|Interactive Graph Views]]
+Read Next: [[../Features/Interactive Graph Views|Interactive Graph Views]]

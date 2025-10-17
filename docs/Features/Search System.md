@@ -334,4 +334,4 @@ document.addEventListener('keydown', (e) => {
 
 ---
 
-Read Next: [[../API-Reference/SiteGenerator API|SiteGenerator API]] > [[Interactive Graph Views]] > [[../Getting-Started/Building Sites|Building Sites]]
+**Main documentation complete!** Explore the API references for advanced usage.

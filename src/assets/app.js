@@ -41,7 +41,15 @@ class ObsidianSSGApp {
     let noteId = null;
     
     // Extract note ID from pathname (clean URLs)
-    const pathname = window.location.pathname;
+    let pathname = window.location.pathname;
+    
+    // Strip basePath prefix if present
+    if (this.basePath && pathname.startsWith(this.basePath + '/')) {
+      pathname = pathname.substring(this.basePath.length);
+    } else if (this.basePath && pathname === this.basePath) {
+      pathname = '/';
+    }
+    
     if (pathname !== '/' && pathname !== '/index.html') {
       // Remove leading slash and decode URI components
       let pathId = decodeURIComponent(pathname.substring(1));

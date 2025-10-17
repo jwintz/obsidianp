@@ -246,4 +246,4 @@ try {
 
 ---
 
-Read Next: [[MarkdownProcessor API]] > [[../Getting-Started/Building Sites|Building Sites]] > [[../Architecture/Core Components|Core Components]]
+See also: [[MarkdownProcessor API]] • [[../Architecture/Core Components|Core Components]]

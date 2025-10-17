@@ -391,4 +391,4 @@ processor.addCustomProcessor((content: string) => {
 
 ---
 
-Read Next: [[GraphRenderer API]] > [[SiteGenerator API]] > [[../Architecture/Core Components|Core Components]]
+See also: [[GraphRenderer API]] • [[SiteGenerator API]] • [[../Architecture/Core Components|Core Components]]

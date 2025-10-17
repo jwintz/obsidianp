@@ -347,4 +347,4 @@ const customPlugin: BuildPlugin = {
 
 ---
 
-Read Next: [[Deployment|Deploy]] > [[../API-Reference/SiteGenerator API|SiteGenerator API]]
+Read Next: [[Deployment]]

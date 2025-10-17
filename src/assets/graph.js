@@ -1725,15 +1725,16 @@ class GraphView {
     }
 
     const defs = svg.append('defs');
-    defs.append('marker')
+    const arrowMarker = defs.append('marker')
       .attr('id', 'arrowhead-local')
       .attr('viewBox', '0 -4 8 8')
       .attr('refX', 8)
       .attr('refY', 0)
       .attr('markerWidth', 6)
       .attr('markerHeight', 6)
-      .attr('orient', 'auto')
-      .append('path')
+      .attr('orient', 'auto');
+
+    arrowMarker.append('path')
       .attr('d', 'M0,-3.5L7,0L0,3.5L1,-0Z')
       .attr('fill', '#9ca3af')
       .attr('opacity', 1);

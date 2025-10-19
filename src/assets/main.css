@@ -1800,15 +1800,6 @@ body.menu-open {
   display: none;
 }
 
-@media (max-width: 768px) {
-  .sidebar {
-    overflow-y: auto;
-    height: 100vh;
-    max-height: 100vh;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-  }
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
   /* Hide desktop sidebar header and show mobile header */
@@ -1817,7 +1808,7 @@ body.menu-open {
   }
   
   .mobile-header {
-    display: block;
+    display: block !important;
     position: fixed;
     top: 0;
     left: 0;
@@ -1869,11 +1860,29 @@ body.menu-open {
     background-color: var(--color-bg-tertiary);
   }
   
+  /* Main content - starts at top, content scrolls under header */
   .main-content {
-    margin-top: 60px; /* Account for mobile header */
-    height: calc(100vh - 60px);
-    /* Safari fix: Use -webkit-calc as fallback */
-    height: -webkit-calc(100vh - 60px);
+    width: 100%;
+    min-height: 100vh;
+    padding-top: 0; /* No padding - content starts at top */
+    margin-top: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Note content gets top padding to push content down initially */
+  .note-content {
+    padding-top: calc(60px + var(--space-xl)); /* Header height + spacing */
+    padding-left: var(--space-xl);
+    padding-right: var(--space-xl);
+    padding-bottom: var(--space-xl);
+  }
+  
+  /* App container - simple block container */
+  .app-container {
+    display: block;
+    width: 100%;
+    min-height: 100vh;
   }
   
   .sidebar-overlay {

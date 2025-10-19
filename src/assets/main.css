@@ -1860,29 +1860,44 @@ body.menu-open {
     background-color: var(--color-bg-tertiary);
   }
   
-  /* Main content - starts at top, content scrolls under header */
+  /* Main content - starts at top, allows content to extend naturally */
   .main-content {
-    width: 100%;
-    min-height: 100vh;
-    padding-top: 0; /* No padding - content starts at top */
-    margin-top: 0;
-    overflow-y: auto;
+    display: block !important; /* Override flex display */
+    flex: none !important; /* Remove flex constraint */
+    width: 100% !important;
+    height: auto !important; /* Grow with content, no fixed height */
+    min-height: 100vh !important;
+    min-height: 100dvh !important; /* Safari dynamic viewport */
+    max-height: none !important; /* No height limit */
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important; /* Don't clip, allow document scroll */
     -webkit-overflow-scrolling: touch;
   }
   
   /* Note content gets top padding to push content down initially */
   .note-content {
+    flex: none !important; /* Remove flex constraint */
+    height: auto !important; /* Allow natural height */
+    overflow-y: visible !important; /* Don't create scroll container */
+    overflow-x: hidden !important;
     padding-top: calc(60px + var(--space-xl)); /* Header height + spacing */
     padding-left: var(--space-xl);
     padding-right: var(--space-xl);
-    padding-bottom: var(--space-xl);
+    padding-bottom: calc(var(--space-xl) + env(safe-area-inset-bottom, 0px));
+    min-height: 100vh;
+    min-height: 100dvh; /* Ensure content can fill dynamic viewport */
   }
   
-  /* App container - simple block container */
+  /* App container - allow content to extend and page to scroll */
   .app-container {
-    display: block;
-    width: 100%;
-    min-height: 100vh;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important; /* Safari dynamic viewport */
+    overflow: visible !important;
+    flex-direction: column;
   }
   
   .sidebar-overlay {
@@ -1952,47 +1967,6 @@ body.menu-open {
   
   .backlinks-panel {
     display: none;
-  }
-}
-
-/* Safari-specific fixes for iOS viewport issues */
-@supports (-webkit-touch-callout: none) {
-  /* Safari iOS specific fixes */
-  @media (max-width: 768px) {
-    .sidebar-header {
-      /* Use fixed pixel values for Safari iOS */
-      height: 60px;
-      min-height: 60px;
-    }
-    
-    .sidebar {
-      /* Safari iOS viewport fix */
-      height: calc(100vh - 60px);
-      height: calc(var(--vh, 1vh) * 100 - 60px);
-      max-height: calc(100vh - 60px);
-      max-height: calc(var(--vh, 1vh) * 100 - 60px);
-    }
-    
-    .main-content {
-      height: calc(100vh - 60px);
-      height: calc(var(--vh, 1vh) * 100 - 60px);
-      max-height: calc(100vh - 60px);
-      max-height: calc(var(--vh, 1vh) * 100 - 60px);
-    }
-    
-    .sidebar-overlay {
-      height: 100vh;
-      height: calc(var(--vh, 1vh) * 100);
-    }
-  }
-}
-
-/* Additional Safari mobile fixes */
-@media (max-width: 768px) and (-webkit-min-device-pixel-ratio: 1) {
-  /* Force repaint on Safari */
-  .sidebar-header {
-    -webkit-transform: translate3d(0, 0, 0);
-    transform: translate3d(0, 0, 0);
   }
 }
 

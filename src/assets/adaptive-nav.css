@@ -548,7 +548,8 @@
     padding-top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
     padding-left: var(--space-md) !important;
     padding-right: var(--space-md) !important;
-    padding-bottom: var(--space-lg) !important;
+    padding-bottom: var(--space-md) !important;
+    min-height: calc(100vh - var(--nav-pill-height) - var(--space-md) - var(--space-md)) !important;
   }
   
   /* Keep the hamburger sidebar as fallback */

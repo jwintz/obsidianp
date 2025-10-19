@@ -34,6 +34,9 @@
   --elevation-2: 0 4px 12px rgba(0, 0, 0, 0.15);
   --elevation-3: 0 8px 24px rgba(0, 0, 0, 0.2);
   
+  /* iOS Safari height fix */
+  --app-height: 100vh;
+  
   /* Pill navigation colors (theme-aware) */
   --nav-pill-bg: var(--color-bg-tertiary);
   --nav-pill-bg-hover: var(--color-bg-tertiary);
@@ -44,6 +47,13 @@
   
   /* Touch target minimum */
   --touch-target-min: 44px;
+}
+
+/* iOS Safari full height support */
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --app-height: 100dvh;
+  }
 }
 
 /* Reduced motion support */
@@ -513,7 +523,34 @@
    Show pill navigation, content scrolls UNDER glass nav
    ---------------------------------------------------------------------------- */
 
+/* MOBILE: Use full viewport height with safe areas */
 @media (max-width: 768px) {
+  html {
+    height: 100%;
+    height: -webkit-fill-available;
+  }
+  
+  body {
+    height: 100%;
+    height: -webkit-fill-available;
+  }
+  
+  /* App container fills screen */
+  .app-container {
+    height: 100dvh;
+    height: -webkit-fill-available;
+    overflow: hidden; /* Keep this */
+  }
+  
+  /* The SCROLLABLE main content area */
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Add bottom padding for safe area */
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  
   /* Show pill navigation as primary header */
   .nav-pills-container {
     display: flex !important;
@@ -524,18 +561,26 @@
     display: none !important;
   }
   
-  /* Force app container to reset */
-  .app-container {
-    padding: 0 !important;
-    display: block !important;
+  /* Hide graph modal close buttons on mobile - use pill button to toggle */
+  #close-local-graph,
+  #close-global-graph {
+    display: none !important;
   }
   
-  /* Main content - NO top margin or padding, starts at viewport top */
-  .main-content {
-    margin: 0 !important;
-    padding: 0 !important;
-    height: 100vh !important;
-    overflow-y: auto !important;
+  /* Graph modal overlay - use same color as sidebar background */
+  .graph-modal-overlay {
+    background-color: var(--color-bg-primary) !important;
+    backdrop-filter: none !important;
+  }
+  
+  /* Graph modal content and header - match background */
+  .graph-modal-content {
+    background-color: var(--color-bg-primary) !important;
+  }
+  
+  .graph-modal-header {
+    background-color: var(--color-bg-primary) !important;
+    border-bottom-color: var(--color-border) !important;
   }
   
   /* Content wrapper - NO padding, let content scroll under nav */
@@ -548,14 +593,50 @@
     padding-top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
     padding-left: var(--space-md) !important;
     padding-right: var(--space-md) !important;
-    padding-bottom: var(--space-md) !important;
-    min-height: calc(100vh - var(--nav-pill-height) - var(--space-md) - var(--space-md)) !important;
+    padding-bottom: calc(var(--space-xl) + env(safe-area-inset-bottom, 0px)) !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important; /* Modern iOS Safari */
+    box-sizing: border-box !important;
   }
   
-  /* Keep the hamburger sidebar as fallback */
+  /* Mobile sidebar - fullscreen under nav pills */
   .sidebar {
-    top: 0 !important;
-    height: 100vh !important;
+    position: fixed !important;
+    top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: calc(100vh - var(--nav-pill-height) - var(--space-md) - var(--space-md)) !important;
+    height: calc(100dvh - var(--nav-pill-height) - var(--space-md) - var(--space-md)) !important; /* Modern iOS Safari */
+    z-index: 1050 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s ease !important;
+    background: var(--color-bg-primary) !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    border-right: none !important;
+    overflow-y: auto !important;
+    margin: 0 !important;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0) !important;
+  }
+  
+  /* Hide main content when sidebar is open */
+  .sidebar.open ~ .main-content {
+    display: none !important;
+  }
+  
+  /* Hide sidebar toggle button on mobile */
+  .sidebar-toggle {
+    display: none !important;
+  }
+  
+  /* No overlay needed for fullscreen sidebar */
+  .sidebar-overlay {
+    display: none !important;
   }
 }
 

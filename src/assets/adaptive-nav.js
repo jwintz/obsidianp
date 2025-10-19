@@ -301,14 +301,27 @@ class AdaptiveNavigation {
       });
     }
     
-    // Setup graph button in pill nav
+    // Setup graph button in pill nav - toggle on mobile
     const graphBtn = document.getElementById('nav-graph-btn');
     if (graphBtn) {
       graphBtn.addEventListener('click', () => {
-        // Trigger the expand graph button (handled by app.js)
-        const expandGraph = document.getElementById('expand-graph');
-        if (expandGraph) {
-          expandGraph.click();
+        const localModal = document.getElementById('local-graph-modal');
+        
+        if (localModal) {
+          // Check if modal is visible
+          const isVisible = !localModal.classList.contains('hidden');
+          
+          if (isVisible) {
+            // Close the modal
+            localModal.classList.add('hidden');
+            document.body.style.overflow = '';
+          } else {
+            // Open the modal - trigger the expand graph button
+            const expandGraph = document.getElementById('expand-graph');
+            if (expandGraph) {
+              expandGraph.click();
+            }
+          }
         }
       });
     }
@@ -331,6 +344,23 @@ class AdaptiveNavigation {
       const announcement = isExpanded ? 'Sidebar expanded' : 'Sidebar collapsed';
       this.announceToScreenReader(announcement);
     });
+    
+    // Setup mobile menu button (in pill navigation) - toggle on/off
+    const menuBtn = document.getElementById('nav-menu-btn');
+    
+    if (menuBtn) {
+      menuBtn.addEventListener('click', () => {
+        const isOpen = this.sidebar.classList.contains('open');
+        
+        if (isOpen) {
+          // Close sidebar
+          this.sidebar.classList.remove('open');
+        } else {
+          // Open sidebar
+          this.sidebar.classList.add('open');
+        }
+      });
+    }
   }
   
   /**

@@ -103,13 +103,13 @@ export class SiteGenerator {
     const fontsDir = path.join(outputAssetsDir, 'fonts');
     await fs.mkdir(fontsDir, { recursive: true });
 
-    // Copy Monaspace Neon font
+    // Copy Monaspace Krypton font
     const monaspaceFont = path.join(
       process.cwd(),
-      'node_modules/@fontsource/monaspace-neon/files/monaspace-neon-latin-400-normal.woff2'
+      'node_modules/@fontsource/monaspace-krypton/files/monaspace-krypton-latin-400-normal.woff2'
     );
 
-    const monaspaceTarget = path.join(fontsDir, 'MonaspaceNeon-Regular.woff2');
+    const monaspaceTarget = path.join(fontsDir, 'MonaspaceKrypton-Regular.woff2');
     await fs.copyFile(monaspaceFont, monaspaceTarget);
 
     // Copy Mona Sans fonts

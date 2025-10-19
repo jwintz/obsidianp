@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@fontsource/mona-sans": "^5.2.6",
-    "@fontsource/monaspace-neon": "^5.2.5",
+    "@fontsource/monaspace-krypton": "^5.2.5",
     "@types/js-yaml": "^4.0.9",
     "@types/katex": "^0.16.7",
     "abcjs": "^6.5.1",

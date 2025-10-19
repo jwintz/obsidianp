@@ -28,8 +28,8 @@
 }
 
 @font-face {
-  font-family: 'Monaspace Neon';
-  src: url('/assets/fonts/MonaspaceNeon-Regular.woff2') format('woff2');
+  font-family: 'Monaspace Krypton';
+  src: url('/assets/fonts/MonaspaceKrypton-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
 }
@@ -38,7 +38,7 @@
 :root {
   --font-family-main: 'Mona Sans', system-ui, -apple-system, sans-serif;
   --font-family-heading: var(--font-family-main);
-  --font-family-code: 'Monaspace Neon', monospace;
+  --font-family-code: 'Monaspace Krypton', monospace;
   
   /* Font sizes */
   --font-size-3xs: 7px;
@@ -162,6 +162,8 @@
 html {
   font-size: 16px;
   line-height: 1.6;
+  height: 100%;
+  height: -webkit-fill-available;
 }
 
 body {
@@ -170,12 +172,18 @@ body {
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
   transition: background-color 0.2s ease, color 0.2s ease;
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  min-height: -webkit-fill-available;
 }
 
 /* Layout */
 .app-container {
   display: flex;
   height: 100vh;
+  height: 100dvh; /* iOS Safari dynamic viewport */
+  height: -webkit-fill-available; /* Fallback for older iOS */
   overflow: hidden;
 }
 
@@ -1163,7 +1171,11 @@ mark {
   flex: 1;
   padding: var(--space-xl);
   overflow-y: auto;
+  overflow-x: hidden;
   background-color: var(--color-bg-primary);
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Typography in notes */
@@ -1270,6 +1282,7 @@ mark {
   padding: var(--space-md);
   margin: var(--space-lg) 0;
   overflow-x: auto;
+  max-width: 100%;
   tab-size: 4;
   -moz-tab-size: 4;
 }
@@ -1282,8 +1295,10 @@ mark {
 }
 
 /* Tables in markdown content */
+/* Table wrapper for responsive behavior */
 .note-body table {
   width: 100%;
+  max-width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   margin: var(--space-lg) 0;
@@ -1291,6 +1306,8 @@ mark {
   border-radius: var(--border-radius);
   overflow: hidden;
   font-size: var(--font-size-sm);
+  table-layout: auto;
+  word-wrap: break-word;
 }
 
 .note-body table thead tr:first-child th:first-child {
@@ -1316,6 +1333,9 @@ mark {
   font-weight: 600;
   color: var(--color-text-primary);
   border-bottom: 1px solid var(--color-border);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 300px;
 }
 
 .note-body table th:not(:last-child) {
@@ -1326,6 +1346,9 @@ mark {
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text-secondary);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 300px;
 }
 
 .note-body table td:not(:last-child) {

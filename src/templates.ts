@@ -61,7 +61,7 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
 <html lang="en" data-base-path="${basePath}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>${pageTitle}</title>
     <link rel="stylesheet" href="${basePath}/assets/main.css">
     <link rel="stylesheet" href="${basePath}/assets/adaptive-nav.css">
@@ -96,6 +96,9 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
         
         <!-- Adaptive Pill Navigation (Mobile/Tablet) -->
         <nav class="nav-pills-container" id="nav-pills-container" role="navigation" aria-label="Main navigation">
+            <button id="nav-menu-btn" class="nav-pill-action icon-only" title="Open menu">
+                ${getLucideIcon('Menu', 20)}
+            </button>
             <h1 class="vault-title">${vaultTitle}</h1>
             <div class="nav-pills-scroll">
                 <div class="nav-pills-wrapper" id="nav-pills-wrapper">

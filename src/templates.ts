@@ -190,10 +190,10 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
         <div class="graph-modal hidden" id="global-graph-modal">
             <div class="graph-modal-overlay" id="global-graph-overlay"></div>
             <div class="graph-modal-content">
-                <button id="close-global-graph" class="icon-button graph-modal-close">
-                    ${getLucideIcon('X', 16)}
-                </button>
-                <div class="graph-modal-container" id="global-graph-container">
+                <div class="graph-modal-controls-wrapper">
+                    <button id="close-global-graph" class="icon-button graph-modal-close">
+                        ${getLucideIcon('X', 16)}
+                    </button>
                     <div class="graph-modal-controls-container">
                         <div class="view-switcher graph-view-switcher">
                             <button id="global-local-graph-toggle" class="view-button" data-mode="local">
@@ -206,6 +206,8 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                             </button>
                         </div>
                     </div>
+                </div>
+                <div class="graph-modal-container" id="global-graph-container">
                     <div class="graph-parameter-panel graph-parameter-panel--global" aria-label="Graph display options (global view)">
                         <div class="graph-parameter-header">
                             <span class="graph-parameter-title">Display options</span>
@@ -294,10 +296,10 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
         <div class="graph-modal hidden" id="local-graph-modal">
             <div class="graph-modal-overlay" id="local-graph-overlay"></div>
             <div class="graph-modal-content">
-                <button id="close-local-graph" class="icon-button graph-modal-close">
-                    ${getLucideIcon('X', 16)}
-                </button>
-                <div class="graph-modal-container" id="local-graph-container">
+                <div class="graph-modal-controls-wrapper">
+                    <button id="close-local-graph" class="icon-button graph-modal-close">
+                        ${getLucideIcon('X', 16)}
+                    </button>
                     <div class="graph-modal-controls-container">
                         <div class="view-switcher graph-view-switcher">
                             <button id="local-graph-toggle" class="view-button active" data-mode="local">
@@ -310,6 +312,8 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                             </button>
                         </div>
                     </div>
+                </div>
+                <div class="graph-modal-container" id="local-graph-container">
                     <div class="graph-parameter-panel" id="local-graph-parameters" aria-label="Local graph display options">
                         <div class="graph-parameter-header">
                             <span class="graph-parameter-title">Display options</span>

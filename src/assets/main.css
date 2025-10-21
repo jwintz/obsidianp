@@ -678,12 +678,19 @@ mark {
   overflow: hidden;
 }
 
-/* Container for view switcher only - top-left floating controls */
-.graph-modal-controls-container {
+/* Wrapper for close button and view switcher - ensures they stay side by side */
+.graph-modal-controls-wrapper {
   position: absolute;
   top: var(--space-md);
-  left: calc(var(--space-md) + 40px + var(--space-sm));
+  left: var(--space-md);
   z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Container for view switcher - no longer needs absolute positioning */
+.graph-modal-controls-container {
   display: flex;
   align-items: center;
   height: 40px;
@@ -710,17 +717,14 @@ mark {
               inset 0 -1px 1px rgba(0, 0, 0, 0.05);
 }
 
-/* Close button - fully circular, separate from view switcher */
+/* Close button - fully circular, inside flex wrapper */
 .graph-modal-close {
-  position: absolute;
-  top: var(--space-md);
-  left: var(--space-md);
-  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
+  flex-shrink: 0;
   border-radius: 20px;
   background: rgba(28, 28, 30, 0.5);
   backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
@@ -1221,17 +1225,19 @@ mark {
   }
 
   /* Mobile responsive adjustments for new graph modal layout */
-  .graph-modal-controls-container {
+  .graph-modal-controls-wrapper {
     top: var(--space-sm);
-    left: calc(var(--space-sm) + 36px + var(--space-xs));
+    left: var(--space-sm);
+    gap: var(--space-xs);
+  }
+
+  .graph-modal-controls-container {
     height: 36px;
     padding: 3px;
     border-radius: 18px;
   }
 
   .graph-modal-close {
-    top: var(--space-sm);
-    left: var(--space-sm);
     width: 36px;
     height: 36px;
     border-radius: 18px;

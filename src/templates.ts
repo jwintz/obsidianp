@@ -85,7 +85,9 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                         <line x1="3" y1="18" x2="21" y2="18"></line>
                     </svg>
                 </button>
-                <h1 class="vault-title">${vaultTitle}</h1>
+                <a href="${basePath}/" class="vault-title-link">
+                    <h1 class="vault-title">${vaultTitle}</h1>
+                </a>
                 <div class="mobile-header-controls">
                     <button id="theme-toggle" class="icon-button" title="Toggle theme">
                         ${getLucideIcon('Sun', 16)}
@@ -99,7 +101,9 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
             <button id="nav-menu-btn" class="nav-pill-action icon-only" title="Open menu">
                 ${getLucideIcon('Menu', 20)}
             </button>
-            <h1 class="vault-title">${vaultTitle}</h1>
+            <a href="${basePath}/" class="vault-title-link">
+                <h1 class="vault-title">${vaultTitle}</h1>
+            </a>
             <div class="nav-pills-scroll">
                 <div class="nav-pills-wrapper" id="nav-pills-wrapper">
                     <!-- Pills will be dynamically populated by JavaScript -->
@@ -122,7 +126,9 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
             
             <div class="sidebar-header">
                 <div class="sidebar-title-section">
-                    <h1 class="vault-title">${vaultTitle}</h1>
+                    <a href="${basePath}/" class="vault-title-link">
+                        <h1 class="vault-title">${vaultTitle}</h1>
+                    </a>
                 </div>
                 <div class="sidebar-controls">
                     <button id="theme-toggle-desktop" class="icon-button" title="Toggle theme">

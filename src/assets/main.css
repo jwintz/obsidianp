@@ -214,6 +214,19 @@ body {
   gap: var(--space-md);
 }
 
+.vault-title-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.vault-title-link:hover,
+.vault-title-link:visited,
+.vault-title-link:active {
+  text-decoration: none;
+  color: inherit;
+}
+
 .vault-title {
   font-size: var(--font-size-lg);
   font-weight: 600;

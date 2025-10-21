@@ -540,21 +540,10 @@
 
 /* MOBILE: Use full viewport height with safe areas */
 @media (max-width: 768px) {
-  html {
-    height: 100%;
-    height: -webkit-fill-available;
-  }
-  
-  body {
-    height: 100%;
-    height: -webkit-fill-available;
-  }
-  
-  /* App container fills screen */
+  /* Ensure app container uses flex column on mobile */
   .app-container {
-    height: 100dvh;
-    height: -webkit-fill-available;
-    overflow: hidden; /* Keep this */
+    display: flex !important;
+    flex-direction: column !important;
   }
   
   /* The SCROLLABLE main content area */
@@ -614,25 +603,47 @@
     box-sizing: border-box !important;
   }
   
-  /* Mobile sidebar - fullscreen under nav pills */
+  /* Mobile sidebar - PART OF FLEX LAYOUT like main-content */
   .sidebar {
-    position: fixed !important;
-    top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
-    left: 0 !important;
-    right: 0 !important;
+    position: static !important;
+    transform: none !important;
+    flex: 1 !important;
     width: 100% !important;
     max-width: 100% !important;
-    height: calc(100vh - var(--nav-pill-height) - var(--space-md) - var(--space-md)) !important;
-    height: calc(100dvh - var(--nav-pill-height) - var(--space-md) - var(--space-md)) !important; /* Modern iOS Safari */
-    z-index: 1050 !important;
-    transform: translateX(-100%) !important;
-    transition: transform 0.3s ease !important;
+    height: auto !important;
+    z-index: auto !important;
+    transition: none !important;
     background: var(--color-bg-primary) !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    border-right: none !important;
     overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
     margin: 0 !important;
+    padding: 0 !important;
+    padding-top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
+    padding-bottom: env(safe-area-inset-bottom, 20px) !important;
+    display: none !important;
+  }
+  
+  /* Mobile: When sidebar is open, show it and hide main-content */
+  .sidebar.open {
+    display: block !important;
+  }
+  
+  .sidebar.open ~ .main-content {
+    display: none !important;
+  }
+  
+  /* Mobile: Hide sidebar header - we have nav pills instead */
+  .sidebar .sidebar-header {
+    display: none !important;
+  }
+  
+  /* Mobile: Remove flex from remaining elements - simple block layout */
+  .sidebar .search-container,
+  .sidebar .sidebar-content,
+  .sidebar .nav-section,
+  .sidebar #folder-tree {
+    display: block !important;
+    flex: none !important;
   }
   
   .sidebar.open {

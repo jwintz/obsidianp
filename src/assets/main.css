@@ -1269,9 +1269,41 @@ mark {
     height: 18px;
   }
 
+  /* Mobile: Graph modal fills viewport with 100dvh */
   .graph-modal-content {
-    width: 95vw;
-    height: 90vh;
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    border-radius: 0;
+    border: none;
+  }
+  
+  /* Mobile: Reposition controls wrapper to bottom for cartridge layout */
+  .graph-modal-controls-wrapper {
+    position: absolute;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    gap: 0;
+    height: 40dvh; /* Approx 2/5 of viewport as requested */
+    background: var(--color-bg-secondary);
+    border-top: 1px solid var(--color-border);
+    padding: var(--space-md);
+    z-index: 20;
+  }
+  
+  /* Mobile: Close button at top of cartridge */
+  .graph-modal-close {
+    align-self: flex-end;
+    margin-bottom: var(--space-sm);
+  }
+  
+  /* Mobile: View switcher spans width in cartridge */
+  .graph-modal-controls-container {
+    width: 100%;
+    justify-content: center;
   }
 }
 

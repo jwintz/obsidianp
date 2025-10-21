@@ -2513,11 +2513,12 @@ body.menu-open {
 }
 
 .property-row {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: var(--property-name-width, 80px) 1fr;
   gap: var(--space-md);
   padding: var(--space-xs) 0;
   min-height: 24px;
+  align-items: baseline;
 }
 
 .property-row:not(:last-child) {
@@ -2527,33 +2528,33 @@ body.menu-open {
 }
 
 .property-name {
-  flex-shrink: 0;
-  width: var(--property-name-width, 80px);
   font-size: var(--font-size-xs);
   font-weight: 500;
   color: var(--color-text-muted);
   text-align: right;
-  padding-top: 2px;
   word-break: break-word;
   overflow-wrap: break-word;
   overflow-x: auto;
   white-space: nowrap;
+  line-height: 1.5;
 }
 
 .property-value {
-  flex: 1;
-  min-width: 0; /* Allow flex item to shrink below content size */
+  min-width: 0; /* Allow grid item to shrink below content size */
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
-  line-height: 1.4;
+  line-height: 1.5;
   overflow-x: auto;
   white-space: nowrap;
+  display: flex;
+  align-items: baseline;
 }
 
 .property-tags {
   display: flex;
   flex-wrap: nowrap;
   gap: var(--space-xs);
+  align-items: baseline;
 }
 
 /* === SCROLLBAR SYSTEM - Consolidated === */
@@ -2596,6 +2597,7 @@ body.menu-open {
   display: flex;
   flex-wrap: nowrap;
   gap: var(--space-xs);
+  align-items: baseline;
 }
 
 .property-list-item {

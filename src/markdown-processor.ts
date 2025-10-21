@@ -955,8 +955,8 @@ export class MarkdownProcessor {
     };
 
     const maxPropertyNameWidth = Math.max(...propertyNames.map(name => getTextWidth(name)));
-    // Add padding and ensure minimum/maximum bounds
-    const propertyNameWidth = Math.min(Math.max(maxPropertyNameWidth + 12, 50), 120);
+    // Add padding and ensure minimum/maximum bounds - increased max to 180px for longer property names
+    const propertyNameWidth = Math.min(Math.max(maxPropertyNameWidth + 16, 60), 180);
 
     // Handle each property type
     Object.entries(frontMatter).forEach(([key, value]) => {

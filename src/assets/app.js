@@ -201,6 +201,11 @@ class ObsidianSSGApp {
   }
   
   initializeNavigation() {
+    // Enable automatic scroll restoration for back/forward navigation
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'auto';
+    }
+    
     // Handle browser back/forward
     window.addEventListener('popstate', (event) => {
       const noteId = event.state?.noteId || this.getDefaultNote();
@@ -874,9 +879,13 @@ class ObsidianSSGApp {
       this.graph.updateMiniGraph(noteId);
     }
     
-    // Scroll to top
+    // Scroll to top - scroll both the container and the window
     if (noteContent) {
       noteContent.scrollTop = 0;
+    }
+    // Scroll window to top for new page navigation (preserves position for back/forward)
+    if (addToHistory) {
+      window.scrollTo(0, 0);
     }
   }
   
@@ -947,9 +956,13 @@ class ObsidianSSGApp {
       this.graph.updateMiniGraph(null);
     }
     
-    // Scroll to top
+    // Scroll to top - scroll both the container and the window
     if (noteContent) {
       noteContent.scrollTop = 0;
+    }
+    // Scroll window to top for new page navigation (preserves position for back/forward)
+    if (addToHistory) {
+      window.scrollTo(0, 0);
     }
   }
   

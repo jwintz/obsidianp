@@ -652,107 +652,148 @@ mark {
   height: 85vh;
   max-width: 1200px;
   background-color: var(--color-bg-secondary);
-  border-radius: var(--border-radius);
+  border-radius: 24px; /* var(--border-radius); */
+  border: 1px solid var(--color-border);
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-.graph-modal-header {
+/* Container for view switcher only - top-left floating controls */
+.graph-modal-controls-container {
+  position: absolute;
+  top: var(--space-md);
+  left: calc(var(--space-md) + 40px + var(--space-sm));
+  z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--space-sm);
-  border-bottom: 1px solid var(--color-border);
-  background-color: var(--color-bg-secondary);
+  height: 40px;
+  background: rgba(28, 28, 30, 0.5);
+  backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
+  -webkit-backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
+  border: 0.5px solid rgba(255, 255, 255, 0.25);
+  padding: 4px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+              0 1px 2px rgba(0, 0, 0, 0.2),
+              inset 0 1px 1px rgba(255, 255, 255, 0.15),
+              inset 0 -1px 1px rgba(0, 0, 0, 0.1);
 }
 
-.graph-modal-header h3 {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-  flex-shrink: 0;
-  order: 1;
+[data-theme="light"] .graph-modal-controls-container {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(100px) saturate(200%) brightness(1.2);
+  -webkit-backdrop-filter: blur(100px) saturate(200%) brightness(1.2);
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+              0 1px 2px rgba(0, 0, 0, 0.05),
+              inset 0 1px 1px rgba(255, 255, 255, 0.6),
+              inset 0 -1px 1px rgba(0, 0, 0, 0.05);
 }
 
-.graph-modal-controls {
+/* Close button - fully circular, separate from view switcher */
+.graph-modal-close {
+  position: absolute;
+  top: var(--space-md);
+  left: var(--space-md);
+  z-index: 20;
   display: flex;
   align-items: center;
-  order: 2;
-  flex: 1;
   justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background: rgba(28, 28, 30, 0.5);
+  backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
+  -webkit-backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
+  border: 0.5px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+              0 1px 2px rgba(0, 0, 0, 0.2),
+              inset 0 1px 1px rgba(255, 255, 255, 0.15),
+              inset 0 -1px 1px rgba(0, 0, 0, 0.1);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
-.graph-modal-controls .view-switcher {
-  display: flex;
-  gap: 0;
-  border-radius: var(--border-radius);
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
-  padding: 2px;
+[data-theme="light"] .graph-modal-close {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(100px) saturate(200%) brightness(1.2);
+  -webkit-backdrop-filter: blur(100px) saturate(200%) brightness(1.2);
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+              0 1px 2px rgba(0, 0, 0, 0.05),
+              inset 0 1px 1px rgba(255, 255, 255, 0.6),
+              inset 0 -1px 1px rgba(0, 0, 0, 0.05);
 }
 
-.graph-modal-controls .view-button {
+.graph-modal-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.graph-modal-close:hover {
+  transform: scale(1.05);
+}
+
+.graph-modal-close:active {
+  transform: scale(0.98);
+}
+
+/* Graph view switcher - inside container */
+.graph-view-switcher {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-xs) var(--space-sm);
+  gap: 4px;
+}
+
+.graph-view-switcher .view-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
   border: none;
-  border-radius: calc(var(--border-radius) - 2px);
+  border-radius: 16px;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0.0, 0.2, 1);
   white-space: nowrap;
+  min-width: 70px;
 }
 
-.graph-modal-controls .view-button:hover {
-  background-color: var(--color-bg-elevated);
+.graph-view-switcher .view-button:hover:not(.active) {
+  background-color: rgba(255, 255, 255, 0.08);
   color: var(--color-text-primary);
+  transform: scale(1.02);
 }
 
-.graph-modal-controls .view-button.active {
+[data-theme="light"] .graph-view-switcher .view-button:hover:not(.active) {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.graph-view-switcher .view-button.active {
   background-color: var(--color-primary);
   color: white;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.5),
+              0 1px 3px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: scale(1.0);
 }
 
-.graph-modal-controls .view-button svg {
-  width: 14px;
-  height: 14px;
+.graph-view-switcher .view-button:active {
+  transform: scale(0.98);
 }
 
-.graph-modal-header .icon-button {
-  order: 3;
+.graph-view-switcher .view-button svg {
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
-}
-
-.graph-mode-toggle {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-xs) var(--space-sm);
-  background: var(--color-accent);
-  color: var(--color-text-primary);
-  border: none;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  font-family: inherit;
-  transition: all 0.2s ease;
-}
-
-.graph-mode-toggle:hover {
-  background: var(--color-bg-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.graph-mode-toggle:active {
-  transform: translateY(0);
 }
 
 .graph-modal-container {
@@ -1159,6 +1200,62 @@ mark {
 
   .graph-canvas {
     flex: 1;
+  }
+
+  /* Mobile responsive adjustments for new graph modal layout */
+  .graph-modal-controls-container {
+    top: var(--space-sm);
+    left: calc(var(--space-sm) + 36px + var(--space-xs));
+    height: 36px;
+    padding: 3px;
+    border-radius: 18px;
+  }
+
+  .graph-modal-close {
+    top: var(--space-sm);
+    left: var(--space-sm);
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+  }
+
+  .graph-modal-close svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .graph-view-switcher {
+    gap: 3px;
+  }
+
+  .graph-view-switcher .view-button {
+    height: 30px;
+    border-radius: 15px;
+    padding: 0 10px;
+    font-size: 12px;
+    min-width: 50px;
+  }
+
+  .graph-view-switcher .view-button span {
+    display: none; /* Hide text on mobile, keep icons only */
+  }
+
+  .graph-view-switcher .view-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .graph-modal-content {
+    width: 95vw;
+    height: 90vh;
+  }
+}
+
+/* Tablet layout (769px to 1199px) */
+@media (min-width: 769px) and (max-width: 1199px) {
+  .graph-modal-controls-container {
+    top: var(--space-sm);
+    left: var(--space-sm);
   }
 }
 
@@ -2544,7 +2641,7 @@ body.menu-open {
   display: flex;
   gap: var(--space-xs);
   border-radius: var(--border-radius);
-  padding: var(--space-xs);
+  /* padding: var(--space-xs); */
   flex-wrap: nowrap;
   white-space: nowrap;
 }

@@ -325,6 +325,17 @@ class AdaptiveNavigation {
         }
       });
     }
+    
+    // Setup graph button in sidebar - same behavior as pill nav button
+    const sidebarGraphBtn = document.getElementById('sidebar-graph-toggle');
+    if (sidebarGraphBtn) {
+      sidebarGraphBtn.addEventListener('click', () => {
+        const expandGraph = document.getElementById('expand-graph');
+        if (expandGraph) {
+          expandGraph.click();
+        }
+      });
+    }
   }
   
   /**

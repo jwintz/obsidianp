@@ -239,6 +239,11 @@ body {
   gap: var(--space-xs);
 }
 
+/* Graph button in sidebar - hidden by default, shown when right sidebar is not visible */
+.sidebar-graph-button {
+  display: none;
+}
+
 .icon-button {
   background: none;
   border: none;

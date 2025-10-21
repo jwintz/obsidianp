@@ -131,6 +131,9 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                     </a>
                 </div>
                 <div class="sidebar-controls">
+                    <button id="sidebar-graph-toggle" class="icon-button sidebar-graph-button" title="Open graph view">
+                        ${getLucideIcon('Network', 16)}
+                    </button>
                     <button id="theme-toggle-desktop" class="icon-button" title="Toggle theme">
                         ${getLucideIcon('Sun', 16)}
                     </button>

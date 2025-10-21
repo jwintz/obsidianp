@@ -513,6 +513,21 @@
   }
 }
 
+/* Show graph button in sidebar when right sidebar is hidden (tablet and small desktop) */
+/* Right sidebar appears at 1200px+, so show button from 1199px and below */
+@media (max-width: 1199px) {
+  .sidebar-graph-button {
+    display: flex !important;
+  }
+}
+
+/* Hide graph button on large screens where right sidebar is visible */
+@media (min-width: 1200px) {
+  .sidebar-graph-button {
+    display: none !important;
+  }
+}
+
 /* ----------------------------------------------------------------------------
    DESKTOP (1024px+)
    Full sidebar with rounded container

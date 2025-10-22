@@ -367,6 +367,16 @@ class AdaptiveNavigation {
           // Close sidebar
           this.sidebar.classList.remove('open');
         } else {
+          // Close any open graph modals
+          const globalGraphModal = document.getElementById('global-graph-modal');
+          const localGraphModal = document.getElementById('local-graph-modal');
+          if (globalGraphModal && !globalGraphModal.classList.contains('hidden')) {
+            globalGraphModal.classList.add('hidden');
+          }
+          if (localGraphModal && !localGraphModal.classList.contains('hidden')) {
+            localGraphModal.classList.add('hidden');
+          }
+          
           // Open sidebar
           this.sidebar.classList.add('open');
         }

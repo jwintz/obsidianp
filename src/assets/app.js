@@ -504,6 +504,12 @@ class ObsidianSSGApp {
     const container = document.getElementById('global-graph-container');
     
     if (modal && container && this.graph) {
+      // Close sidebar if open (mobile)
+      const sidebar = document.querySelector('.sidebar');
+      if (sidebar && sidebar.classList.contains('open')) {
+        sidebar.classList.remove('open');
+      }
+      
       modal.classList.remove('hidden');
       document.body.style.overflow = 'hidden'; // Prevent background scrolling
       
@@ -529,6 +535,12 @@ class ObsidianSSGApp {
     const targetNoteId = noteId || this.currentNote?.id;
     
     if (modal && container && this.graph && targetNoteId) {
+      // Close sidebar if open (mobile)
+      const sidebar = document.querySelector('.sidebar');
+      if (sidebar && sidebar.classList.contains('open')) {
+        sidebar.classList.remove('open');
+      }
+      
       modal.classList.remove('hidden');
       document.body.style.overflow = 'hidden'; // Prevent background scrolling
       

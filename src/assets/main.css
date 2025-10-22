@@ -1207,13 +1207,7 @@ mark {
 }
 
 @media (max-width: 768px) {
-  .graph-parameter-panel {
-    position: static;
-    width: 100%;
-    max-height: none;
-    margin-bottom: var(--space-md);
-    backdrop-filter: none;
-  }
+  /* Removed conflicting .graph-parameter-panel styles - now handled in adaptive-nav.css */
 
   .graph-modal-container {
     display: flex;

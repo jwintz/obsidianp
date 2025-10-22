@@ -555,19 +555,14 @@
     padding-bottom: env(safe-area-inset-bottom, 20px);
   }
   
-  /* Show pill navigation as primary header */
+  /* Show pill navigation as primary header - ABOVE graph modal */
   .nav-pills-container {
     display: flex !important;
+    z-index: 2100 !important; /* Above graph modal (2000) */
   }
   
   /* HIDE the old mobile header completely */
   .mobile-header {
-    display: none !important;
-  }
-  
-  /* Hide graph modal close buttons on mobile - use pill button to toggle */
-  #close-local-graph,
-  #close-global-graph {
     display: none !important;
   }
   
@@ -614,36 +609,69 @@
     z-index: auto !important;
     transition: none !important;
     background: var(--color-bg-primary) !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
+    overflow: hidden !important;
     margin: 0 !important;
     padding: 0 !important;
     padding-top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
-    padding-bottom: env(safe-area-inset-bottom, 20px) !important;
     display: none !important;
   }
   
-  /* Mobile: When sidebar is open, show it and hide main-content */
+  /* Mobile: When sidebar is open, show as flex column */
   .sidebar.open {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
   }
   
   .sidebar.open ~ .main-content {
     display: none !important;
   }
   
-  /* Mobile: Hide sidebar header - we have nav pills instead */
+  /* Mobile: Hide sidebar header */
   .sidebar .sidebar-header {
     display: none !important;
   }
   
-  /* Mobile: Remove flex from remaining elements - simple block layout */
-  .sidebar .search-container,
-  .sidebar .sidebar-content,
-  .sidebar .nav-section,
-  .sidebar #folder-tree {
-    display: block !important;
-    flex: none !important;
+  /* Mobile: Search container - fixed at top, no scrolling */
+  .sidebar .search-container {
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+  }
+  
+  /* Mobile: Sidebar content - flex container, no scrolling */
+  .sidebar .sidebar-content {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Mobile: Nav section - flex container, no scrolling */
+  .sidebar .nav-section {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* Mobile: Nav section header (FILES) - fixed at top, no scrolling */
+  .sidebar .nav-section-header {
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+  }
+  
+  /* Mobile: #folder-tree - THE ONLY SCROLLABLE ELEMENT */
+  .sidebar #folder-tree,
+  .sidebar .folder-tree {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: env(safe-area-inset-bottom, 20px) !important;
   }
   
   .sidebar.open {
@@ -863,64 +891,137 @@
    ---------------------------------------------------------------------------- */
 
 @media (max-width: 768px) {
-  /* Make graph modal full screen */
+  /* Graph modal fills entire viewport with 100dvh */
+  .graph-modal.hidden {
+    display: none !important;
+  }
+  
+  .graph-modal:not(.hidden) {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 2000 !important;
+    display: block !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: var(--color-bg-primary) !important;
+  }
+  
+  /* Hide overlay - not needed on mobile */
+  .graph-modal-overlay {
+    display: none !important;
+  }
+  
+  /* Graph modal content fills entire modal */
   .graph-modal-content {
     width: 100% !important;
     height: 100% !important;
     max-width: 100% !important;
-    max-height: 100% !important;
+    max-height: none !important;
     border-radius: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+    display: block !important;
+    overflow: hidden !important;
+    background: transparent !important;
   }
   
-  /* Graph modal gets top padding for nav */
+  /* Graph container fills entire content */
   .graph-modal-content .content-wrapper,
   .graph-modal-container {
-    padding-top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
-  }
-  
-  /* Header stays at top with glass effect */
-  .graph-modal-header {
-    position: fixed !important;
-    top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
+    position: absolute !important;
+    top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    z-index: 1001 !important;
-    background: rgba(28, 28, 30, 0.65) !important;
-    backdrop-filter: blur(60px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(60px) saturate(200%) !important;
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.2) !important;
-    padding: var(--space-md) !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+    overflow: hidden !important;
   }
   
-  [data-theme="light"] .graph-modal-header {
-    background: rgba(255, 255, 255, 0.65) !important;
-    border-bottom: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  /* Canvas fills entire viewport from edge to edge */
+  .graph-modal-content #graph-canvas,
+  .graph-modal-content canvas {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 1 !important;
   }
   
-  /* Move parameter panel to BOTTOM as FOOTER CARD - FIXED HEIGHT */
+  /* Controls wrapper - floats above parameter panel, positioned from BOTTOM */
+  .graph-modal-controls-wrapper {
+    position: fixed !important;
+    bottom: calc(35vh + var(--space-md)) !important; /* Just above the 35vh parameter panel */
+    left: var(--space-md) !important;
+    right: auto !important;
+    top: auto !important;
+    z-index: 101 !important;
+    display: flex !important;
+    flex-direction: row !important; /* Force horizontal layout */
+    align-items: center !important; /* Vertical center alignment */
+    gap: var(--space-sm) !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: calc(100vw - 2 * var(--space-md)) !important;
+    background: none !important; /* Remove background box */
+    border: none !important; /* Remove border box */
+    box-shadow: none !important; /* Remove any shadow */
+    backdrop-filter: none !important; /* Remove blur effect */
+    -webkit-backdrop-filter: none !important;
+  }
+  
+  /* Ensure close button and controls container align vertically */
+  .graph-modal-controls-wrapper #close-local-graph,
+  .graph-modal-controls-wrapper #close-global-graph,
+  .graph-modal-controls-wrapper .graph-modal-close {
+    align-self: center !important;
+    margin-bottom: 0 !important; /* Remove margin that causes misalignment */
+  }
+  
+  .graph-modal-controls-wrapper .graph-modal-controls-container {
+    align-self: center !important;
+  }
+  
+  /* Parameter panel - REDUCED HEIGHT to ~35vh */
   .graph-parameter-panel {
     position: fixed !important;
+    top: auto !important; /* Override base style */
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    top: auto !important;
     width: 100% !important;
-    height: 180px !important;
-    max-height: 180px !important;
-    min-height: 180px !important;
+    max-width: 100vw !important;
+    height: auto !important;
+    max-height: 35vh !important; /* REDUCED from 50vh */
+    min-height: 200px !important;
     margin: 0 !important;
+    padding: var(--space-md) !important;
+    padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 20px)) !important;
     border-radius: 0 !important;
-    background: rgba(28, 28, 30, 0.98) !important;
+    background: rgba(28, 28, 30, 1) !important;
     backdrop-filter: blur(60px) saturate(200%) !important;
     -webkit-backdrop-filter: blur(60px) saturate(200%) !important;
     border-top: 0.5px solid rgba(255, 255, 255, 0.2) !important;
     border-left: none !important;
     border-right: none !important;
     border-bottom: none !important;
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4) !important;
+    z-index: 100 !important;
     overflow-y: auto !important;
-    z-index: 1001 !important;
+    -webkit-overflow-scrolling: touch !important;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4) !important;
   }
   
   [data-theme="light"] .graph-parameter-panel {

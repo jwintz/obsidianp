@@ -364,8 +364,22 @@ class AdaptiveNavigation {
         const isOpen = this.sidebar.classList.contains('open');
         
         if (isOpen) {
+          // Get saved scroll position
+          const scrollY = this.sidebar.dataset.scrollY || 0;
+          
           // Close sidebar
           this.sidebar.classList.remove('open');
+          
+          // Re-enable scrolling on body
+          document.body.style.overflow = '';
+          document.body.style.position = '';
+          document.body.style.top = '';
+          document.body.style.width = '';
+          document.body.style.left = '';
+          document.body.style.right = '';
+          
+          // Restore scroll position
+          window.scrollTo(0, parseInt(scrollY));
         } else {
           // Close any open graph modals
           const globalGraphModal = document.getElementById('global-graph-modal');
@@ -377,8 +391,24 @@ class AdaptiveNavigation {
             localGraphModal.classList.add('hidden');
           }
           
+          // Save current scroll position
+          const scrollY = window.scrollY;
+          
           // Open sidebar
           this.sidebar.classList.add('open');
+          
+          // Prevent body scrolling and maintain scroll position
+          document.body.style.overflow = 'hidden';
+          document.body.style.position = 'fixed';
+          document.body.style.top = `-${scrollY}px`;
+          document.body.style.width = '100%';
+          document.body.style.left = '0';
+          document.body.style.right = '0';
+          
+          // No need to offset sidebar - it uses position: fixed (viewport-relative)
+          
+          // Store scroll position for restoration
+          this.sidebar.dataset.scrollY = scrollY;
         }
       });
     }

@@ -201,16 +201,22 @@ class ObsidianSSGApp {
   }
   
   initializeNavigation() {
-    // Enable automatic scroll restoration for back/forward navigation
+    // Disable automatic scroll restoration - we'll handle it manually
     if ('scrollRestoration' in history) {
-      history.scrollRestoration = 'auto';
+      history.scrollRestoration = 'manual';
     }
     
     // Handle browser back/forward
     window.addEventListener('popstate', (event) => {
       const noteId = event.state?.noteId || this.getDefaultNote();
       if (noteId) {
+        // On back/forward, restore the saved scroll position if available
+        const savedScroll = event.state?.scrollY || 0;
         this.loadNote(noteId, false);
+        // Restore scroll after content loads
+        requestAnimationFrame(() => {
+          window.scrollTo(0, savedScroll);
+        });
       }
     });
   }
@@ -832,7 +838,8 @@ class ObsidianSSGApp {
     // Update URL and history with clean URLs
     if (addToHistory) {
       const cleanUrl = this.basePath ? `${window.location.origin}${this.basePath}/${noteId}` : `${window.location.origin}/${noteId}`;
-      window.history.pushState({ noteId }, note.title, cleanUrl);
+      // Save current scroll position in history state for back/forward navigation
+      window.history.pushState({ noteId, scrollY: window.scrollY }, note.title, cleanUrl);
     }
     
     // Update page title

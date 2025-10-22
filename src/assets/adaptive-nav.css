@@ -626,10 +626,20 @@
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important; /* CRITICAL: Prevent any scrolling on sidebar */
+    position: fixed !important; /* Fixed to viewport, not affected by body offset */
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 2000 !important; /* Above main content */
+    background: var(--color-bg-primary) !important; /* Ensure sidebar covers content */
   }
   
+  /* Prevent main-content from scrolling when sidebar is open */
   .sidebar.open ~ .main-content {
-    display: none !important;
+    overflow: hidden !important;
+    touch-action: none !important;
+    pointer-events: none !important;
   }
   
   /* Mobile: Hide sidebar header */
@@ -761,7 +771,9 @@
   
   /* Hide main content when ANY graph modal is open */
   body:has(.graph-modal:not(.hidden)) .main-content {
-    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    /* Use visibility instead of display to preserve scroll position */
   }
   
   /* Hide overlay - not needed on mobile */

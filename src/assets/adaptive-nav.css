@@ -544,6 +544,8 @@
   .app-container {
     display: flex !important;
     flex-direction: column !important;
+    height: 100vh !important;
+    height: 100dvh !important;
   }
   
   /* The SCROLLABLE main content area */
@@ -598,29 +600,31 @@
     box-sizing: border-box !important;
   }
   
-  /* Mobile sidebar - PART OF FLEX LAYOUT like main-content */
+  /* Mobile sidebar - uses flex: 1 to adapt to available height */
   .sidebar {
     position: static !important;
     transform: none !important;
     flex: 1 !important;
     width: 100% !important;
     max-width: 100% !important;
-    height: auto !important;
+    height: auto !important; /* Let flex handle the height */
+    max-height: 100% !important;
     z-index: auto !important;
     transition: none !important;
     background: var(--color-bg-primary) !important;
-    overflow: hidden !important;
+    overflow: hidden !important; /* NEVER scroll the sidebar itself */
     margin: 0 !important;
     padding: 0 !important;
     padding-top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
     display: none !important;
+    box-sizing: border-box !important;
   }
   
   /* Mobile: When sidebar is open, show as flex column */
   .sidebar.open {
     display: flex !important;
     flex-direction: column !important;
-    overflow: hidden !important;
+    overflow: hidden !important; /* CRITICAL: Prevent any scrolling on sidebar */
   }
   
   .sidebar.open ~ .main-content {
@@ -635,31 +639,37 @@
   /* Mobile: Search container - fixed at top, no scrolling */
   .sidebar .search-container {
     flex-shrink: 0 !important;
+    flex-grow: 0 !important;
     overflow: visible !important;
   }
   
-  /* Mobile: Sidebar content - flex container, no scrolling */
+  /* Mobile: Sidebar content - flex container, NEVER scrolls */
   .sidebar .sidebar-content {
     flex: 1 !important;
     min-height: 0 !important;
-    overflow: hidden !important;
+    overflow: hidden !important; /* CRITICAL: Block scrolling at this level */
+    overflow-y: hidden !important;
+    overflow-x: hidden !important;
     display: flex !important;
     flex-direction: column !important;
   }
   
-  /* Mobile: Nav section - flex container, no scrolling */
+  /* Mobile: Nav section - flex container, NEVER scrolls */
   .sidebar .nav-section {
     flex: 1 !important;
     min-height: 0 !important;
-    overflow: hidden !important;
+    overflow: hidden !important; /* CRITICAL: Block scrolling at this level */
+    overflow-y: hidden !important;
+    overflow-x: hidden !important;
     display: flex !important;
     flex-direction: column !important;
     margin-bottom: 0 !important;
   }
   
-  /* Mobile: Nav section header (FILES) - fixed at top, no scrolling */
+  /* Mobile: Nav section header (FILES) - fixed at top, NEVER scrolls */
   .sidebar .nav-section-header {
     flex-shrink: 0 !important;
+    flex-grow: 0 !important;
     overflow: visible !important;
   }
   
@@ -667,8 +677,10 @@
   .sidebar #folder-tree,
   .sidebar .folder-tree {
     flex: 1 !important;
+    flex-shrink: 1 !important;
+    flex-grow: 1 !important;
     min-height: 0 !important;
-    overflow-y: scroll !important;
+    overflow-y: scroll !important; /* ONLY this element scrolls */
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     padding-bottom: env(safe-area-inset-bottom, 20px) !important;
@@ -692,11 +704,174 @@
   .sidebar-overlay {
     display: none !important;
   }
+  
+  /* Graph modal fills entire viewport with 100dvh */
+  .graph-modal.hidden {
+    display: none !important;
+  }
+  
+  .graph-modal:not(.hidden) {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 2000 !important;
+    display: block !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: var(--color-bg-primary) !important;
+  }
+  
+  /* Hide overlay - not needed on mobile */
+  .graph-modal-overlay {
+    display: none !important;
+  }
+  
+  /* Graph modal content fills entire modal */
+  .graph-modal-content {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+    display: block !important;
+    overflow: hidden !important;
+    background: transparent !important;
+  }
+  
+  /* Graph container fills entire content */
+  .graph-modal-content .content-wrapper,
+  .graph-modal-container {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  /* Canvas fills entire viewport from edge to edge */
+  .graph-modal-content #graph-canvas,
+  .graph-modal-content canvas {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 1 !important;
+  }
+  
+  /* Controls wrapper - floats above parameter panel, positioned from BOTTOM */
+  .graph-modal-controls-wrapper {
+    position: fixed !important;
+    bottom: calc(35vh + var(--space-md)) !important; /* Just above the 35vh parameter panel */
+    left: var(--space-md) !important;
+    right: auto !important;
+    top: auto !important;
+    z-index: 101 !important;
+    display: flex !important;
+    flex-direction: row !important; /* Force horizontal layout */
+    align-items: center !important; /* Vertical center alignment */
+    gap: var(--space-sm) !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: calc(100vw - 2 * var(--space-md)) !important;
+    background: none !important; /* Remove background box */
+    border: none !important; /* Remove border box */
+    box-shadow: none !important; /* Remove any shadow */
+    backdrop-filter: none !important; /* Remove blur effect */
+    -webkit-backdrop-filter: none !important;
+  }
+  
+  /* Ensure close button and controls container align vertically */
+  .graph-modal-controls-wrapper #close-local-graph,
+  .graph-modal-controls-wrapper #close-global-graph,
+  .graph-modal-controls-wrapper .graph-modal-close {
+    align-self: center !important;
+    margin-bottom: 0 !important; /* Remove margin that causes misalignment */
+  }
+  
+  .graph-modal-controls-wrapper .graph-modal-controls-container {
+    align-self: center !important;
+  }
+  
+  /* Parameter panel - REDUCED HEIGHT to ~35vh */
+  .graph-parameter-panel {
+    position: fixed !important;
+    top: auto !important; /* Override base style */
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    height: auto !important;
+    max-height: 35vh !important; /* REDUCED from 50vh */
+    min-height: 200px !important;
+    margin: 0 !important;
+    padding: var(--space-md) !important;
+    padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 20px)) !important;
+    border-radius: 0 !important;
+    background: rgba(28, 28, 30, 1) !important;
+    backdrop-filter: blur(60px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(60px) saturate(200%) !important;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.2) !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    z-index: 100 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4) !important;
+  }
+  
+  [data-theme="light"] .graph-parameter-panel {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border-top: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12) !important;
+  }
+  
+  /* Graph container adjusts for bottom panel - add bottom padding */
+  .graph-modal-container {
+    padding-bottom: 180px !important;
+    height: 100vh !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Graph canvas itself should not overlap footer */
+  #graph-canvas,
+  .graph-canvas {
+    margin-bottom: 0 !important;
+  }
+  
+  /* Add handle to bottom panel for drag hint */
+  .graph-parameter-panel::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    margin: 8px auto;
+  }
+  
+  [data-theme="light"] .graph-parameter-panel::before {
+    background: rgba(0, 0, 0, 0.2);
+  }
 }
-
-/* ----------------------------------------------------------------------------
-   KEYBOARD & ACCESSIBILITY
-   ---------------------------------------------------------------------------- */
 
 /* Focus indicators for keyboard navigation */
 .nav-pill:focus-visible {
@@ -889,175 +1064,6 @@
    MOBILE GRAPH MODAL LAYOUT
    Top padding for nav clearance, controls as footer card
    ---------------------------------------------------------------------------- */
-
-@media (max-width: 768px) {
-  /* Graph modal fills entire viewport with 100dvh */
-  .graph-modal.hidden {
-    display: none !important;
-  }
-  
-  .graph-modal:not(.hidden) {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100vw !important;
-    min-height: 100vh !important;
-    min-height: 100dvh !important;
-    height: 100vh !important;
-    height: 100dvh !important;
-    z-index: 2000 !important;
-    display: block !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    background: var(--color-bg-primary) !important;
-  }
-  
-  /* Hide overlay - not needed on mobile */
-  .graph-modal-overlay {
-    display: none !important;
-  }
-  
-  /* Graph modal content fills entire modal */
-  .graph-modal-content {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100% !important;
-    max-height: none !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    position: relative !important;
-    display: block !important;
-    overflow: hidden !important;
-    background: transparent !important;
-  }
-  
-  /* Graph container fills entire content */
-  .graph-modal-content .content-wrapper,
-  .graph-modal-container {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-  }
-  
-  /* Canvas fills entire viewport from edge to edge */
-  .graph-modal-content #graph-canvas,
-  .graph-modal-content canvas {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    z-index: 1 !important;
-  }
-  
-  /* Controls wrapper - floats above parameter panel, positioned from BOTTOM */
-  .graph-modal-controls-wrapper {
-    position: fixed !important;
-    bottom: calc(35vh + var(--space-md)) !important; /* Just above the 35vh parameter panel */
-    left: var(--space-md) !important;
-    right: auto !important;
-    top: auto !important;
-    z-index: 101 !important;
-    display: flex !important;
-    flex-direction: row !important; /* Force horizontal layout */
-    align-items: center !important; /* Vertical center alignment */
-    gap: var(--space-sm) !important;
-    padding: 0 !important;
-    width: auto !important;
-    height: auto !important;
-    max-width: calc(100vw - 2 * var(--space-md)) !important;
-    background: none !important; /* Remove background box */
-    border: none !important; /* Remove border box */
-    box-shadow: none !important; /* Remove any shadow */
-    backdrop-filter: none !important; /* Remove blur effect */
-    -webkit-backdrop-filter: none !important;
-  }
-  
-  /* Ensure close button and controls container align vertically */
-  .graph-modal-controls-wrapper #close-local-graph,
-  .graph-modal-controls-wrapper #close-global-graph,
-  .graph-modal-controls-wrapper .graph-modal-close {
-    align-self: center !important;
-    margin-bottom: 0 !important; /* Remove margin that causes misalignment */
-  }
-  
-  .graph-modal-controls-wrapper .graph-modal-controls-container {
-    align-self: center !important;
-  }
-  
-  /* Parameter panel - REDUCED HEIGHT to ~35vh */
-  .graph-parameter-panel {
-    position: fixed !important;
-    top: auto !important; /* Override base style */
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    max-width: 100vw !important;
-    height: auto !important;
-    max-height: 35vh !important; /* REDUCED from 50vh */
-    min-height: 200px !important;
-    margin: 0 !important;
-    padding: var(--space-md) !important;
-    padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 20px)) !important;
-    border-radius: 0 !important;
-    background: rgba(28, 28, 30, 1) !important;
-    backdrop-filter: blur(60px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(60px) saturate(200%) !important;
-    border-top: 0.5px solid rgba(255, 255, 255, 0.2) !important;
-    border-left: none !important;
-    border-right: none !important;
-    border-bottom: none !important;
-    z-index: 100 !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4) !important;
-  }
-  
-  [data-theme="light"] .graph-parameter-panel {
-    background: rgba(255, 255, 255, 0.98) !important;
-    border-top: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12) !important;
-  }
-  
-  /* Graph container adjusts for bottom panel - add bottom padding */
-  .graph-modal-container {
-    padding-bottom: 180px !important;
-    height: 100vh !important;
-    box-sizing: border-box !important;
-  }
-  
-  /* Graph canvas itself should not overlap footer */
-  #graph-canvas,
-  .graph-canvas {
-    margin-bottom: 0 !important;
-  }
-  
-  /* Add handle to bottom panel for drag hint */
-  .graph-parameter-panel::before {
-    content: '';
-    display: block;
-    width: 36px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 3px;
-    margin: 8px auto;
-  }
-  
-  [data-theme="light"] .graph-parameter-panel::before {
-    background: rgba(0, 0, 0, 0.2);
-  }
-}
 
 /* ----------------------------------------------------------------------------
    PRINT STYLES

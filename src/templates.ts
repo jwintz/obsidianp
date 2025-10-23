@@ -64,7 +64,6 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>${pageTitle}</title>
     <link rel="stylesheet" href="${basePath}/assets/main.css">
-    <link rel="stylesheet" href="${basePath}/assets/adaptive-nav.css">
     <link rel="stylesheet" href="${basePath}/assets/katex.min.css">
 </head>
 
@@ -909,8 +908,7 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
     <script src="${basePath}/assets/search.js"></script>
     <script src="${basePath}/assets/table-of-contents.js"></script>
     <script src="${basePath}/assets/graph.js"></script>
-    <script src="${basePath}/assets/adaptive-nav.js"></script>
-    <script src="${basePath}/assets/app.js"></script>
+    <script src="${basePath}/assets/main.js"></script>
 </body>
 </html>`;
 }

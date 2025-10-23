@@ -163,7 +163,9 @@ html {
   font-size: 16px;
   line-height: 1.6;
   height: 100%;
-  height: -webkit-fill-available;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden; /* Prevent html scroll */
 }
 
 body {
@@ -174,8 +176,16 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
   margin: 0;
   padding: 0;
-  min-height: 100%;
-  min-height: -webkit-fill-available;
+  height: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden; /* Prevent body scroll */
+  width: 100%;
+  /* iOS Safari: Use relative instead of fixed to avoid layout issues */
+  position: relative;
+  /* Prevent pull-to-refresh and overscroll */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Layout */
@@ -183,8 +193,8 @@ body {
   display: flex;
   height: 100vh;
   height: 100dvh; /* iOS Safari dynamic viewport */
-  height: -webkit-fill-available; /* Fallback for older iOS */
   overflow: hidden;
+  position: relative; /* Ensure proper containment */
 }
 
 /* Sidebar */
@@ -338,6 +348,8 @@ mark {
   flex: 1;
   overflow-y: auto;
   padding: var(--space-xs) 0; /* Reduced from space-sm to space-xs */
+  overscroll-behavior: contain; /* Prevent scroll chaining to body */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .nav-section {
@@ -1207,7 +1219,7 @@ mark {
 }
 
 @media (max-width: 768px) {
-  /* Removed conflicting .graph-parameter-panel styles - now handled in adaptive-nav.css */
+  /* Removed conflicting .graph-parameter-panel styles - now in mobile section below */
 
   .graph-modal-container {
     display: flex;
@@ -1947,170 +1959,9 @@ body.menu-open {
   display: none;
 }
 
-/* Responsive design */
+/* Responsive design - Mobile layout */
 @media (max-width: 768px) {
-  /* Hide desktop sidebar header and show mobile header */
-  .sidebar-header {
-    display: none;
-  }
-  
-  .mobile-header {
-    display: block !important;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    box-sizing: border-box; /* Include border in height calculation */
-    z-index: 1000;
-    background-color: var(--color-bg-secondary);
-    border-bottom: 1px solid var(--color-border);
-  }
-  
-  .mobile-header-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 100%;
-    padding: 0 var(--space-md);
-  }
-  
-  .mobile-header-content .vault-title {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    margin: 0;
-    flex: 1;
-    text-align: left;
-    margin-left: var(--space-md);
-  }
-  
-  .mobile-header-controls {
-    display: flex;
-    gap: var(--space-sm);
-  }
-  
-  /* Mobile menu toggle - show in mobile mode */
-  .mobile-menu-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: none;
-    border: none;
-    color: var(--color-text-primary);
-    cursor: pointer;
-    padding: var(--space-sm);
-    border-radius: var(--border-radius-sm);
-    transition: background-color 0.2s ease;
-  }
-  
-  .mobile-menu-toggle:hover {
-    background-color: var(--color-bg-tertiary);
-  }
-  
-  /* Main content - starts at top, allows content to extend naturally */
-  .main-content {
-    display: block !important; /* Override flex display */
-    flex: none !important; /* Remove flex constraint */
-    width: 100% !important;
-    height: auto !important; /* Grow with content, no fixed height */
-    min-height: 100vh !important;
-    min-height: 100dvh !important; /* Safari dynamic viewport */
-    max-height: none !important; /* No height limit */
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: visible !important; /* Don't clip, allow document scroll */
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  /* Note content gets top padding to push content down initially */
-  .note-content {
-    flex: none !important; /* Remove flex constraint */
-    height: auto !important; /* Allow natural height */
-    overflow-y: visible !important; /* Don't create scroll container */
-    overflow-x: hidden !important;
-    padding-top: calc(60px + var(--space-xl)); /* Header height + spacing */
-    padding-left: var(--space-xl);
-    padding-right: var(--space-xl);
-    padding-bottom: calc(var(--space-xl) + env(safe-area-inset-bottom, 0px));
-    min-height: 100vh;
-    min-height: 100dvh; /* Ensure content can fill dynamic viewport */
-  }
-  
-  /* App container - allow content to extend and page to scroll */
-  .app-container {
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: 100vh !important;
-    min-height: 100dvh !important; /* Safari dynamic viewport */
-    overflow: visible !important;
-    flex-direction: column;
-  }
-  
-  .sidebar-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    width: 100%; /* Safari fallback */
-    height: 100vh;
-    height: 100%; /* Safari fallback */
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 49;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    /* Safari fixes */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
-  
-  .sidebar-overlay.visible {
-    opacity: 1;
-    visibility: visible;
-  }
-  
-  /* Sidebar slides out from left but header remains fixed */
-  .sidebar {
-    position: fixed;
-    left: -100%;
-    top: 60px; /* Start below the fixed header */
-    width: 100vw;
-    width: 100%; /* Safari fallback */
-    height: calc(100vh - 60px); /* Account for fixed header */
-    height: -webkit-calc(100vh - 60px); /* Safari fallback */
-    z-index: 50;
-    transition: left 0.3s ease;
-    -webkit-transition: left 0.3s ease; /* Safari prefix */
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch; /* Safari smooth scrolling */
-    /* Safari fixes */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
-  
-  .sidebar.open {
-    left: 0;
-  }
-  
-  /* Remove extra margin since sidebar already starts below header */
-  .sidebar .sidebar-content {
-    margin-top: 0;
-    padding-top: var(--space-sm);
-  }
-  
-  /* Position search container properly in mobile sidebar */
-  .sidebar .search-container {
-    position: relative;
-    top: 0;
-  }
-  
-  .sidebar-content {
-    height: auto;
-    max-height: none;
-    overflow-y: visible;
-    padding-top: var(--space-sm);
-  }
+  /* Mobile header toggle visibility */
   
   .backlinks-panel {
     display: none;
@@ -2735,7 +2586,7 @@ body.menu-open {
 
 /* Table View */
 .table-view {
-  overflow-x: auto;
+   overflow-x: auto;
   border-radius: var(--border-radius);
   border: 1px solid var(--color-border);
 }
@@ -3647,6 +3498,7 @@ body.menu-open {
   fill: var(--color-text-primary) !important;
   font-family: var(--font-family-main) !important;
   font-size: 14px !important;
+  font-weight: 500 !important;
 }
 
 /* Dark theme - ensure white text on ALL elements */
@@ -3876,5 +3728,1021 @@ body.menu-open {
   
   .mermaid svg {
     max-width: 100%;
+  }
+}
+/* ============================================================================
+   ADAPTIVE NAVIGATION SYSTEM
+   Responsive navigation with liquid glass design for ObsidianP
+   Transforms from left sidebar (desktop) to top pills (mobile)
+   ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+   CSS Variables & Breakpoints
+   ---------------------------------------------------------------------------- */
+:root {
+  /* Breakpoints */
+  --breakpoint-mobile-sm: 320px;
+  --breakpoint-mobile: 480px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1024px;
+  
+  /* Navigation dimensions */
+  --nav-pill-height: 56px;
+  --nav-pill-gap: 8px;
+  --nav-sidebar-collapsed-width: 70px;
+  --sidebar-inset: 16px;
+  
+  /* Animation timing */
+  --anim-fast: 150ms;
+  --anim-medium: 250ms;
+  --anim-slow: 350ms;
+  --anim-ease: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --anim-ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --anim-ease-in: cubic-bezier(0.4, 0.0, 1, 1);
+  
+  /* Elevation levels */
+  --elevation-0: none;
+  --elevation-1: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --elevation-2: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --elevation-3: 0 8px 24px rgba(0, 0, 0, 0.2);
+  
+  /* iOS Safari height fix */
+  --app-height: 100vh;
+  
+  /* Pill navigation colors (theme-aware) */
+  --nav-pill-bg: var(--color-bg-tertiary);
+  --nav-pill-bg-hover: var(--color-bg-tertiary);
+  --nav-pill-bg-active: var(--color-primary);
+  --nav-pill-text: var(--color-text-secondary);
+  --nav-pill-text-active: #ffffff;
+  --nav-pill-border: transparent;
+  
+  /* Touch target minimum */
+  --touch-target-min: 44px;
+}
+
+/* iOS Safari full height support */
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --app-height: 100dvh;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --anim-fast: 0ms;
+    --anim-medium: 0ms;
+    --anim-slow: 0ms;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   MOBILE PILL NAVIGATION (320px - 768px)
+   Top horizontal bar with liquid glass effect
+   Only shows: Vault title | Graph | Theme toggle
+   ---------------------------------------------------------------------------- */
+
+/* Pill navigation container with liquid glass effect - FLOATING */
+.nav-pills-container {
+  position: fixed;
+  top: calc(var(--space-md) + var(--space-xs));
+  left: var(--space-md);
+  right: var(--space-md);
+  height: var(--nav-pill-height);
+  background: rgba(28, 28, 30, 0.5);
+  backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
+  -webkit-backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
+  border: 0.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: calc(var(--nav-pill-height) / 2);
+  z-index: 1100;
+  display: none;
+  padding: 0 var(--space-md);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+              0 1px 2px rgba(0, 0, 0, 0.2),
+              inset 0 1px 1px rgba(255, 255, 255, 0.15),
+              inset 0 -1px 1px rgba(0, 0, 0, 0.1);
+  pointer-events: auto;
+}
+
+/* Light theme glass effect */
+[data-theme="light"] .nav-pills-container {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(120px) saturate(400%) brightness(1.05);
+  -webkit-backdrop-filter: blur(120px) saturate(400%) brightness(1.05);
+  border: 0.5px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+              0 2px 8px rgba(0, 0, 0, 0.05),
+              inset 0 1px 1px rgba(255, 255, 255, 1),
+              inset 0 -1px 1px rgba(0, 0, 0, 0.05);
+}
+
+/* Vault title - left side */
+.nav-pills-container .vault-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* HIDE center navigation pills on mobile */
+.nav-pills-scroll {
+  display: none !important;
+}
+
+/* Action pills container - RIGHT SIDE */
+.nav-pills-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Action pill buttons (theme, graph) - LIQUID GLASS */
+.nav-pill-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  min-height: 38px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  color: var(--color-text-primary);
+  border: 0.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 9999px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--anim-fast) var(--anim-ease-out);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15),
+              inset 0 1px 1px rgba(255, 255, 255, 0.25),
+              inset 0 -1px 1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .nav-pill-action {
+  background: rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(50px) saturate(250%);
+  -webkit-backdrop-filter: blur(50px) saturate(250%);
+  border: 0.5px solid rgba(0, 0, 0, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08),
+              inset 0 1px 1px rgba(255, 255, 255, 0.9),
+              inset 0 -1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.nav-pill-action:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: scale(1.05);
+  backdrop-filter: blur(50px) saturate(250%);
+  -webkit-backdrop-filter: blur(50px) saturate(250%);
+}
+
+[data-theme="light"] .nav-pill-action:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(60px) saturate(300%);
+  -webkit-backdrop-filter: blur(60px) saturate(300%);
+}
+
+.nav-pill-action:active {
+  transform: scale(0.95);
+}
+
+/* Icon-only action pills */
+.nav-pill-action.icon-only {
+  padding: 9px;
+  min-width: 38px;
+}
+
+/* Light theme glass effect */
+[data-theme="light"] .nav-pills-container {
+  background: rgba(255, 255, 255, 0.72);
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* Vault title in pill nav - left side */
+.nav-pills-container .vault-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Scrollable pills wrapper - CENTER */
+.nav-pills-scroll {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  margin: 0 var(--space-sm);
+  -ms-overflow-style: none;
+}
+
+.nav-pills-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pill wrapper */
+.nav-pills-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--nav-pill-gap);
+  min-height: 100%;
+  padding: var(--space-xs) 0;
+}
+
+/* Action pills container - RIGHT SIDE */
+.nav-pills-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Action pill buttons (theme, graph, etc) */
+.nav-pill-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  min-height: 36px;
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--color-text-primary);
+  border: none;
+  border-radius: 9999px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--anim-fast) var(--anim-ease-out);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+
+[data-theme="light"] .nav-pill-action {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.nav-pill-action:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+[data-theme="light"] .nav-pill-action:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.nav-pill-action:active {
+  transform: scale(0.95);
+}
+
+/* Icon-only action pills */
+.nav-pill-action.icon-only {
+  padding: 8px;
+  min-width: 36px;
+}
+
+/* Individual pill button with liquid glass style */
+.nav-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  min-height: 32px;
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--color-text-primary);
+  border: none;
+  border-radius: 9999px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--anim-fast) var(--anim-ease-out);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Light theme pills */
+[data-theme="light"] .nav-pill {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--color-text-primary);
+}
+
+.nav-pill:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+[data-theme="light"] .nav-pill:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.nav-pill:active {
+  transform: scale(0.95);
+}
+
+/* Active pill - prominent with color */
+.nav-pill.active {
+  background: var(--color-primary);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+[data-theme="light"] .nav-pill.active {
+  background: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+}
+
+/* Pill icon */
+.nav-pill-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ----------------------------------------------------------------------------
+   TABLET (769px - 1023px)
+   Full sidebar, hide right panel to maximize content space
+   ---------------------------------------------------------------------------- */
+
+@media (min-width: 769px) and (max-width: 1023px) {
+  /* Hide pill navigation on tablet */
+  .nav-pills-container {
+    display: none !important;
+  }
+  
+  /* Hide mobile header on tablet */
+  .mobile-header {
+    display: none !important;
+  }
+  
+  /* Reset sidebar overlay from mobile */
+  .sidebar-overlay {
+    display: none !important;
+  }
+  
+  /* CRITICAL: Reset ALL mobile-specific styles */
+  .content-wrapper {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+  }
+  
+  .note-content {
+    padding-left: var(--space-lg) !important;
+    padding-right: var(--space-lg) !important;
+  }
+  
+  /* Container with padding only on left for sidebar */
+  .app-container {
+    padding: 0 !important;
+    padding-left: var(--sidebar-inset) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: var(--sidebar-inset) !important;
+    height: 100vh !important;
+    height: 100dvh !important; /* Safari iPadOS fix */
+    overflow: hidden !important; /* Prevent page scrolling */
+    box-sizing: border-box !important;
+    position: fixed !important; /* Lock container position */
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+  }
+  
+  /* Rounded sidebar on the left */
+  .sidebar {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    width: var(--sidebar-width) !important;
+    min-width: var(--sidebar-width) !important;
+    margin: var(--sidebar-inset) 0 !important;
+    height: calc(100vh - calc(var(--sidebar-inset) * 2)) !important;
+    height: calc(100dvh - calc(var(--sidebar-inset) * 2)) !important; /* Safari iPadOS fix */
+    border-radius: var(--border-radius-lg) !important;
+    box-shadow: var(--elevation-2) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overscroll-behavior: contain !important; /* Prevent scroll chaining on iOS */
+  }
+  
+  /* Main content - NO SHADOW, takes all remaining space */
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    flex: 1 !important;
+    overflow-y: auto !important; /* Allow content scroll */
+    overflow-x: hidden !important;
+    background-color: var(--color-bg-primary) !important;
+    height: 100% !important; /* Use percentage instead of vh */
+    overscroll-behavior: contain !important; /* Prevent bounce scroll */
+    -webkit-overflow-scrolling: touch !important; /* Smooth iOS scrolling */
+  }
+  
+  /* Hide sidebar toggle button */
+  .sidebar-toggle {
+    display: none !important;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   DESKTOP (1024px+)
+   Full sidebar with rounded container
+   ---------------------------------------------------------------------------- */
+
+@media (min-width: 1024px) {
+  /* Hide pill navigation on desktop */
+  .nav-pills-container {
+    display: none !important;
+  }
+  
+  /* Hide mobile header on desktop */
+  .mobile-header {
+    display: none !important;
+  }
+  
+  /* Reset sidebar overlay from mobile */
+  .sidebar-overlay {
+    display: none !important;
+  }
+  
+  /* CRITICAL: Reset ALL mobile-specific styles */
+  .content-wrapper {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+  }
+  
+  .note-content {
+    padding-left: var(--space-lg) !important;
+    padding-right: var(--space-lg) !important;
+  }
+  
+  /* Container with padding only on left for sidebar */
+  .app-container {
+    padding: 0 !important;
+    padding-left: var(--sidebar-inset) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: var(--sidebar-inset) !important;
+    height: 100vh !important;
+    height: 100dvh !important; /* Safari iPadOS fix */
+    overflow: hidden !important; /* Prevent page scrolling */
+    box-sizing: border-box !important;
+    position: fixed !important; /* Lock container position */
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+  }
+  
+  /* Rounded sidebar on the left - ONLY element with shadow */
+  .sidebar {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    width: var(--sidebar-width) !important;
+    min-width: var(--sidebar-width) !important;
+    margin: var(--sidebar-inset) 0 !important;
+    height: calc(100vh - calc(var(--sidebar-inset) * 2)) !important;
+    height: calc(100dvh - calc(var(--sidebar-inset) * 2)) !important; /* Safari iPadOS fix */
+    border-radius: var(--border-radius-lg) !important;
+    box-shadow: var(--elevation-2) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overscroll-behavior: contain !important; /* Prevent scroll chaining on iOS */
+  }
+  
+  /* Main content - NO SHADOW, NO BORDER RADIUS */
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    flex: 1 !important;
+    overflow-y: auto !important; /* Allow content scroll */
+    overflow-x: hidden !important;
+    background-color: var(--color-bg-primary) !important;
+    height: 100% !important; /* Use percentage instead of vh */
+    overscroll-behavior: contain !important; /* Prevent bounce scroll */
+    -webkit-overflow-scrolling: touch !important; /* Smooth iOS scrolling */
+  }
+  
+  /* Hide tablet toggle button */
+  .sidebar-toggle {
+    display: none !important;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   HIDE RIGHT SIDEBAR (1023px and DOWN)
+   For mobile and tablet, hide the right sidebar/backlinks to save space
+   ---------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .right-sidebar,
+  .backlinks-panel {
+    display: none !important;
+  }
+}
+
+/* Show graph button in sidebar when right sidebar is hidden (tablet and small desktop) */
+/* Right sidebar appears at 1200px+, so show button from 1199px and below */
+@media (max-width: 1199px) {
+  .sidebar-graph-button {
+    display: flex !important;
+  }
+}
+
+/* Hide graph button on large screens where right sidebar is visible */
+@media (min-width: 1200px) {
+  .sidebar-graph-button {
+    display: none !important;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   DESKTOP (1024px+)
+   Full sidebar with rounded container
+   ---------------------------------------------------------------------------- */
+
+/* ----------------------------------------------------------------------------
+   MOBILE SPECIFIC (< 769px)
+   Show pill navigation, content scrolls UNDER glass nav
+   ---------------------------------------------------------------------------- */
+
+/* MOBILE: Use full viewport height with safe areas */
+@media (max-width: 768px) {
+  /* iOS Safari: Ensure html and body are properly configured */
+  html, body {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    position: relative;
+    overscroll-behavior: none;
+  }
+  
+  /* Ensure app container uses flex column on mobile */
+  .app-container {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    position: relative !important;
+  }
+  
+  /* The SCROLLABLE main content area */
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    /* Add top padding to account for fixed pill navigation */
+    padding-top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
+    /* Add bottom padding for safe area */
+    padding-bottom: env(safe-area-inset-bottom, 20px) !important;
+    overscroll-behavior: contain !important; /* Prevent bounce */
+    height: 100% !important; /* Fill container */
+    position: relative !important;
+    width: 100%;
+  }
+  
+  /* MOBILE: Hide sidebar by default */
+  .sidebar {
+    display: none !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 2000 !important;
+    background: var(--color-bg-primary) !important;
+    border-right: none !important;
+    margin: 0 !important;
+    padding-top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* MOBILE: Show sidebar when open class is added */
+  .sidebar.open {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* MOBILE: Hide sidebar header */
+  .sidebar .sidebar-header {
+    display: none !important;
+  }
+  
+  /* Mobile: Keep skip-to-content truly hidden unless focused */
+  .skip-to-content:not(:focus) {
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    clip-path: inset(50%) !important;
+    white-space: nowrap !important;
+  }
+  
+  /* Pill navigation container with liquid glass effect - FLOATING */
+  .nav-pills-container {
+    position: fixed;
+    top: calc(var(--space-md) + var(--space-xs));
+    left: var(--space-md);
+    right: var(--space-md);
+    height: var(--nav-pill-height);
+    background: rgba(28, 28, 30, 0.5);
+    backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
+    -webkit-backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
+    border: 0.5px solid rgba(255, 255, 255, 0.25);
+    border-radius: calc(var(--nav-pill-height) / 2);
+    z-index: 1100;
+    display: flex !important;
+    padding: 0 var(--space-md);
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                0 1px 2px rgba(0, 0, 0, 0.2),
+                inset 0 1px 1px rgba(255, 255, 255, 0.15),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.1);
+    pointer-events: auto;
+  }
+
+  /* Light theme glass effect */
+  [data-theme="light"] .nav-pills-container {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(120px) saturate(400%) brightness(1.05);
+    -webkit-backdrop-filter: blur(120px) saturate(400%) brightness(1.05);
+    border: 0.5px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+                0 2px 8px rgba(0, 0, 0, 0.05),
+                inset 0 1px 1px rgba(255, 255, 255, 1),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Vault title - left side */
+  .nav-pills-container .vault-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* HIDE center navigation pills on mobile */
+  .nav-pills-scroll {
+    display: none !important;
+  }
+
+  /* Action pills container - RIGHT SIDE */
+  .nav-pills-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  /* Action pill buttons (theme, graph) - LIQUID GLASS */
+  .nav-pill-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    min-height: 38px;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    color: var(--color-text-primary);
+    border: 0.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: 9999px;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--anim-fast) var(--anim-ease-out);
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15),
+                inset 0 1px 1px rgba(255, 255, 255, 0.25),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.1);
+  }
+
+  [data-theme="light"] .nav-pill-action {
+    background: rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(50px) saturate(250%);
+    -webkit-backdrop-filter: blur(50px) saturate(250%);
+    border: 0.5px solid rgba(0, 0, 0, 0.18);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08),
+                inset 0 1px 1px rgba(255, 255, 255, 0.9),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.05);
+  }
+
+  .nav-pill-action:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.45);
+    transform: scale(1.05);
+    backdrop-filter: blur(50px) saturate(250%);
+    -webkit-backdrop-filter: blur(50px) saturate(250%);
+  }
+
+  [data-theme="light"] .nav-pill-action:hover {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(60px) saturate(300%);
+    -webkit-backdrop-filter: blur(60px) saturate(300%);
+  }
+
+  .nav-pill-action:active {
+    transform: scale(0.95);
+  }
+
+  /* Icon-only action pills */
+  .nav-pill-action.icon-only {
+    padding: 9px;
+    min-width: 38px;
+  }
+
+  /* Individual pill button with liquid glass style */
+  .nav-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    min-height: 32px;
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--color-text-primary);
+    border: none;
+    border-radius: 9999px;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all var(--anim-fast) var(--anim-ease-out);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* Light theme pills */
+  [data-theme="light"] .nav-pill {
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--color-text-primary);
+  }
+
+  .nav-pill:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+  }
+
+  [data-theme="light"] .nav-pill:hover {
+    background: rgba(0, 0, 0, 0.12);
+  }
+
+  .nav-pill:active {
+    transform: scale(0.95);
+  }
+
+  /* Active pill - prominent with color */
+  .nav-pill.active {
+    background: var(--color-primary);
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  }
+
+  [data-theme="light"] .nav-pill.active {
+    background: var(--color-primary);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+  }
+
+  /* Pill icon */
+  .nav-pill-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   SMOOTH TRANSITIONS & MICROINTERACTIONS
+   ---------------------------------------------------------------------------- */
+
+/* Hover effect for navigation items */
+.nav-item {
+  position: relative;
+  transition: all var(--anim-fast) var(--anim-ease-out);
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: var(--color-primary);
+  opacity: 0;
+  transform: scaleY(0);
+  transition: all var(--anim-fast) var(--anim-ease-out);
+}
+
+.nav-item:hover::before {
+  opacity: 0.3;
+  transform: scaleY(1);
+}
+
+.nav-item.active::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+/* Stagger animation for loading navigation items */
+@keyframes navItemFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.nav-item,
+.nav-pill {
+  animation: navItemFadeIn var(--anim-medium) var(--anim-ease-out);
+  animation-fill-mode: both;
+}
+
+/* Stagger delay (applied via JS) */
+.nav-item:nth-child(1),
+.nav-pill:nth-child(1) { animation-delay: 0ms; }
+.nav-item:nth-child(2),
+.nav-pill:nth-child(2) { animation-delay: 50ms; }
+.nav-item:nth-child(3),
+.nav-pill:nth-child(3) { animation-delay: 100ms; }
+.nav-item:nth-child(4),
+.nav-pill:nth-child(4) { animation-delay: 150ms; }
+.nav-item:nth-child(5),
+.nav-pill:nth-child(5) { animation-delay: 200ms; }
+
+/* Prevent stagger on subsequent renders */
+.nav-item.loaded,
+.nav-pill.loaded {
+  animation: none;
+}
+
+/* Active pill auto-scroll animation */
+@keyframes scrollToActive {
+  to {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   DARK THEME ADJUSTMENTS
+   ---------------------------------------------------------------------------- */
+
+[data-theme="dark"] {
+  --nav-pill-bg: rgba(255, 255, 255, 0.08);
+  --nav-pill-bg-hover: rgba(255, 255, 255, 0.12);
+  --elevation-1: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --elevation-2: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --elevation-3: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ----------------------------------------------------------------------------
+   UTILITY CLASSES
+   ---------------------------------------------------------------------------- */
+
+/* Hide visually but keep accessible to screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Prevent layout shift */
+.nav-skeleton {
+  height: var(--nav-pill-height);
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-tertiary) 25%,
+    var(--color-bg-secondary) 50%,
+    var(--color-bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   RESPONSIVE TYPOGRAPHY
+   ---------------------------------------------------------------------------- */
+
+@media (max-width: 479px) {
+  .nav-pill {
+    font-size: var(--font-size-xs);
+    padding: 6px 12px;
+  }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .nav-pill {
+    font-size: var(--font-size-sm);
+    padding: 8px 16px;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   MOBILE GRAPH MODAL LAYOUT
+   Top padding for nav clearance, controls as footer card
+   ---------------------------------------------------------------------------- */
+
+/* ----------------------------------------------------------------------------
+   PRINT STYLES
+   ---------------------------------------------------------------------------- */
+
+@media print {
+  .nav-pills-container,
+  .sidebar-toggle,
+  .skip-to-content {
+    display: none !important;
+  }
+  
+  .sidebar {
+    display: none !important;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   TABLET & DESKTOP: Ensure skip-to-content stays hidden
+   ---------------------------------------------------------------------------- */
+
+@media (min-width: 769px) {
+  /* Keep skip-to-content properly hidden on iPad/desktop */
+  .skip-to-content:not(:focus) {
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    clip-path: inset(50%) !important;
+    white-space: nowrap !important;
   }
 }

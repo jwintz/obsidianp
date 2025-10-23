@@ -1,3 +1,21 @@
+// Sync CSS viewport height with actual viewport to support mobile dynamic sizing
+const updateAppHeight = () => {
+  const viewport = window.visualViewport;
+  const height = viewport ? viewport.height : window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', `${Math.round(height)}px`);
+};
+
+const registerAppHeightListeners = () => {
+  updateAppHeight();
+  window.addEventListener('resize', updateAppHeight, { passive: true });
+  window.addEventListener('orientationchange', updateAppHeight, { passive: true });
+  window.addEventListener('pageshow', updateAppHeight, { passive: true });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', updateAppHeight);
+    window.visualViewport.addEventListener('scroll', updateAppHeight);
+  }
+};
+
 // Main application class
 class ObsidianSSGApp {
   constructor() {
@@ -2492,9 +2510,16 @@ class ObsidianSSGApp {
 }
 
 // Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+const bootstrapApp = () => {
+  registerAppHeightListeners();
   window.app = new ObsidianSSGApp();
-});
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrapApp);
+} else {
+  bootstrapApp();
+}
 
 // Global functions for backlinks interaction
 function toggleBacklinksSection(sectionId) {
@@ -2940,19 +2965,21 @@ class AdaptiveNavigation {
    * Setup sidebar toggle button for tablet view
    */
   setupSidebarToggle() {
-    if (!this.sidebarToggle || !this.sidebar) return;
-    
-    this.sidebarToggle.addEventListener('click', () => {
-      this.sidebar.classList.toggle('expanded');
-      
-      // Update ARIA
-      const isExpanded = this.sidebar.classList.contains('expanded');
-      this.sidebarToggle.setAttribute('aria-expanded', isExpanded.toString());
-      
-      // Announce to screen readers
-      const announcement = isExpanded ? 'Sidebar expanded' : 'Sidebar collapsed';
-      this.announceToScreenReader(announcement);
-    });
+    if (!this.sidebar) return;
+
+    if (this.sidebarToggle) {
+      this.sidebarToggle.addEventListener('click', () => {
+        this.sidebar.classList.toggle('expanded');
+
+        // Update ARIA
+        const isExpanded = this.sidebar.classList.contains('expanded');
+        this.sidebarToggle.setAttribute('aria-expanded', isExpanded.toString());
+
+        // Announce to screen readers
+        const announcement = isExpanded ? 'Sidebar expanded' : 'Sidebar collapsed';
+        this.announceToScreenReader(announcement);
+      });
+    }
     
     // Setup mobile menu button (in pill navigation) - toggle on/off
     const menuBtn = document.getElementById('nav-menu-btn');

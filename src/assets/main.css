@@ -39,6 +39,7 @@
   --font-family-main: 'Mona Sans', system-ui, -apple-system, sans-serif;
   --font-family-heading: var(--font-family-main);
   --font-family-code: 'Monaspace Krypton', monospace;
+  --app-height: 100vh;
   
   /* Font sizes */
   --font-size-3xs: 7px;
@@ -162,9 +163,7 @@
 html {
   font-size: 16px;
   line-height: 1.6;
-  height: 100%;
-  height: 100vh;
-  height: 100dvh;
+  height: var(--app-height, 100dvh);
   overflow: hidden; /* Prevent html scroll */
 }
 
@@ -176,9 +175,7 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
   margin: 0;
   padding: 0;
-  height: 100%;
-  height: 100vh;
-  height: 100dvh;
+  height: var(--app-height, 100dvh);
   overflow: hidden; /* Prevent body scroll */
   width: 100%;
   /* iOS Safari: Use relative instead of fixed to avoid layout issues */
@@ -191,8 +188,7 @@ body {
 /* Layout */
 .app-container {
   display: flex;
-  height: 100vh;
-  height: 100dvh; /* iOS Safari dynamic viewport */
+  height: var(--app-height, 100dvh); /* iOS Safari dynamic viewport */
   overflow: hidden;
   position: relative; /* Ensure proper containment */
 }
@@ -346,14 +342,35 @@ mark {
 /* Sidebar content */
 .sidebar-content {
   flex: 1;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
   padding: var(--space-xs) 0; /* Reduced from space-sm to space-xs */
+}
+
+.nav-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.nav-section-header {
+  flex-shrink: 0;
+}
+
+#folder-tree {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  max-height: 100%;
   overscroll-behavior: contain; /* Prevent scroll chaining to body */
   -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .nav-section {
-  margin-bottom: var(--space-md); /* Reduced from space-lg to space-md */
+  margin-bottom: var(--space-xs);
 }
 
 .nav-section-header {
@@ -421,6 +438,8 @@ mark {
   flex: 1;
   display: flex;
   overflow: hidden;
+  min-height: var(--app-height, 100dvh);
+  height: var(--app-height, 100dvh);
 }
 
 .content-wrapper {
@@ -656,7 +675,7 @@ mark {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1000;
+  z-index: 1500;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1219,22 +1238,34 @@ mark {
 }
 
 @media (max-width: 768px) {
-  /* Removed conflicting .graph-parameter-panel styles - now in mobile section below */
+  .graph-modal-content {
+    --graph-sheet-height: min(48dvh, 520px);
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    border-radius: 0;
+    border: none;
+  }
 
   .graph-modal-container {
     display: flex;
     flex-direction: column;
+    gap: 0;
+    padding: 0;
   }
 
   .graph-canvas {
     flex: 1;
+    border-radius: 0;
+    box-shadow: none;
   }
 
-  /* Mobile responsive adjustments for new graph modal layout */
   .graph-modal-controls-wrapper {
-    top: var(--space-sm);
-    left: var(--space-sm);
-    gap: var(--space-xs);
+    top: calc(env(safe-area-inset-top, 0px) + var(--nav-pill-height) + var(--space-lg));
+    left: var(--space-md);
+    right: var(--space-md);
+    padding: 0;
+    gap: var(--space-sm);
   }
 
   .graph-modal-controls-container {
@@ -1261,13 +1292,13 @@ mark {
   .graph-view-switcher .view-button {
     height: 30px;
     border-radius: 15px;
-    padding: 0 10px;
+    padding: 0 12px;
     font-size: 12px;
     min-width: 50px;
   }
 
   .graph-view-switcher .view-button span {
-    display: none; /* Hide text on mobile, keep icons only */
+    display: none;
   }
 
   .graph-view-switcher .view-button svg {
@@ -1275,41 +1306,40 @@ mark {
     height: 18px;
   }
 
-  /* Mobile: Graph modal fills viewport with 100dvh */
-  .graph-modal-content {
-    width: 100vw;
-    height: 100dvh;
-    max-width: none;
-    border-radius: 0;
-    border: none;
-  }
-  
-  /* Mobile: Reposition controls wrapper to bottom for cartridge layout */
-  .graph-modal-controls-wrapper {
-    position: absolute;
+  .graph-parameter-panel {
+    position: fixed;
+    left: calc(env(safe-area-inset-left, 0px) + var(--space-md));
+    right: calc(env(safe-area-inset-right, 0px) + var(--space-md));
+    bottom: env(safe-area-inset-bottom, 0px);
     top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    flex-direction: column;
-    gap: 0;
-    height: 40dvh; /* Approx 2/5 of viewport as requested */
-    background: var(--color-bg-secondary);
-    border-top: 1px solid var(--color-border);
-    padding: var(--space-md);
-    z-index: 20;
+    width: auto;
+    max-width: none;
+    max-height: var(--graph-sheet-height);
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    padding: var(--space-lg) var(--space-lg) calc(var(--space-lg) + env(safe-area-inset-bottom, 16px));
+    background: color-mix(in srgb, var(--color-bg-secondary) 80%, transparent);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.28);
+    overflow-y: auto;
+    gap: var(--space-md);
+    z-index: 30;
   }
-  
-  /* Mobile: Close button at top of cartridge */
-  .graph-modal-close {
-    align-self: flex-end;
-    margin-bottom: var(--space-sm);
+
+  [data-theme="light"] .graph-parameter-panel {
+    background: color-mix(in srgb, var(--color-bg-secondary) 65%, white 35%);
+    border-color: color-mix(in srgb, rgba(0, 0, 0, 0.16) 50%, transparent);
+    box-shadow: 0 -18px 28px rgba(0, 0, 0, 0.16);
   }
-  
-  /* Mobile: View switcher spans width in cartridge */
-  .graph-modal-controls-container {
-    width: 100%;
-    justify-content: center;
+
+  .graph-parameter-header {
+    margin-bottom: var(--space-xs);
+  }
+
+  .graph-parameter-panel::-webkit-scrollbar {
+    width: 0;
+    height: 0;
   }
 }
 
@@ -1954,9 +1984,23 @@ body.menu-open {
   overflow: hidden;
 }
 
-/* Mobile header - hidden by default, shown only on mobile */
 .mobile-header {
-  display: none;
+  display: none !important;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--anim-medium) var(--anim-ease);
+  z-index: 1050;
+}
+
+.sidebar-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* Responsive design - Mobile layout */
@@ -3806,7 +3850,7 @@ body.menu-open {
 /* Pill navigation container with liquid glass effect - FLOATING */
 .nav-pills-container {
   position: fixed;
-  top: calc(var(--space-md) + var(--space-xs));
+  top: calc(env(safe-area-inset-top, 0px) + var(--space-md));
   left: var(--space-md);
   right: var(--space-md);
   height: var(--nav-pill-height);
@@ -3815,7 +3859,7 @@ body.menu-open {
   -webkit-backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
   border: 0.5px solid rgba(255, 255, 255, 0.25);
   border-radius: calc(var(--nav-pill-height) / 2);
-  z-index: 1100;
+  z-index: 3000;
   display: none;
   padding: 0 var(--space-md);
   align-items: center;
@@ -4120,8 +4164,7 @@ body.menu-open {
     display: flex !important;
     flex-direction: row !important;
     gap: var(--sidebar-inset) !important;
-    height: 100vh !important;
-    height: 100dvh !important; /* Safari iPadOS fix */
+    height: var(--app-height, 100dvh) !important; /* Safari iPadOS fix */
     overflow: hidden !important; /* Prevent page scrolling */
     box-sizing: border-box !important;
     position: fixed !important; /* Lock container position */
@@ -4140,8 +4183,7 @@ body.menu-open {
     width: var(--sidebar-width) !important;
     min-width: var(--sidebar-width) !important;
     margin: var(--sidebar-inset) 0 !important;
-    height: calc(100vh - calc(var(--sidebar-inset) * 2)) !important;
-    height: calc(100dvh - calc(var(--sidebar-inset) * 2)) !important; /* Safari iPadOS fix */
+    height: calc(var(--app-height, 100dvh) - (var(--sidebar-inset) * 2)) !important; /* Safari iPadOS fix */
     border-radius: var(--border-radius-lg) !important;
     box-shadow: var(--elevation-2) !important;
     overflow: hidden !important;
@@ -4209,8 +4251,7 @@ body.menu-open {
     display: flex !important;
     flex-direction: row !important;
     gap: var(--sidebar-inset) !important;
-    height: 100vh !important;
-    height: 100dvh !important; /* Safari iPadOS fix */
+    height: var(--app-height, 100dvh) !important; /* Safari iPadOS fix */
     overflow: hidden !important; /* Prevent page scrolling */
     box-sizing: border-box !important;
     position: fixed !important; /* Lock container position */
@@ -4229,8 +4270,7 @@ body.menu-open {
     width: var(--sidebar-width) !important;
     min-width: var(--sidebar-width) !important;
     margin: var(--sidebar-inset) 0 !important;
-    height: calc(100vh - calc(var(--sidebar-inset) * 2)) !important;
-    height: calc(100dvh - calc(var(--sidebar-inset) * 2)) !important; /* Safari iPadOS fix */
+    height: calc(var(--app-height, 100dvh) - (var(--sidebar-inset) * 2)) !important; /* Safari iPadOS fix */
     border-radius: var(--border-radius-lg) !important;
     box-shadow: var(--elevation-2) !important;
     overflow: hidden !important;
@@ -4300,8 +4340,7 @@ body.menu-open {
   /* iOS Safari: Ensure html and body are properly configured */
   html, body {
     width: 100%;
-    height: 100vh;
-    height: 100dvh;
+    height: var(--app-height, 100dvh);
     overflow: hidden;
     position: relative;
     overscroll-behavior: none;
@@ -4311,8 +4350,7 @@ body.menu-open {
   .app-container {
     display: flex !important;
     flex-direction: column !important;
-    height: 100vh !important;
-    height: 100dvh !important;
+    height: var(--app-height, 100dvh) !important;
     width: 100% !important;
     overflow: hidden !important;
     position: relative !important;
@@ -4324,14 +4362,15 @@ body.menu-open {
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    /* Add top padding to account for fixed pill navigation */
-    padding-top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
+    /* Add top padding to account for floating navigation pills */
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--nav-pill-height) + var(--space-lg)) !important;
     /* Add bottom padding for safe area */
     padding-bottom: env(safe-area-inset-bottom, 20px) !important;
     overscroll-behavior: contain !important; /* Prevent bounce */
-    height: 100% !important; /* Fill container */
+    height: var(--app-height, 100dvh) !important; /* Fill dynamic viewport */
     position: relative !important;
     width: 100%;
+    min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top, 0px));
   }
   
   /* MOBILE: Hide sidebar by default */
@@ -4344,14 +4383,38 @@ body.menu-open {
     bottom: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    height: 100vh !important;
-    height: 100dvh !important;
-    z-index: 2000 !important;
+    height: var(--app-height, 100dvh) !important;
+    z-index: 900 !important;
     background: var(--color-bg-primary) !important;
     border-right: none !important;
     margin: 0 !important;
-    padding-top: calc(var(--nav-pill-height) + var(--space-md) + var(--space-md)) !important;
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--nav-pill-height) + var(--space-lg)) !important;
     box-sizing: border-box !important;
+  }
+
+  .sidebar-content {
+    padding: 0 var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 16px)) var(--space-md) !important;
+    gap: var(--space-lg);
+  }
+
+  .nav-section {
+    margin-bottom: 0 !important;
+  }
+
+  #folder-tree {
+    background: rgba(28, 28, 30, 0.55);
+    backdrop-filter: blur(40px) saturate(220%) brightness(1.05);
+    -webkit-backdrop-filter: blur(40px) saturate(220%) brightness(1.05);
+    border: 0.5px solid rgba(255, 255, 255, 0.22);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-lg) var(--space-md);
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.18);
+  }
+
+  [data-theme="light"] #folder-tree {
+    background: rgba(255, 255, 255, 0.72);
+    border: 0.5px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 18px 24px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.9);
   }
   
   /* MOBILE: Show sidebar when open class is added */
@@ -4381,7 +4444,7 @@ body.menu-open {
   /* Pill navigation container with liquid glass effect - FLOATING */
   .nav-pills-container {
     position: fixed;
-    top: calc(var(--space-md) + var(--space-xs));
+    top: calc(env(safe-area-inset-top, 0px) + var(--space-md));
     left: var(--space-md);
     right: var(--space-md);
     height: var(--nav-pill-height);
@@ -4390,7 +4453,7 @@ body.menu-open {
     -webkit-backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
     border: 0.5px solid rgba(255, 255, 255, 0.25);
     border-radius: calc(var(--nav-pill-height) / 2);
-    z-index: 1100;
+    z-index: 3000;
     display: flex !important;
     padding: 0 var(--space-md);
     align-items: center;

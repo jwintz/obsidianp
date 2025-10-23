@@ -119,10 +119,6 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
         </nav>
         
         <nav class="sidebar" role="navigation" aria-label="Sidebar navigation">
-            <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar" title="Toggle sidebar">
-                ${getLucideIcon('ChevronLeft', 16)}
-            </button>
-            
             <div class="sidebar-header">
                 <div class="sidebar-title-section">
                     <a href="${basePath}/" class="vault-title-link">

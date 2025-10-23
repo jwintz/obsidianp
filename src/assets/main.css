@@ -39,7 +39,6 @@
   --font-family-main: 'Mona Sans', system-ui, -apple-system, sans-serif;
   --font-family-heading: var(--font-family-main);
   --font-family-code: 'Monaspace Krypton', monospace;
-  --app-height: 100vh;
   
   /* Font sizes */
   --font-size-3xs: 7px;
@@ -163,7 +162,6 @@
 html {
   font-size: 16px;
   line-height: 1.6;
-  height: var(--app-height, 100dvh);
   overflow: hidden; /* Prevent html scroll */
 }
 
@@ -175,7 +173,7 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
   margin: 0;
   padding: 0;
-  height: var(--app-height, 100dvh);
+  min-height: 100dvh;
   overflow: hidden; /* Prevent body scroll */
   width: 100%;
   /* iOS Safari: Use relative instead of fixed to avoid layout issues */
@@ -188,7 +186,6 @@ body {
 /* Layout */
 .app-container {
   display: flex;
-  height: var(--app-height, 100dvh); /* iOS Safari dynamic viewport */
   overflow: hidden;
   position: relative; /* Ensure proper containment */
 }
@@ -438,8 +435,7 @@ mark {
   flex: 1;
   display: flex;
   overflow: hidden;
-  min-height: var(--app-height, 100dvh);
-  height: var(--app-height, 100dvh);
+  min-height: 100dvh;
 }
 
 .content-wrapper {
@@ -447,6 +443,7 @@ mark {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 100%;
 }
 
 /* Right sidebar */
@@ -3810,9 +3807,6 @@ body.menu-open {
   --elevation-2: 0 4px 12px rgba(0, 0, 0, 0.15);
   --elevation-3: 0 8px 24px rgba(0, 0, 0, 0.2);
   
-  /* iOS Safari height fix */
-  --app-height: 100vh;
-  
   /* Pill navigation colors (theme-aware) */
   --nav-pill-bg: var(--color-bg-tertiary);
   --nav-pill-bg-hover: var(--color-bg-tertiary);
@@ -3823,13 +3817,6 @@ body.menu-open {
   
   /* Touch target minimum */
   --touch-target-min: 44px;
-}
-
-/* iOS Safari full height support */
-@supports (-webkit-touch-callout: none) {
-  :root {
-    --app-height: 100dvh;
-  }
 }
 
 /* Reduced motion support */
@@ -4164,7 +4151,8 @@ body.menu-open {
     display: flex !important;
     flex-direction: row !important;
     gap: var(--sidebar-inset) !important;
-    height: var(--app-height, 100dvh) !important; /* Safari iPadOS fix */
+    height: 100vh !important;
+    height: 100dvh !important; /* Safari iPadOS fix */
     overflow: hidden !important; /* Prevent page scrolling */
     box-sizing: border-box !important;
     position: fixed !important; /* Lock container position */
@@ -4183,7 +4171,7 @@ body.menu-open {
     width: var(--sidebar-width) !important;
     min-width: var(--sidebar-width) !important;
     margin: var(--sidebar-inset) 0 !important;
-    height: calc(var(--app-height, 100dvh) - (var(--sidebar-inset) * 2)) !important; /* Safari iPadOS fix */
+    height: calc(100dvh - (var(--sidebar-inset) * 2)) !important; /* Safari iPadOS fix */
     border-radius: var(--border-radius-lg) !important;
     box-shadow: var(--elevation-2) !important;
     overflow: hidden !important;
@@ -4251,7 +4239,8 @@ body.menu-open {
     display: flex !important;
     flex-direction: row !important;
     gap: var(--sidebar-inset) !important;
-    height: var(--app-height, 100dvh) !important; /* Safari iPadOS fix */
+    height: 100vh !important;
+    height: 100dvh !important; /* Safari iPadOS fix */
     overflow: hidden !important; /* Prevent page scrolling */
     box-sizing: border-box !important;
     position: fixed !important; /* Lock container position */
@@ -4270,7 +4259,7 @@ body.menu-open {
     width: var(--sidebar-width) !important;
     min-width: var(--sidebar-width) !important;
     margin: var(--sidebar-inset) 0 !important;
-    height: calc(var(--app-height, 100dvh) - (var(--sidebar-inset) * 2)) !important; /* Safari iPadOS fix */
+    height: calc(100dvh - (var(--sidebar-inset) * 2)) !important; /* Safari iPadOS fix */
     border-radius: var(--border-radius-lg) !important;
     box-shadow: var(--elevation-2) !important;
     overflow: hidden !important;
@@ -4340,7 +4329,8 @@ body.menu-open {
   /* iOS Safari: Ensure html and body are properly configured */
   html, body {
     width: 100%;
-    height: var(--app-height, 100dvh);
+    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     position: relative;
     overscroll-behavior: none;
@@ -4350,7 +4340,8 @@ body.menu-open {
   .app-container {
     display: flex !important;
     flex-direction: column !important;
-    height: var(--app-height, 100dvh) !important;
+    height: 100vh !important;
+    height: 100dvh !important;
     width: 100% !important;
     overflow: hidden !important;
     position: relative !important;
@@ -4367,10 +4358,11 @@ body.menu-open {
     /* Add bottom padding for safe area */
     padding-bottom: env(safe-area-inset-bottom, 20px) !important;
     overscroll-behavior: contain !important; /* Prevent bounce */
-    height: var(--app-height, 100dvh) !important; /* Fill dynamic viewport */
+    height: 100vh !important;
+    height: 100dvh !important; /* Fill dynamic viewport */
     position: relative !important;
     width: 100%;
-    min-height: calc(var(--app-height, 100dvh) - env(safe-area-inset-top, 0px));
+    min-height: calc(100dvh - env(safe-area-inset-top, 0px));
   }
   
   /* MOBILE: Hide sidebar by default */
@@ -4383,7 +4375,8 @@ body.menu-open {
     bottom: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    height: var(--app-height, 100dvh) !important;
+    height: 100vh !important;
+    height: 100dvh !important;
     z-index: 900 !important;
     background: var(--color-bg-primary) !important;
     border-right: none !important;

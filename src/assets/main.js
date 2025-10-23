@@ -1,21 +1,3 @@
-// Sync CSS viewport height with actual viewport to support mobile dynamic sizing
-const updateAppHeight = () => {
-  const viewport = window.visualViewport;
-  const height = viewport ? viewport.height : window.innerHeight;
-  document.documentElement.style.setProperty('--app-height', `${Math.round(height)}px`);
-};
-
-const registerAppHeightListeners = () => {
-  updateAppHeight();
-  window.addEventListener('resize', updateAppHeight, { passive: true });
-  window.addEventListener('orientationchange', updateAppHeight, { passive: true });
-  window.addEventListener('pageshow', updateAppHeight, { passive: true });
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', updateAppHeight);
-    window.visualViewport.addEventListener('scroll', updateAppHeight);
-  }
-};
-
 // Main application class
 class ObsidianSSGApp {
   constructor() {
@@ -2510,15 +2492,12 @@ class ObsidianSSGApp {
 }
 
 // Initialize app when DOM is loaded
-const bootstrapApp = () => {
-  registerAppHeightListeners();
-  window.app = new ObsidianSSGApp();
-};
-
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', bootstrapApp);
+  document.addEventListener('DOMContentLoaded', () => {
+    window.app = new ObsidianSSGApp();
+  });
 } else {
-  bootstrapApp();
+  window.app = new ObsidianSSGApp();
 }
 
 // Global functions for backlinks interaction

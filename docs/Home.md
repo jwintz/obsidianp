@@ -24,20 +24,21 @@ Obsidian:P is a TypeScript-based static site generator specifically designed for
 
 ### Core Features
 - **[[Features/Interactive Graph Views|Interactive Graph Views]]** - Local and global graph visualization with D3.js
-- **[[Features/Search System|Full-Text Search]]** - Fast, client-side search powered by Lunr.js
+- **[[Features/Search System|Full-Text Search]]** - Fast, client-side search
 - **Wiki-Links** - Full support for `[[Wiki Links]]` with automatic resolution
 - **Backlinks** - Automatic bidirectional linking between notes
 - **Responsive Design** - Mobile-friendly with light/dark theme support
+- **[[Features/Syntax Reference|Complete Syntax Support]]** - All Obsidian markdown features
 
 ### Obsidian Syntax Support
 - **Math Rendering** - LaTeX equations with KaTeX (inline `$...$` and block `$$...$$`)
 - **Mermaid Diagrams** - Flow charts, sequence diagrams, gantt charts, and more
-- **ABC Music Notation** - Musical scores with ABC.js rendering
-- **Code Highlighting** - Syntax highlighting for 100+ languages with Shiki
+- **ABC Music Notation** - Musical scores with ABCJS rendering
+- **Code Highlighting** - Syntax highlighting for 100+ languages with Shiki (dual theme support)
 - **Callouts** - Obsidian-style callouts (`> [!note]`, `> [!warning]`, etc.)
-- **Obsidian Databases** - Native database support with table, card, and calendar views
-- **Embeds** - Image and note embeds (`![[image.png]]`, `![[note]]`)
-- **Tags** - Full tag support with # syntax
+- **Obsidian Databases** - Native database support with `.base` files for table and card views
+- **Embeds** - Image and note embeds (`![[image.png]]`, `![[note]]`, `![[note#view]]`)
+- **Tags** - Full tag support with `#` syntax
 
 ## Getting Started
 
@@ -57,10 +58,16 @@ Obsidian:P is a TypeScript-based static site generator specifically designed for
 
 ## API Reference
 
-- [[API-Reference/VaultProcessor API|VaultProcessor API]] - Vault processing
-- [[API-Reference/GraphRenderer API|GraphRenderer API]] - Graph visualization
+- [[API-Reference/VaultProcessor API|VaultProcessor API]] - Vault processing and structure building
 - [[API-Reference/MarkdownProcessor API|MarkdownProcessor API]] - Markdown transformation
 - [[API-Reference/SiteGenerator API|SiteGenerator API]] - Site generation
+- [[API-Reference/BaseProcessor API|BaseProcessor API]] - Database file processing
+
+## Features
+
+- [[Features/Syntax Reference|Syntax Reference]] - Complete syntax guide with examples
+- [[Features/Interactive Graph Views|Interactive Graph Views]] - Graph visualization
+- [[Features/Search System|Search System]] - Client-side search
 
 ---
 

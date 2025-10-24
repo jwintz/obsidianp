@@ -11,23 +11,25 @@ type: api-reference
 category: api
 audience: developers
 difficulty: advanced
-estimated_time: 30 minutes
-last_updated: 2025-10-17
+estimated_time: 25 minutes
+last_updated: 2025-10-24
 related_components:
   - VaultProcessor
   - SiteGenerator
+  - BaseProcessor
 features:
   - Wiki-links
-  - Code highlighting
+  - Code highlighting (Shiki)
   - Mermaid diagrams
   - ABC notation
-  - Callouts
+  - Math (KaTeX)
+  - Embeds
 code_examples: true
 ---
 
 # MarkdownProcessor API
 
-The `MarkdownProcessor` class transforms Obsidian-flavored markdown into HTML.
+The `MarkdownProcessor` class transforms Obsidian-flavored markdown into HTML with support for wiki-links, math, diagrams, music notation, and more.
 
 ## Class: MarkdownProcessor
 
@@ -35,231 +37,297 @@ The `MarkdownProcessor` class transforms Obsidian-flavored markdown into HTML.
 
 ```typescript
 class MarkdownProcessor {
-  constructor(config: MarkdownConfig)
+  constructor()
 }
 ```
 
+**Note:** The constructor takes no parameters. Configuration is handled internally.
+
 ### Methods
 
-#### process()
+#### initialize()
 
-Process markdown content to HTML.
+Initialize the markdown processor (must be called before processing).
 
 ```typescript
-process(
+async initialize(): Promise<void>
+```
+
+This initializes the Shiki syntax highlighter. Call it once before processing any markdown.
+
+**Example:**
+```typescript
+const processor = new MarkdownProcessor();
+await processor.initialize();
+```
+
+#### processMarkdown()
+
+Process markdown content and return a complete Note object.
+
+```typescript
+processMarkdown(
+  filePath: string,
   content: string,
-  context: ProcessContext
+  vaultPath: string,
+  allNotes?: Map<string, Note>
+): Note
+```
+
+**Parameters:**
+- `filePath`: Absolute path to the markdown file
+- `content`: Raw markdown content
+- `vaultPath`: Vault root path
+- `allNotes`: (Optional) All notes for link resolution
+
+**Returns:** A `Note` object with processed HTML
+
+**Example:**
+```typescript
+const processor = new MarkdownProcessor();
+await processor.initialize();
+
+const content = await fs.readFile('./note.md', 'utf-8');
+const note = processor.processMarkdown(
+  './note.md',
+  content,
+  './vault',
+  allNotes
+);
+
+console.log(note.title);
+console.log(note.html);  // Processed HTML
+```
+
+#### generateBacklinks()
+
+Generate backlinks for all notes.
+
+```typescript
+generateBacklinks(notes: Map<string, Note>): void
+```
+
+**Parameters:**
+- `notes`: All notes in the vault
+
+This method updates the `backlinks` array on each note based on which other notes link to it.
+
+**Example:**
+```typescript
+const processor = new MarkdownProcessor();
+processor.generateBacklinks(vaultData.notes);
+
+// Now each note has populated backlinks
+for (const note of vaultData.notes.values()) {
+  console.log(`${note.title} has ${note.backlinks.length} backlinks`);
+}
+```
+
+#### resolveEmbeddedNotes()
+
+Resolve embedded note and base references.
+
+```typescript
+resolveEmbeddedNotes(
+  html: string,
+  allNotes: Map<string, Note>,
+  bases?: Map<string, Base>
 ): string
 ```
 
 **Parameters:**
-- `content`: Raw markdown string
-- `context`: Processing context (current note info, vault data)
+- `html`: HTML with embed placeholders
+- `allNotes`: All notes for embed resolution
+- `bases`: (Optional) All bases for base embed resolution
 
-**Returns:** Processed HTML string
-
-**Example:**
-```typescript
-const processor = new MarkdownProcessor({
-  highlightCode: true,
-  processMermaid: true,
-  processABC: true
-});
-
-const html = processor.process(markdownContent, {
-  noteId: 'MyNote',
-  notes: vaultData.notes
-});
-```
-
-#### processWikiLinks()
-
-Convert wiki-links to HTML links.
-
-```typescript
-processWikiLinks(
-  content: string,
-  notes: Map<string, Note>
-): string
-```
-
-**Syntax Support:**
-```markdown
-`[[Note]]`                    → Link to note
-`[[Note|Display Text]]`       → Link with custom text
-`[[Note#Heading]]`            → Link to heading
-`[[Note#Heading|Text]]`       → Link to heading with text
-`![[Image.png]]`              → Embed image
-`![[Note]]`                   → Embed note content
-```
+**Returns:** HTML with embedded content
 
 **Example:**
 ```typescript
-const processed = processor.processWikiLinks(
-  'See [[Other Note]] for details',
-  notes
+const processor = new MarkdownProcessor();
+const resolved = processor.resolveEmbeddedNotes(
+  note.html,
+  allNotes,
+  bases
 );
-// Result: 'See <a href="/Other-Note">Other Note</a> for details'
 ```
 
-#### processCodeBlocks()
+#### fixWikiLinks()
 
-Process code blocks with syntax highlighting.
+Fix wiki-link paths to use correct note IDs.
 
 ```typescript
-processCodeBlocks(
-  content: string,
-  highlighter: Highlighter
+fixWikiLinks(
+  html: string,
+  allNotes: Map<string, Note>
 ): string
 ```
 
-**Supported Languages:**
-- TypeScript, JavaScript, Python, JSON, YAML, Bash, and many more
-- Syntax highlighting powered by Shiki
-- Automatic language detection
+**Parameters:**
+- `html`: HTML with internal links
+- `allNotes`: All notes for link resolution
+
+**Returns:** HTML with corrected link paths
 
 **Example:**
+```typescript
+const processor = new MarkdownProcessor();
+const fixed = processor.fixWikiLinks(note.html, allNotes);
+```
+
+#### generateNoteId()
+
+Generate a unique note ID from a path or link text.
+
+```typescript
+generateNoteId(linkText: string): string
+```
+
+**Parameters:**
+- `linkText`: Note path or link text
+
+**Returns:** URL-safe note ID
+
+**Example:**
+```typescript
+const processor = new MarkdownProcessor();
+const id = processor.generateNoteId('My Note');
+// Returns: "my-note"
+
+const id2 = processor.generateNoteId('folder/Sub Note');
+// Returns: "folder/sub-note"
+```
+
+#### generateFrontMatterHtml()
+
+Generate HTML for frontmatter properties display.
+
+```typescript
+generateFrontMatterHtml(frontMatter: FrontMatter): string
+```
+
+**Parameters:**
+- `frontMatter`: Parsed frontmatter object
+
+**Returns:** HTML for properties panel
+
+**Example:**
+```typescript
+const processor = new MarkdownProcessor();
+const html = processor.generateFrontMatterHtml({
+  title: 'My Note',
+  tags: ['documentation', 'api'],
+  date: '2025-10-24'
+});
+```
+
+## Supported Features
+
+### Wiki-Links
+
+Automatically converts Obsidian wiki-links to HTML:
+
+```markdown
+[[Note Name]]                 → <a href="/note-name">Note Name</a>
+[[Note|Display]]             → <a href="/note">Display</a>
+[[folder/Note]]              → <a href="/folder/note">Note</a>
+[[Note#Heading]]             → Link to heading (not yet implemented)
+```
+
+### Embeds
+
+Embeds notes and images:
+
+```markdown
+![[image.png]]               → <img> tag
+![[Note]]                    → Embedded note content
+![[Note|Title]]              → Embedded with custom title
+![[Base.base]]               → Embedded database
+![[Base.base#View]]          → Embedded with specific view
+```
+
+### Math Rendering (KaTeX)
+
+Inline math: `$E = mc^2$`
+
+Display math:
+```markdown
+$$
+\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
+$$
+```
+
+### Code Highlighting (Shiki)
+
+Dual-theme syntax highlighting with light and dark variants:
+
 ````markdown
 ```typescript
-// TypeScript code
-const x: number = 42;
-```
-
-```python
-# Python code
-def hello():
-    print("Hello")
-```
-
-```json
-{
-  "key": "value"
-}
+const hello = (name: string) => {
+  console.log(`Hello, ${name}!`);
+};
 ```
 ````
 
-#### processMermaid()
+Supported languages: TypeScript, JavaScript, Python, Java, C++, C, HTML, CSS, JSON, YAML, Bash, SQL, and many more.
 
-Process Mermaid diagram blocks.
+### Mermaid Diagrams
 
-```typescript
-processMermaid(content: string): string
-```
+Processed by MermaidProcessor:
 
-**Example Input:**
 ````markdown
 ```mermaid
-graph LR
+graph TD
     A[Start] --> B[Process]
     B --> C[End]
 ```
 ````
 
-**Output:**
-```html
-<div class="mermaid">
-graph LR
-    A[Start] --> B[Process]
-    B --> C[End]
-</div>
-```
+### ABC Music Notation
 
-#### processABC()
+Processed by AbcProcessor:
 
-Process ABC music notation blocks.
-
-```typescript
-processABC(content: string): string
-```
-
-**Example Input:**
 ````markdown
 ```abc
 X:1
-T:Scale
+T:C Major Scale
 M:4/4
-L:1/4
 K:C
 CDEFGAB
 ```
 ````
 
-**Output:**
-```html
-<div class="abc-notation">
-X:1
-T:Scale
-M:4/4
-L:1/4
-K:C
-CDEFGAB
-</div>
-```
+### Callouts
 
-#### processCallouts()
+Obsidian-style callouts:
 
-Process Obsidian-style callouts.
-
-```typescript
-processCallouts(content: string): string
-```
-
-**Syntax:**
 ```markdown
 > [!note]
-> This is a note callout
+> This is a note
 
 > [!warning]
 > This is a warning
 
-> [!info] Custom Title
-> With custom title
+> [!tip] Custom Title
+> This is a tip
 ```
 
-**Supported Types:**
-- `note` - Information callout
-- `warning` - Warning callout
-- `tip` - Tip/advice callout
-- `important` - Important callout
-- `caution` - Caution callout
+Supported types: `note`, `tip`, `warning`, `important`, `info`
 
-#### processTags()
+### Inline Base Syntax
 
-Extract and process tags.
+Embed databases inline:
 
-```typescript
-processTags(content: string): {
-  content: string;
-  tags: string[];
-}
+````markdown
+```base
+title: Tasks
+filters:
+  file.tag: task
+views:
+  - type: cards
+    name: Card View
 ```
-
-**Syntax Support:**
-```markdown
-#tag                    → Inline tag
-#nested/tag             → Nested tag
-Tags: #tag1, #tag2      → Multiple tags
-```
-
-**Example:**
-```typescript
-const result = processor.processTags('Content with #tag1 and #tag2');
-console.log(result.tags); // ['tag1', 'tag2']
-```
-
-## Configuration
-
-```typescript
-interface MarkdownConfig {
-  highlightCode?: boolean;        // Enable syntax highlighting
-  processMermaid?: boolean;       // Process Mermaid diagrams
-  processABC?: boolean;           // Process ABC notation
-  processCallouts?: boolean;      // Process callouts
-  allowHTML?: boolean;            // Allow raw HTML in markdown
-  sanitizeHTML?: boolean;         // Sanitize HTML output
-  baseUrl?: string;               // Base URL for links
-}
-```
+````
 
 ## Type Definitions
 
@@ -286,107 +354,109 @@ interface HighlightConfig {
 
 ## Usage Examples
 
-### Basic Markdown Processing
+### Basic Processing
 
 ```typescript
 import { MarkdownProcessor } from './markdown-processor';
+import fs from 'fs';
 
-const processor = new MarkdownProcessor({
-  highlightCode: true,
-  processMermaid: true,
-  processABC: true,
-  processCallouts: true
-});
+const processor = new MarkdownProcessor();
+await processor.initialize();
 
-const markdown = `
-# My Note
+const content = fs.readFileSync('./note.md', 'utf-8');
+const note = processor.processMarkdown(
+  './note.md',
+  content,
+  './vault'
+);
 
-This links to [[Other Note]].
-
-\`\`\`typescript
-const x: number = 42;
-\`\`\`
-
-> [!note]
-> Important information
-`;
-
-const html = processor.process(markdown, {
-  noteId: 'MyNote',
-  notePath: 'folder/MyNote.md',
-  notes: vaultData.notes
-});
+console.log(note.title);
+console.log(note.html);
+console.log(note.links);  // Extracted wiki-links
 ```
 
-### Custom Link Processing
+### With Full Vault Context
 
 ```typescript
-// Override wiki-link processing
-processor.processWikiLinks = (content, notes) => {
-  return content.replace(/\[\[([^\]]+)\]\]/g, (match, link) => {
-    const [target, display] = link.split('|');
-    const note = notes.get(target.trim());
-    
-    if (!note) {
-      return `<span class="broken-link">${display || target}</span>`;
-    }
-    
-    return `<a href="/${note.id}" class="wiki-link">${display || note.title}</a>`;
-  });
-};
-```
+const processor = new MarkdownProcessor();
+await processor.initialize();
 
-### Extract Frontmatter
+// Process all notes first
+const notes = new Map();
+for (const file of markdownFiles) {
+  const content = fs.readFileSync(file, 'utf-8');
+  const note = processor.processMarkdown(file, content, vaultPath);
+  notes.set(note.id, note);
+}
 
-```typescript
-const markdown = `---
-title: My Note
-tags: [concept, important]
-date: 2025-01-01
----
+// Generate backlinks
+processor.generateBacklinks(notes);
 
-# Content here
-`;
-
-const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
-const match = markdown.match(frontmatterRegex);
-
-if (match) {
-  const frontmatter = yaml.parse(match[1]);
-  const content = markdown.slice(match[0].length);
-  
-  console.log(frontmatter.title); // "My Note"
-  console.log(frontmatter.tags);  // ["concept", "important"]
+// Resolve embeds and fix links
+for (const note of notes.values()) {
+  note.html = processor.resolveEmbeddedNotes(note.html, notes);
+  note.html = processor.fixWikiLinks(note.html, notes);
 }
 ```
 
-### Process Embeds
+### Custom Frontmatter Rendering
 
 ```typescript
-// Embed another note's content
-const embedRegex = /!\[\[([^\]]+)\]\]/g;
-const processedContent = markdown.replace(embedRegex, (match, noteId) => {
-  const embeddedNote = notes.get(noteId);
-  if (!embeddedNote) return match;
-  
-  return `<div class="embedded-note">
-    <h3>${embeddedNote.title}</h3>
-    ${processor.process(embeddedNote.content, context)}
-  </div>`;
-});
+const processor = new MarkdownProcessor();
+
+const frontMatter = {
+  title: 'My Note',
+  tags: ['documentation', 'api'],
+  author: 'John Doe',
+  date: '2025-10-24'
+};
+
+const html = processor.generateFrontMatterHtml(frontMatter);
+// Generates collapsible properties panel
 ```
 
-### Custom Syntax Extensions
+### Extract Links
 
 ```typescript
-// Add custom syntax processing
-processor.addCustomProcessor((content: string) => {
-  // Process custom [[todo]] syntax
-  return content.replace(/\[\[todo\]\]/g, 
-    '<input type="checkbox" class="task-checkbox">');
-});
+const processor = new MarkdownProcessor();
+const content = `
+# My Note
+
+See [[Other Note]] and [[folder/Another Note|link text]].
+Also check [[Third Note]].
+`;
+
+const note = processor.processMarkdown('./note.md', content, './vault');
+console.log(note.links);
+// ['Other Note', 'folder/Another Note', 'Third Note']
 ```
+
+## Internal Processing
+
+The markdown processor handles several stages internally:
+
+1. **Frontmatter Extraction** - Uses `gray-matter` to extract YAML frontmatter
+2. **Math Preservation** - Replaces math expressions with placeholders before markdown processing
+3. **Obsidian Syntax** - Converts wiki-links and embeds to placeholders
+4. **Markdown to HTML** - Uses `marked` library with custom renderer
+5. **Code Highlighting** - Shiki generates dual-theme HTML (light/dark)
+6. **Special Blocks** - ABC and Mermaid blocks are wrapped for client-side rendering
+7. **Math Restoration** - Renders math with KaTeX and restores in output
+8. **Frontmatter HTML** - Generates collapsible properties panel
+
+## Performance Notes
+
+- **Shiki Initialization**: Takes ~1-2 seconds on first call, then cached
+- **Math Rendering**: KaTeX is fast, inline math < 1ms, display math < 5ms
+- **Link Resolution**: O(n) where n is number of wiki-links in note
+- **Embed Resolution**: Done in second pass after all notes processed
+
+## Related Processors
+
+- **AbcProcessor** (`src/abc-processor.ts`) - Handles ABC music notation
+- **MermaidProcessor** (`src/mermaid-processor.ts`) - Handles Mermaid diagrams
+- **BaseProcessor** (`src/base-processor.ts`) - Handles .base database files
 
 ---
 
-See also: [[GraphRenderer API]] • [[SiteGenerator API]] • [[Architecture/Core Components|Core Components]]
+See also: [[VaultProcessor API]] • [[BaseProcessor API]] • [[SiteGenerator API]] • [[../Features/Syntax Reference|Syntax Reference]]

@@ -23,39 +23,43 @@ Learn how to generate your static website from your Obsidian vault.
 ## Quick Start
 
 ```bash
-# Build your site
-npm run build
+# Generate your site
+obsidianp generate ./vault ./dist
 
-# Output will be in ./dist directory
+# Or with npm (after building the project)
+node dist/cli.js generate ./vault ./dist
 ```
 
 ## CLI Usage
 
-### Basic Command
+### Generate Command
 
 ```bash
-node dist/cli.js build
+obsidianp generate <vault-path> <output-path> [options]
 ```
 
-### With Custom Config
+**Arguments:**
+- `<vault-path>` - Path to your Obsidian vault directory
+- `<output-path>` - Path where the static site will be generated
 
+**Options:**
+- `--title <title>` / `-t` - Site title (overrides config file)
+- `--base-path <path>` / `-b` - Base path for hosting in subfolders (e.g., "/poseidon")
+- `--config <path>` / `-c` - Path to configuration file
+
+**Examples:**
 ```bash
-node dist/cli.js build --config custom-config.jsonc
-```
+# Basic generation
+obsidianp generate ./vault ./dist
 
-### Options
+# With custom title
+obsidianp generate ./vault ./dist --title "My Knowledge Base"
 
-```bash
-node dist/cli.js build [options]
+# For GitHub Pages project (subfolder hosting)
+obsidianp generate ./vault ./dist --base-path "/my-repo"
 
-Options:
-  --config <path>    Path to configuration file
-  --vault <path>     Vault directory path
-  --output <path>    Output directory path
-  --watch           Watch for changes and rebuild
-  --serve           Serve the site locally
-  --port <number>   Port for local server (default: 8000)
-  --help            Show help
+# With custom config file
+obsidianp generate ./vault ./dist --config my-config.jsonc
 ```
 
 ## Build Process
@@ -128,60 +132,79 @@ Build complete! ✓
 Output: ./dist
 ```
 
-## Watch Mode
+### Serve Command
 
-Monitor vault changes and rebuild automatically:
+For local development with automatic rebuilding:
 
 ```bash
-node dist/cli.js build --watch
+obsidianp serve <vault-path> [options]
+```
+
+**Options:**
+- `--port <port>` / `-p` - Port to serve on (default: 8000)
+- `--title <title>` / `-t` - Site title (overrides config file)
+- `--base-path <path>` / `-b` - Base path for hosting
+- `--config <path>` / `-c` - Path to configuration file
+- `--no-watch` - Disable file watching
+
+**Examples:**
+```bash
+# Serve with default settings
+obsidianp serve ./vault
+
+# Serve on custom port
+obsidianp serve ./vault --port 3000
+
+# Serve without file watching
+obsidianp serve ./vault --no-watch
 ```
 
 **Features:**
-- Detects file changes
-- Incremental rebuilds
-- Fast refresh
-- Live reload (with serve)
+- Automatic file watching and rebuilding
+- Live development server
+- Temporary output directory (no dist pollution)
+- Hot reload on changes
 
 **Console Output:**
 ```
-Watching vault for changes...
-✓ Ready
-
-[12:34:56] Changed: notes/MyNote.md
-[12:34:57] Rebuilding...
-[12:34:58] Build complete ✓
+🔮 Generating site...
+✅ Initial generation complete
+👀 Watching for file changes...
+🌐 Starting server on http://localhost:8000
+Press Ctrl+C to stop the server
 ```
 
-## Local Development Server
+### Initialize Configuration
 
-Serve your site locally:
+Create a configuration file:
 
 ```bash
-node dist/cli.js build --serve --port 8000
+obsidianp init [options]
 ```
 
-**Features:**
-- Static file serving
-- Auto-refresh on changes
-- CORS enabled
-- Development mode
+**Options:**
+- `--output <file>` / `-o` - Output configuration file (default: obsidianp.config.json)
 
-**Console Output:**
-```
-Server running at http://localhost:8000
-Press Ctrl+C to stop
+**Example:**
+```bash
+# Create default config
+obsidianp init
+
+# Create with custom name
+obsidianp init --output my-config.jsonc
 ```
 
-## Build Configuration
+## Configuration
+
+Obsidian:P automatically detects `obsidianp.config.jsonc` or `obsidianp.config.json` in your project directory.
 
 ### Production Build
 
 ```bash
-# Use command line arguments for vault and output paths
-node dist/cli.js generate ./vault ./dist --title "My Site" --base-path "/my-site"
+obsidianp generate ./vault ./dist
 ```
 
-Or with a config file `obsidianp.config.jsonc`:
+With config file `obsidianp.config.jsonc`:
 
 ```jsonc
 {
@@ -198,8 +221,8 @@ Or with a config file `obsidianp.config.jsonc`:
 ### Development Build
 
 ```bash
-# Generate without base path for local development
-node dist/cli.js generate ./vault ./dev-dist --title "Dev Site"
+# Serve for local development
+obsidianp serve ./vault --port 8000
 ```
 
 ## Output Structure
@@ -221,45 +244,25 @@ dist/
 └── sitemap.xml               # SEO sitemap
 ```
 
-## Performance Optimization
+## Performance Tips
 
-### Fast Builds
+### Incremental Rebuilds
 
-```bash
-# Skip graph generation
-node dist/cli.js build --no-graph
+The `serve` command automatically detects changes and rebuilds only what's necessary:
 
-# Skip search index
-node dist/cli.js build --no-search
+- New markdown files
+- Modified notes
+- Deleted files
+- Configuration changes
 
-# Minimal build
-node dist/cli.js build --no-graph --no-search
-```
+### Large Vaults
 
-### Incremental Builds
+For vaults with many notes (500+):
 
-Only rebuild changed files in watch mode:
-
-```typescript
-// Detects:
-// - New files
-// - Modified files
-// - Deleted files
-// - Changed links
-```
-
-### Parallel Processing
-
-Process notes in parallel:
-
-```jsonc
-{
-  "build": {
-    "parallel": true,
-    "workers": 4
-  }
-}
-```
+1. Use `serve` command for development (faster than repeated `generate`)
+2. Ensure images are in supported formats (PNG, JPG, SVG, WebP)
+3. Keep frontmatter concise
+4. Avoid extremely large individual notes (>10,000 lines)
 
 ## Troubleshooting
 
@@ -298,55 +301,48 @@ node dist/cli.js build --no-graph --no-search
 
 ## Advanced Usage
 
-### Custom Build Script
+### Programmatic Usage
 
 ```typescript
-import { VaultProcessor, SiteGenerator } from 'obsidianp';
+import { SiteGenerator } from './site-generator';
+import { SiteConfig } from './types';
 
 async function customBuild() {
-  const processor = new VaultProcessor('./vault', config);
-  const vaultData = await processor.processVault();
+  const config: SiteConfig = {
+    title: 'My Knowledge Base',
+    basePath: '/docs',
+    customization: {
+      light: {
+        'color-primary': '#7c3aed'
+      }
+    }
+  };
+
+  const generator = new SiteGenerator();
+  await generator.generateSite('./vault', './dist', config);
   
-  // Custom processing
-  for (const [id, note] of vaultData.notes) {
-    // Your custom logic
-  }
-  
-  const generator = new SiteGenerator(config);
-  await generator.generate(vaultData);
+  console.log('Build complete!');
 }
 
 customBuild();
 ```
 
-### Pre/Post Build Hooks
+### Custom Scripts
 
-```jsonc
-{
-  "build": {
-    "hooks": {
-      "preBuild": "scripts/pre-build.sh",
-      "postBuild": "scripts/post-build.sh"
-    }
-  }
-}
-```
+You can wrap the CLI in your own scripts:
 
-### Custom Plugins
+```bash
+#!/bin/bash
+# deploy.sh
 
-```typescript
-interface BuildPlugin {
-  name: string;
-  setup(build: BuildContext): void;
-}
+# Generate the site
+obsidianp generate ./vault ./dist --base-path "/docs"
 
-const customPlugin: BuildPlugin = {
-  name: 'my-plugin',
-  setup(build) {
-    build.onStart(() => console.log('Starting...'));
-    build.onEnd(() => console.log('Complete!'));
-  }
-};
+# Run custom post-processing
+node scripts/post-process.js
+
+# Deploy to server
+rsync -avz ./dist/ user@server:/var/www/
 ```
 
 ---

@@ -25,27 +25,53 @@ Get started with Obsidian:P by installing it in your Obsidian vault directory.
 
 ## Installation Steps
 
-### 1. Clone or Install
+### Method 1: Development Installation
 
 ```bash
 # Clone the repository
 git clone https://github.com/jwintz/obsidianp.git
 cd obsidianp
 
-# Or install via npm (if published)
-npm install -g obsidianp
-```
-
-### 2. Install Dependencies
-
-```bash
+# Install dependencies
 npm install
+
+# Build the project
+npm run build
+
+# Link globally for command-line usage
+npm link
 ```
 
-### 3. Build the Project
+After linking, you can use the `obsidianp` command anywhere:
 
 ```bash
+obsidianp generate ./vault ./dist
+obsidianp serve ./vault
+```
+
+### Method 2: Direct Usage (Without Global Install)
+
+```bash
+# Clone and build
+git clone https://github.com/jwintz/obsidianp.git
+cd obsidianp
+npm install
 npm run build
+
+# Use directly with node
+node dist/cli.js generate ./vault ./dist
+```
+
+### Method 3: Development Mode
+
+```bash
+# Clone and install
+git clone https://github.com/jwintz/obsidianp.git
+cd obsidianp
+npm install
+
+# Run in development mode (no build needed)
+npm run dev serve ./vault -- --port 8000
 ```
 
 ## Verify Installation
@@ -53,10 +79,48 @@ npm run build
 Check that Obsidian:P is installed correctly:
 
 ```bash
-npm run build -- --help
+# If you used npm link
+obsidianp --help
+
+# Or with direct usage
+node dist/cli.js --help
 ```
 
-You should see the available CLI options.
+You should see output showing available commands:
+
+```
+Usage: obsidianp [options] [command]
+
+Static Site Generator for Obsidian vaults
+
+Options:
+  -V, --version              output the version number
+  -h, --help                 display help for command
+
+Commands:
+  generate|gen <vault-path> <output-path>
+                             Generate a static site from an Obsidian vault
+  serve <vault-path>         Generate and serve the site locally with file watching
+  init                       Initialize a configuration file
+  help [command]             display help for command
+```
+
+Test with a simple generation:
+
+```bash
+# Create a test vault
+mkdir test-vault
+echo "# Hello World" > test-vault/index.md
+
+# Generate site
+obsidianp generate ./test-vault ./test-output
+
+# You should see output like:
+# 🚀 Starting site generation...
+# 📁 Vault: /path/to/test-vault
+# 📤 Output: /path/to/test-output
+# ✅ Site generation complete!
+```
 
 ## Next Steps
 

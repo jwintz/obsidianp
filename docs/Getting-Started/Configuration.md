@@ -22,15 +22,35 @@ Obsidian:P uses a JSON configuration file to customize your site generation.
 
 ## Configuration File
 
-Create `obsidianp.config.jsonc` in your project root:
+Obsidian:P automatically detects configuration files in your project root:
+- `obsidianp.config.jsonc` (recommended - supports comments)
+- `obsidianp.config.json`
+
+### Create Configuration
+
+Use the `init` command to create a default configuration:
+
+```bash
+obsidianp init
+```
+
+This creates `obsidianp.config.json`:
+
+```json
+{
+  "title": "Vault"
+}
+```
+
+Or create `obsidianp.config.jsonc` manually for a configuration with comments:
 
 ```jsonc
 {
   "title": "My Knowledge Base",
   "basePath": "",  // For subfolder hosting (e.g., "/poseidon"), leave empty for root
   "fonts": {
-    "main": "Inter, system-ui, sans-serif",
-    "code": "JetBrains Mono, monospace"
+    "main": "Mona Sans, system-ui, sans-serif",
+    "code": "Monaspace Krypton, monospace"
   },
   "customization": {
     "common": {
@@ -49,7 +69,7 @@ Create `obsidianp.config.jsonc` in your project root:
 }
 ```
 
-**Note:** The file will be automatically detected if named `obsidianp.config.jsonc` or `obsidianp.config.json`.
+**Note:** The `.jsonc` extension allows you to include comments (using `//`) in your configuration.
 
 ## Configuration Options
 
@@ -62,13 +82,24 @@ Create `obsidianp.config.jsonc` in your project root:
 
 ### Fonts
 
-Customize font families:
+Customize font families (defaults shown):
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `fonts.main` | string | System default | Main text font |
-| `fonts.heading` | string | Main font | Heading font |
-| `fonts.code` | string | Monospace | Code font |
+| `fonts.main` | string | "Mona Sans, system-ui, sans-serif" | Main text font |
+| `fonts.heading` | string | Same as main | Heading font |
+| `fonts.code` | string | "Monaspace Krypton, monospace" | Code font |
+
+**Example:**
+```jsonc
+{
+  "fonts": {
+    "main": "Inter, system-ui, sans-serif",
+    "heading": "Playfair Display, serif",
+    "code": "Fira Code, monospace"
+  }
+}
+```
 
 ### Customization
 
@@ -86,19 +117,43 @@ Theme-aware CSS variables:
 - `color-bg-primary` - Background color
 - `color-text-primary` - Text color
 
-## Environment-Specific Configuration
+## Using Configuration
 
-You can use different configurations for development and production:
+### With Auto-Detection
+
+Simply place `obsidianp.config.jsonc` or `obsidianp.config.json` in your project root:
 
 ```bash
-# Development
-npm run build -- --config obsidianp.dev.jsonc
+# Configuration is automatically loaded
+obsidianp generate ./vault ./dist
+```
 
-# Production
-npm run build -- --config obsidianp.prod.jsonc
+### With Custom Path
+
+Specify a custom configuration file:
+
+```bash
+obsidianp generate ./vault ./dist --config my-config.jsonc
+```
+
+### Command-Line Overrides
+
+Command-line options override configuration file settings:
+
+```bash
+# Override title
+obsidianp generate ./vault ./dist --title "My Site"
+
+# Override base path
+obsidianp generate ./vault ./dist --base-path "/docs"
+
+# Override both
+obsidianp generate ./vault ./dist --title "Docs" --base-path "/docs"
 ```
 
 ## Configuration API
+
+The configuration object type definition:
 
 ```typescript
 interface SiteConfig {
@@ -117,7 +172,16 @@ interface SiteConfig {
 }
 ```
 
-See [[API-Reference/VaultProcessor API|VaultProcessor API]] for programmatic configuration.
+**Note:** When using programmatically, you can import types:
+
+```typescript
+import { SiteConfig } from './types';
+
+const config: SiteConfig = {
+  title: 'My Site',
+  basePath: '/docs'
+};
+```
 
 ---
 

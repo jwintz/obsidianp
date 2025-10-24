@@ -37,7 +37,7 @@ The local graph shows connections around a specific note.
 - **Outgoing links** - Show notes this note links to
 - **Incoming links** - Show notes that link to this note (backlinks)
 - **Neighbor links** - Show connections between revealed notes
-- **Tags** - Display tag nodes
+- **Tags** - Display tag nodes (only tags from the current note and its connected notes)
 - **Attachments** - Include file attachments
 - **Existing files only** - Hide broken links
 
@@ -86,21 +86,20 @@ Compact graph view in the sidebar that stays synchronized with the local graph s
 
 ## Graph Rendering Architecture
 
-```typescript
-class GraphRenderer {
-  // Initialize graph with notes and links
-  initialize(notes: Map<string, Note>, links: Link[]): void;
-  
-  // Render local graph for specific note
-  renderLocalGraph(container: HTMLElement, noteId: string): void;
-  
-  // Render global graph
-  renderGlobalGraph(container: HTMLElement): void;
-  
-  // Render mini graph (sidebar)
-  renderMiniGraph(noteId: string): void;
-}
-```
+The graph visualization is implemented client-side in `src/assets/graph.js` using D3.js.
+
+**Key Features:**
+- Force-directed layout simulation
+- Interactive zoom and pan
+- Node hover and click interactions
+- Synchronized settings between local and mini graphs
+- Dynamic filtering and search
+
+**Data Flow:**
+1. Server generates JSON with notes and link graph
+2. Client-side JavaScript loads graph data
+3. D3.js creates SVG visualization
+4. User interactions update the display in real-time
 
 ## Visual Properties
 
@@ -137,5 +136,7 @@ Graph rendering is optimized for large vaults:
 - Level-of-detail rendering when zoomed out
 
 ---
+
+**Note:** Graph rendering is implemented client-side. For server-side data processing, see [[../API-Reference/VaultProcessor API|VaultProcessor API]]
 
 Read Next: [[Search System]]

@@ -284,124 +284,29 @@ CNAME   www     yourusername.github.io.
 
 ## Performance Optimization
 
-### Pre-Build Optimization
+### Static Assets
 
-```jsonc
-{
-  "optimization": {
-    "minifyHTML": true,
-    "minifyCSS": true,
-    "minifyJS": true,
-    "optimizeImages": true,
-    "generateSitemap": true
-  }
-}
-```
+The generated site includes optimized assets:
+- Minified JavaScript libraries (D3.js, Mermaid.js, ABCJS)
+- Optimized CSS with theme variables
+- Web fonts (WOFF2 format for modern browsers)
 
-### CDN Integration
+### Caching
 
-Use CDN for assets:
+Configure caching headers on your server for better performance.
+### Caching
 
-```html
-<!-- Use CDN for libraries -->
-<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-```
+Configure caching headers on your server for better performance.
 
-### Service Worker
+## Generated Files
 
-Add offline support with `sw.js`:
-
-```javascript
-const CACHE_NAME = 'obsidianp-v1';
-const urlsToCache = [
-  '/',
-  '/assets/main.css',
-  '/assets/app.js',
-  '/assets/graph.js'
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => response || fetch(event.request))
-  );
-});
-```
-
-## SEO Configuration
-
-### Meta Tags
-
-Ensure templates include:
-
-```html
-<meta name="description" content="{{ siteDescription }}">
-<meta property="og:title" content="{{ pageTitle }}">
-<meta property="og:description" content="{{ pageDescription }}">
-<meta property="og:type" content="website">
-<meta property="og:url" content="{{ pageUrl }}">
-<meta name="twitter:card" content="summary">
-```
-
-### Sitemap
-
-Generated automatically in `dist/sitemap.xml`:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://example.com/</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <!-- More URLs -->
-</urlset>
-```
-
-### Robots.txt
-
-Create in `dist`:
-
-```
-User-agent: *
-Allow: /
-Sitemap: https://example.com/sitemap.xml
-```
-
-## Monitoring
-
-### Analytics Integration
-
-```html
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=GA_ID"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'GA_ID');
-</script>
-```
-
-### Error Tracking
-
-```html
-<!-- Sentry -->
-<script src="https://browser.sentry-cdn.com/sdk.min.js"></script>
-<script>
-  Sentry.init({ dsn: 'YOUR_DSN' });
-</script>
-```
+The site generator creates:
+- **sitemap.xml** - Basic XML sitemap for search engines  
+- **.nojekyll** - Marker file for GitHub Pages (bypasses Jekyll processing)
+- **HTML files** - One per note and base file
+- **data/notes.json** - Search data
+- **assets/** - CSS, JavaScript, fonts, libraries
 
 ---
 
-Read Next: [[Architecture/Core Components|Core Components]]
+Read Next: [[../Architecture/Core Components|Core Components]]

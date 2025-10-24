@@ -37,10 +37,10 @@ graph TB
 
 The system follows a pipeline architecture:
 
-1. **[[VaultProcessor API|VaultProcessor]]** - Reads vault structure
-2. **[[MarkdownProcessor API|MarkdownProcessor]]** - Transforms content
-3. **[[GraphRenderer API|GraphRenderer]]** - Creates visualizations
-4. **[[SiteGenerator API|SiteGenerator]]** - Generates final site
+1. **[[../API-Reference/VaultProcessor API|VaultProcessor]]** - Reads vault structure
+2. **[[../API-Reference/MarkdownProcessor API|MarkdownProcessor]]** - Transforms content
+3. **Client-Side Graph** - Creates visualizations (D3.js in browser)
+4. **[[../API-Reference/SiteGenerator API|SiteGenerator]]** - Generates final site
 
 ## VaultProcessor
 
@@ -48,22 +48,23 @@ The system follows a pipeline architecture:
 
 **Key Responsibilities:**
 - Scan directory structure
-- Read markdown files
+- Read markdown files and `.base` database files
 - Extract frontmatter
 - Build link graph
 - Identify tags and categories
 
 **Output:**
 ```typescript
-{
+interface VaultStructure {
   notes: Map<string, Note>,
-  folders: FolderStructure[],
+  bases: Map<string, Base>,
+  folders: FolderNode[],
   tags: Map<string, string[]>,
-  linkGraph: LinkGraph
+  linkGraph: Map<string, Set<string>>
 }
 ```
 
-See [[API-Reference/VaultProcessor API|VaultProcessor API]] for detailed API documentation.
+See [[../API-Reference/VaultProcessor API|VaultProcessor API]] for detailed API documentation.
 
 ## MarkdownProcessor
 
@@ -72,89 +73,88 @@ See [[API-Reference/VaultProcessor API|VaultProcessor API]] for detailed API doc
 **Key Responsibilities:**
 - Convert wiki-links to HTML links
 - Process embeds
-- Syntax highlight code blocks
+- Syntax highlight code blocks with Shiki (dual theme)
 - Render Mermaid diagrams
-- Render ABC notation
+- Render ABC music notation
 - Process callouts
+- Render math with KaTeX
 
 **Input:** Raw markdown string
 **Output:** Processed HTML string
 
-See [[API-Reference/MarkdownProcessor API|MarkdownProcessor API]] for detailed API documentation.
+See [[../API-Reference/MarkdownProcessor API|MarkdownProcessor API]] for detailed API documentation.
 
-## GraphRenderer
+## Client-Side Graph Visualization
 
-**Purpose:** Create interactive graph visualizations
+**Purpose:** Create interactive graph visualizations in the browser
 
 **Key Responsibilities:**
-- Compute graph layouts using D3.js
 - Render local graphs (note-centered)
 - Render global graphs (all notes)
 - Render mini graphs (sidebar)
 - Handle user interactions
+- Compute force-directed layouts
 
 **Technologies:**
 - D3.js for force-directed layout
 - SVG for rendering
-- Web Workers for large graphs (optional)
+- Client-side JavaScript in `src/assets/graph.js`
 
-See [[API-Reference/GraphRenderer API|GraphRenderer API]] for detailed API documentation.
+**Note:** Graph rendering is entirely client-side. The server generates JSON data that the browser uses to create visualizations.
 
 ## SiteGenerator
 
 **Purpose:** Generate the final static website
 
 **Key Responsibilities:**
-- Generate HTML pages for each note
-- Create index and navigation
-- Copy assets (CSS, JS, images)
-- Generate search index
-- Create sitemap
+- Orchestrate the entire build process
+- Process vault with VaultProcessor
+- Generate HTML pages for each note and base
+- Copy assets (CSS, JS, images, fonts)
+- Generate search index JSON
+- Apply configuration and customization
 
 **Output:** Static HTML site in `outputPath`
 
-See [[API-Reference/SiteGenerator API|SiteGenerator API]] for detailed API documentation.
+See [[../API-Reference/SiteGenerator API|SiteGenerator API]] for detailed API documentation.
 
 ## Supporting Components
 
 ### BaseProcessor
 
-Base class for specialized processors:
+Processes `.base` database files:
 
 ```typescript
-abstract class BaseProcessor {
-  abstract process(input: any): any;
-  protected config: ProcessorConfig;
+class BaseProcessor {
+  processBase(filePath, content, vaultPath): Base;
+  filterNotes(base, allNotes): Note[];
+  processFormulas(base, notes): Note[];
+  sortNotes(notes, view): Note[];
 }
 ```
 
-Extended by:
-- `MarkdownProcessor`
-- `MermaidProcessor`
-- `ABCProcessor`
+See [[../API-Reference/BaseProcessor API|BaseProcessor API]] for detailed documentation.
 
 ### Templates
 
-HTML templates for generated pages:
+HTML template functions for generated pages:
 
 ```typescript
-interface Templates {
-  noteTemplate: (data: NoteData) => string;
-  indexTemplate: (data: IndexData) => string;
-  graphTemplate: () => string;
-}
+// In src/templates.ts
+function generateMainTemplate(title, basePath): string;
+function generateNoteTemplate(title, content, frontMatter, backlinks, basePath): string;
+function generateNoteHTML(content, vaultTitle, basePath, noteTitle): string;
+function generateBaseHTML(base, vaultTitle, basePath, processor): string;
 ```
 
-### Search System
+### Client-Side Components
 
-Client-side search functionality:
+Located in `src/assets/`:
 
-```typescript
-class SearchEngine {
-  buildIndex(notes: Note[]): SearchIndex;
-  search(query: string): SearchResult[];
-}
-```
+- **graph.js** - D3.js-based graph visualization
+- **search.js** - Client-side search functionality
+- **table-of-contents.js** - Dynamic TOC generation
+- **main.js** - General UI interactions and theme switching
 
 ## Data Flow
 
@@ -168,87 +168,78 @@ const vaultData = await processor.processVault();
 ### 2. Content Processing Phase
 
 ```typescript
-const markdownProcessor = new MarkdownProcessor(config);
-for (const [id, note] of vaultData.notes) {
-  note.htmlContent = markdownProcessor.process(note.content, {
-    noteId: id,
-    notes: vaultData.notes
-  });
-}
+// Handled internally by VaultProcessor
+const vaultData = await processor.processVault(vaultPath);
+// Note: MarkdownProcessor is used internally
+// All notes come back with processed HTML
 ```
 
-### 3. Graph Generation Phase
+### 3. Site Generation Phase
 
 ```typescript
-const graphRenderer = new GraphRenderer(
-  container,
-  vaultData.notes,
-  vaultData.linkGraph
-);
-```
-
-### 4. Site Generation Phase
-
-```typescript
-const generator = new SiteGenerator(config, templates);
-await generator.generate(vaultData);
+const generator = new SiteGenerator();
+await generator.generateSite(vaultPath, outputPath, config);
+// This internally:
+// - Processes vault
+// - Generates HTML for all notes and bases
+// - Copies assets
+// - Creates data files
 ```
 
 ## File Structure
 
 ```
 src/
-├── vault-processor.ts      # Vault reading
+├── cli.ts                  # Command-line interface
+├── vault-processor.ts      # Vault reading and processing
 ├── markdown-processor.ts   # Markdown transformation
-├── site-generator.ts       # HTML generation
-├── templates.ts            # HTML templates
-├── types.ts                # TypeScript types
+├── base-processor.ts       # Database file processing
+├── site-generator.ts       # HTML generation and orchestration
+├── templates.ts            # HTML template functions
+├── types.ts                # TypeScript type definitions
+├── abc-processor.ts        # ABC music notation
+├── mermaid-processor.ts    # Mermaid diagrams
+├── card-renderer.ts        # Card view rendering
+├── note-highlighter.ts     # Note highlighting
 └── assets/
-    ├── graph.js            # Graph rendering
-    ├── search.js           # Search functionality
-    └── main.css            # Styling
+    ├── graph.js            # Graph visualization (client-side)
+    ├── search.js           # Search functionality (client-side)
+    ├── table-of-contents.js  # TOC generation (client-side)
+    ├── main.js             # Main client logic
+    ├── main.css            # Styling
+    └── abcjs-basic-min.js  # ABC notation library
 ```
 
 ## Extension Points
 
-### Custom Processors
+### Custom Markdown Processing
 
-Add custom markdown syntax:
+The MarkdownProcessor can be extended by modifying its behavior:
 
 ```typescript
-class CustomProcessor extends BaseProcessor {
-  process(content: string): string {
-    // Custom processing logic
-    return processedContent;
-  }
-}
+// Customize code block rendering via marked renderer
+// Customize link resolution logic
+// Add custom syntax patterns
 ```
+
+### Custom Base Views
+
+Implement custom view types for `.base` database files by extending BaseProcessor filtering and rendering logic.
 
 ### Custom Templates
 
-Override default templates:
+Override HTML generation in `src/templates.ts`:
 
 ```typescript
-const customTemplates = {
-  noteTemplate: (data) => `
-    <article>
-      <h1>${data.title}</h1>
-      ${data.content}
-    </article>
-  `
-};
-```
-
-### Custom Graph Layouts
-
-Implement alternative layout algorithms:
-
-```typescript
-class CustomGraphLayout {
-  compute(nodes, links): Layout {
-    // Custom layout algorithm
-    return layout;
-  }
+export function generateNoteTemplate(
+  title: string,
+  content: string,
+  frontMatter: string,
+  backlinks: string[],
+  basePath: string
+): string {
+  // Custom HTML structure
+  return `<article>...</article>`;
 }
 ```
 
@@ -256,33 +247,30 @@ class CustomGraphLayout {
 
 ### Large Vaults (1000+ Notes)
 
-- Use streaming processing
-- Implement caching
-- Progressive graph rendering
-- Web Workers for computation
+- Vault processing is sequential but uses async I/O
+- Markdown processor initializes Shiki once and caches
+- Graph rendering is client-side (browser handles layout computation)
+- JSON data files enable fast client-side features
 
 ### Memory Management
 
+The SiteGenerator processes notes sequentially to manage memory:
+
 ```typescript
-// Process in batches
-const BATCH_SIZE = 100;
-for (let i = 0; i < notes.length; i += BATCH_SIZE) {
-  const batch = notes.slice(i, i + BATCH_SIZE);
-  await processBatch(batch);
+// Process each note individually
+for (const note of notes.values()) {
+  const noteHtml = generateNoteHTML(note, config);
+  await fs.writeFile(outputPath, noteHtml);
 }
 ```
 
 ### Build Optimization
 
-```typescript
-// Watch mode with incremental builds
-const watcher = watch('./vault/**/*.md');
-watcher.on('change', async (path) => {
-  await processChangedFile(path);
-  await regeneratePage(path);
-});
-```
+Use the `serve` command for development:
+- Automatic rebuilding on file changes
+- Incremental updates (detects changed files)
+- Fast feedback loop
 
 ---
 
-Read Next: [[Features/Interactive Graph Views|Interactive Graph Views]]
+Read Next: [[../Features/Interactive Graph Views|Interactive Graph Views]]

@@ -182,11 +182,13 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                 <div class="graph-modal-container" id="global-graph-container">
                     <div class="graph-parameter-panel graph-parameter-panel--global" aria-label="Graph display options (global view)">
                         <div class="graph-parameter-header">
-                            <span class="graph-parameter-title">Display options</span>
-                            <div class="graph-parameter-header-controls">
+                            <div class="graph-parameter-title-group">
                                 <button type="button" class="graph-parameter-collapse icon-button" title="Collapse/Expand">
                                     ${getLucideIcon('ChevronDown', 16)}
                                 </button>
+                                <span class="graph-parameter-title">Display options</span>
+                            </div>
+                            <div class="graph-parameter-header-controls">
                                 <button type="button" class="graph-parameter-reset" id="global-graph-reset" title="Reset to defaults">
                                     ${getLucideIcon('RotateCcw', 14)}
                                     <span>Reset</span>
@@ -293,11 +295,13 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                 <div class="graph-modal-container" id="local-graph-container">
                     <div class="graph-parameter-panel" id="local-graph-parameters" aria-label="Local graph display options">
                         <div class="graph-parameter-header">
-                            <span class="graph-parameter-title">Display options</span>
-                            <div class="graph-parameter-header-controls">
+                            <div class="graph-parameter-title-group">
                                 <button type="button" class="graph-parameter-collapse icon-button" title="Collapse/Expand">
                                     ${getLucideIcon('ChevronDown', 16)}
                                 </button>
+                                <span class="graph-parameter-title">Display options</span>
+                            </div>
+                            <div class="graph-parameter-header-controls">
                                 <button type="button" class="graph-parameter-reset" id="local-graph-reset" title="Reset to defaults">
                                     ${getLucideIcon('RotateCcw', 14)}
                                     <span>Reset</span>

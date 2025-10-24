@@ -918,6 +918,12 @@ mark {
   gap: var(--space-sm);
 }
 
+.graph-parameter-title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
 .graph-parameter-header-controls {
   display: flex;
   align-items: center;
@@ -1457,10 +1463,10 @@ mark {
     max-height: var(--graph-sheet-height);
     border-radius: var(--border-radius-lg);
     padding: var(--space-lg);
-    background: rgba(28, 28, 30, 0.4);
-    backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
-    -webkit-backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
-    border: 0.5px solid rgba(255, 255, 255, 0.25);
+    background: rgba(28, 28, 30, 0.25);
+    backdrop-filter: blur(120px) saturate(320%) brightness(1.12);
+    -webkit-backdrop-filter: blur(120px) saturate(320%) brightness(1.12);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
     box-shadow: none;
     overflow-y: auto;
     gap: var(--space-md);
@@ -1470,10 +1476,10 @@ mark {
   }
 
   [data-theme="light"] .graph-parameter-panel {
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(100px) saturate(200%) brightness(1.2);
-    -webkit-backdrop-filter: blur(100px) saturate(200%) brightness(1.2);
-    border: 0.5px solid rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(120px) saturate(220%) brightness(1.18);
+    -webkit-backdrop-filter: blur(120px) saturate(220%) brightness(1.18);
+    border: 0.5px solid rgba(255, 255, 255, 0.65);
     box-shadow: none;
   }
 
@@ -4307,6 +4313,7 @@ mark {
    TABLET (769px - 1023px)
    Full sidebar, hide right panel to maximize content space
    ---------------------------------------------------------------------------- */
+
 
 @media (min-width: 769px) and (max-width: 1023px) {
   /* Hide pill navigation on tablet */

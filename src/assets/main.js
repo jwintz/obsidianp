@@ -2542,6 +2542,31 @@ class ObsidianSSGApp {
   }
 }
 
+// Keeps --viewport-block synced with the current visual viewport height
+const initializeViewportBlock = () => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+
+  const applyViewportBlock = () => {
+    const viewport = window.visualViewport;
+    const height = viewport ? viewport.height : window.innerHeight;
+    if (!height) {
+      return;
+    }
+
+    document.documentElement.style.setProperty('--viewport-block', `${height}px`);
+  };
+
+  applyViewportBlock();
+  window.addEventListener('resize', applyViewportBlock);
+  window.addEventListener('orientationchange', applyViewportBlock);
+  window.visualViewport?.addEventListener('resize', applyViewportBlock);
+  window.visualViewport?.addEventListener('scroll', applyViewportBlock);
+};
+
+initializeViewportBlock();
+
 // Initialize app when DOM is loaded
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {

@@ -66,11 +66,24 @@
   --border-radius: 6px;
   --border-radius-sm: 4px;
   --border-radius-lg: 12px;
+  --viewport-block: 100vh;
   
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+@supports (height: 100svh) {
+  :root {
+    --viewport-block: 100svh;
+  }
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --viewport-block: 100dvh;
+  }
 }
 
 /* Light Theme */
@@ -173,7 +186,7 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
   margin: 0;
   padding: 0;
-  min-height: 100vh;
+  min-height: var(--viewport-block);
   overflow: hidden; /* Prevent body scroll */
   width: 100%;
   /* iOS Safari: Use relative instead of fixed to avoid layout issues */
@@ -435,7 +448,7 @@ mark {
   flex: 1;
   display: flex;
   overflow: hidden;
-  min-height: 100vh;
+  min-height: var(--viewport-block);
 }
 
 .content-wrapper {
@@ -4298,8 +4311,8 @@ mark {
     display: flex !important;
     flex-direction: row !important;
     gap: var(--sidebar-inset) !important;
-    height: 100vh !important;
-    height: 100dvh !important;
+    min-height: var(--viewport-block) !important;
+    height: var(--viewport-block) !important;
     overflow: hidden !important; /* Prevent page scrolling */
     box-sizing: border-box !important;
     position: fixed !important; /* Lock container position */
@@ -4318,8 +4331,8 @@ mark {
     width: var(--sidebar-width) !important;
     min-width: var(--sidebar-width) !important;
     margin: var(--sidebar-inset) 0 !important;
-    height: calc(100vh - (var(--sidebar-inset) * 2)) !important;
-    height: calc(100dvh - (var(--sidebar-inset) * 2)) !important;
+    min-height: calc(var(--viewport-block) - (var(--sidebar-inset) * 2)) !important;
+    height: calc(var(--viewport-block) - (var(--sidebar-inset) * 2)) !important;
     border-radius: var(--border-radius-lg) !important;
     box-shadow: var(--elevation-2) !important;
     overflow: hidden !important;
@@ -4382,8 +4395,8 @@ mark {
     display: flex !important;
     flex-direction: row !important;
     gap: var(--sidebar-inset) !important;
-    height: 100vh !important;
-    height: 100dvh !important;
+    min-height: var(--viewport-block) !important;
+    height: var(--viewport-block) !important;
     overflow: hidden !important; /* Prevent page scrolling */
     box-sizing: border-box !important;
     position: fixed !important; /* Lock container position */
@@ -4402,8 +4415,8 @@ mark {
     width: var(--sidebar-width) !important;
     min-width: var(--sidebar-width) !important;
     margin: var(--sidebar-inset) 0 !important;
-    height: calc(100vh - (var(--sidebar-inset) * 2)) !important;
-    height: calc(100dvh - (var(--sidebar-inset) * 2)) !important;
+    min-height: calc(var(--viewport-block) - (var(--sidebar-inset) * 2)) !important;
+    height: calc(var(--viewport-block) - (var(--sidebar-inset) * 2)) !important;
     border-radius: var(--border-radius-lg) !important;
     box-shadow: var(--elevation-2) !important;
     overflow: hidden !important;

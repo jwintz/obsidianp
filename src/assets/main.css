@@ -668,14 +668,13 @@ mark {
 /* Graph Modal Popups */
 .graph-modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1500;
+  inset: 0;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 .graph-modal.hidden {
@@ -1247,18 +1246,40 @@ mark {
 }
 
 @media (max-width: 768px) {
-  /* Make graph modal work like main-content */
+  /* Smooth transition for blur effect */
+  .main-content {
+    transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  /* Blur and darken content when graph modal is visible */
+  body:has(.graph-modal:not(.hidden)) .main-content {
+    filter: blur(30px) brightness(0.75) !important;
+    -webkit-filter: blur(30px) brightness(0.75) !important;
+  }
+
+  /* Shadow gradients when graph modal is open - reuse body::before/after with higher z-index */
+  body:has(.graph-modal:not(.hidden))::before,
+  body:has(.graph-modal:not(.hidden))::after {
+    opacity: 1;
+    z-index: 9998 !important; /* Just below modal (9999) but above content */
+  }
+
+  /* Graph modal covers full screen edge-to-edge */
   .graph-modal {
-    position: absolute !important;
+    position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    z-index: 2000 !important;
-    background-color: var(--color-bg-primary) !important;
+    width: 100vw !important;
+    width: 100dvw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 9999 !important;
+    background-color: transparent !important;
     overflow: hidden !important;
+    display: block !important;
+    isolation: isolate !important;
   }
 
   .graph-modal.hidden {
@@ -1266,76 +1287,101 @@ mark {
   }
 
   .graph-modal-overlay {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background-color: var(--color-bg-primary) !important;
+    display: none !important;
   }
 
   .graph-modal-content {
-    --graph-sheet-height: min(48vh, 520px);
-    position: absolute !important;
+    --graph-sheet-height: min(48dvh, 520px);
+    position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    max-width: none;
-    border-radius: 0;
-    border: none;
-    background-color: var(--color-bg-primary);
+    width: 100vw !important;
+    width: 100dvw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: transparent !important;
     overflow: hidden !important;
+    display: block !important;
+    z-index: 2 !important;
   }
 
   .graph-modal-container {
-    position: absolute !important;
+    position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    display: flex;
-    flex-direction: column;
+    width: 100vw !important;
+    width: 100dvw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: hidden !important;
+    background-color: transparent !important;
+    display: block !important;
+    z-index: 3 !important;
   }
 
   .graph-canvas {
-    position: absolute !important;
+    position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 0;
-    box-shadow: none;
+    width: 100vw !important;
+    width: 100dvw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background-color: var(--color-bg-primary) !important;
+    display: block !important;
+    z-index: 4 !important;
   }
 
   .graph-canvas svg {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 100% !important;
     height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  /* Ensure graph container children fill completely */
+  .graph-modal-container > * {
+    box-sizing: border-box !important;
   }
 
   .graph-modal-controls-wrapper {
     position: fixed !important;
-    top: calc(env(safe-area-inset-top, 0px) + var(--nav-pill-height) + var(--space-lg)) !important;
+    top: calc(env(safe-area-inset-top, 0px) + var(--space-md) + var(--nav-pill-height) + var(--space-md)) !important;
     left: var(--space-md) !important;
     right: auto !important;
-    padding: 0;
+    padding: 0 !important;
+    margin: 0 !important;
     gap: var(--space-sm);
-    z-index: 2003 !important;
+    z-index: 10050 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    pointer-events: all !important;
   }
 
   .graph-modal-controls-container {
     height: 36px;
     padding: 3px;
     border-radius: 18px;
+    background: rgba(28, 28, 30, 0.4);
+    backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
+    -webkit-backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
+    border: 0.5px solid rgba(255, 255, 255, 0.25);
+    display: flex !important;
+    align-items: center !important;
   }
 
   /* Hide close button on mobile */
@@ -1365,10 +1411,10 @@ mark {
   }
 
   .graph-parameter-panel {
-    position: fixed;
+    position: fixed !important;
     left: var(--space-md);
     right: var(--space-md);
-    bottom: var(--space-md);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-md));
     top: auto;
     width: auto;
     max-width: none;
@@ -1385,7 +1431,7 @@ mark {
                 inset 0 -1px 1px rgba(0, 0, 0, 0.1);
     overflow-y: auto;
     gap: var(--space-md);
-    z-index: 30;
+    z-index: 10051 !important;
     transition: max-height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
                 padding 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
   }
@@ -4276,7 +4322,7 @@ mark {
     flex-direction: row !important;
     gap: var(--sidebar-inset) !important;
     height: 100vh !important;
-    height: 100svh !important;
+    height: 100dvh !important;
     overflow: hidden !important; /* Prevent page scrolling */
     box-sizing: border-box !important;
     position: fixed !important; /* Lock container position */
@@ -4285,7 +4331,7 @@ mark {
     right: 0 !important;
     bottom: 0 !important;
   }
-  
+
   /* Rounded sidebar on the left */
   .sidebar {
     position: relative !important;
@@ -4296,7 +4342,7 @@ mark {
     min-width: var(--sidebar-width) !important;
     margin: var(--sidebar-inset) 0 !important;
     height: calc(100vh - (var(--sidebar-inset) * 2)) !important;
-    height: calc(100svh - (var(--sidebar-inset) * 2)) !important;
+    height: calc(100dvh - (var(--sidebar-inset) * 2)) !important;
     border-radius: var(--border-radius-lg) !important;
     box-shadow: var(--elevation-2) !important;
     overflow: hidden !important;
@@ -4365,7 +4411,7 @@ mark {
     flex-direction: row !important;
     gap: var(--sidebar-inset) !important;
     height: 100vh !important;
-    height: 100svh !important;
+    height: 100dvh !important;
     overflow: hidden !important; /* Prevent page scrolling */
     box-sizing: border-box !important;
     position: fixed !important; /* Lock container position */
@@ -4374,7 +4420,7 @@ mark {
     right: 0 !important;
     bottom: 0 !important;
   }
-  
+
   /* Rounded sidebar on the left - ONLY element with shadow */
   .sidebar {
     position: relative !important;
@@ -4385,7 +4431,7 @@ mark {
     min-width: var(--sidebar-width) !important;
     margin: var(--sidebar-inset) 0 !important;
     height: calc(100vh - (var(--sidebar-inset) * 2)) !important;
-    height: calc(100svh - (var(--sidebar-inset) * 2)) !important;
+    height: calc(100dvh - (var(--sidebar-inset) * 2)) !important;
     border-radius: var(--border-radius-lg) !important;
     box-shadow: var(--elevation-2) !important;
     overflow: hidden !important;
@@ -4469,6 +4515,13 @@ mark {
     background-color: var(--color-bg-primary) !important;
   }
 
+  /* Prevent body scroll when sidebar is open on mobile */
+  body.sidebar-open {
+    overflow: hidden !important;
+    height: 100vh;
+    height: 100dvh;
+  }
+
   /* App container uses dynamic viewport height */
   .app-container {
     display: flex !important;
@@ -4515,23 +4568,30 @@ mark {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    width: 100vw !important;
+    width: 100dvw !important;
     height: 100vh !important;
-    height: 100svh !important;
-    z-index: 900 !important;
-    background: var(--color-bg-primary) !important;
+    height: 100dvh !important;
+    z-index: 10003 !important;
+    background: transparent !important;
     border-right: none !important;
     margin: 0 !important;
     padding-top: calc(env(safe-area-inset-top, 0px) + var(--nav-pill-height) + var(--space-lg)) !important;
     box-sizing: border-box !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .sidebar-content {
-    padding: 0 var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 16px)) var(--space-md) !important;
-    gap: var(--space-lg);
+    display: flex !important;
+    flex-direction: column !important;
+    padding: var(--space-sm) var(--space-sm) calc(var(--space-sm) + env(safe-area-inset-bottom, 16px)) var(--space-sm) !important;
+    gap: var(--space-md);
+    min-height: min-content !important;
+    background: var(--color-bg-primary) !important;
+    border-radius: var(--border-radius-lg);
+    margin: var(--space-sm);
   }
 
   .nav-section {
@@ -4554,10 +4614,49 @@ mark {
     box-shadow: 0 18px 24px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.9);
   }
   
+  /* Blur main content when sidebar is open - smooth transition */
+  body.sidebar-open .main-content {
+    filter: blur(30px) brightness(0.75) !important;
+    -webkit-filter: blur(30px) brightness(0.75) !important;
+    transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  /* Shadow gradients - applied to body to be OUTSIDE modals */
+  body::before,
+  body::after {
+    content: '';
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 200px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body::before {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, transparent 100%);
+  }
+
+  body::after {
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+  }
+
+  /* Show shadows when sidebar is open with appropriate z-index */
+  body.sidebar-open::before,
+  body.sidebar-open::after {
+    opacity: 1;
+    z-index: 10002 !important; /* Just below sidebar (10003) but above content and below nav pills (10100) */
+  }
+
   /* MOBILE: Show sidebar when open class is added */
   .sidebar.open {
     display: flex !important;
     flex-direction: column !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
   
   /* MOBILE: Hide sidebar header */
@@ -4590,7 +4689,7 @@ mark {
     -webkit-backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
     border: 0.5px solid rgba(255, 255, 255, 0.25);
     border-radius: calc(var(--nav-pill-height) / 2);
-    z-index: 3000;
+    z-index: 10100 !important;
     display: flex !important;
     padding: 0 var(--space-md);
     align-items: center;

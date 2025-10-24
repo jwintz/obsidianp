@@ -226,7 +226,7 @@ class ObsidianSSGApp {
 
     if (sidebar) {
       sidebar.classList.remove('open');
-      document.body.classList.remove('menu-open');
+      document.body.classList.remove('sidebar-open');
     }
   }
 
@@ -235,7 +235,7 @@ class ObsidianSSGApp {
 
     if (sidebar) {
       sidebar.classList.add('open');
-      document.body.classList.add('menu-open');
+      document.body.classList.add('sidebar-open');
     }
   }
   
@@ -541,15 +541,21 @@ class ObsidianSSGApp {
       const sidebar = document.querySelector('.sidebar');
       if (sidebar && sidebar.classList.contains('open')) {
         sidebar.classList.remove('open');
+        document.body.classList.remove('sidebar-open');
       }
 
       modal.classList.remove('hidden');
 
-      // Render global graph
-      this.graph.renderGlobalGraph(container);
+      // Wait for layout to complete before rendering graph
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Render global graph
+          this.graph.renderGlobalGraph(container);
 
-      // Update toggle states
-      this.updateGraphToggleStates('global');
+          // Update toggle states
+          this.updateGraphToggleStates('global');
+        });
+      });
     }
   }
 
@@ -570,15 +576,21 @@ class ObsidianSSGApp {
       const sidebar = document.querySelector('.sidebar');
       if (sidebar && sidebar.classList.contains('open')) {
         sidebar.classList.remove('open');
+        document.body.classList.remove('sidebar-open');
       }
 
       modal.classList.remove('hidden');
 
-      // Render local graph - pass note ID, not note object
-      this.graph.renderLocalGraph(container, targetNoteId);
+      // Wait for layout to complete before rendering graph
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Render local graph - pass note ID, not note object
+          this.graph.renderLocalGraph(container, targetNoteId);
 
-      // Update toggle states
-      this.updateGraphToggleStates('local');
+          // Update toggle states
+          this.updateGraphToggleStates('local');
+        });
+      });
     }
   }
 
@@ -2926,26 +2938,28 @@ class AdaptiveNavigation {
       });
     }
     
-    // Setup graph button in pill nav - toggle on mobile
+    // Setup graph button in pill nav - toggle ANY graph modal on/off
     const graphBtn = document.getElementById('nav-graph-btn');
     if (graphBtn) {
       graphBtn.addEventListener('click', () => {
         const localModal = document.getElementById('local-graph-modal');
-        
-        if (localModal) {
-          // Check if modal is visible
-          const isVisible = !localModal.classList.contains('hidden');
-          
-          if (isVisible) {
-            // Close the modal
-            localModal.classList.add('hidden');
-            document.body.style.overflow = '';
-          } else {
-            // Open the modal - trigger the expand graph button
-            const expandGraph = document.getElementById('expand-graph');
-            if (expandGraph) {
-              expandGraph.click();
-            }
+        const globalModal = document.getElementById('global-graph-modal');
+
+        // Check if ANY graph modal is visible
+        const localVisible = localModal && !localModal.classList.contains('hidden');
+        const globalVisible = globalModal && !globalModal.classList.contains('hidden');
+        const anyModalVisible = localVisible || globalVisible;
+
+        if (anyModalVisible) {
+          // Close ALL graph modals
+          if (localModal) localModal.classList.add('hidden');
+          if (globalModal) globalModal.classList.add('hidden');
+          document.body.style.overflow = '';
+        } else {
+          // Open the appropriate modal - trigger the expand graph button
+          const expandGraph = document.getElementById('expand-graph');
+          if (expandGraph) {
+            expandGraph.click();
           }
         }
       });
@@ -2985,28 +2999,32 @@ class AdaptiveNavigation {
     
     // Setup mobile menu button (in pill navigation) - toggle on/off
     const menuBtn = document.getElementById('nav-menu-btn');
-    
+
     if (menuBtn) {
-      menuBtn.addEventListener('click', () => {
+      console.log('AdaptiveNav: Menu button found, setting up click handler');
+      menuBtn.addEventListener('click', (e) => {
+        console.log('AdaptiveNav: Menu button clicked');
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Re-query sidebar in case it wasn't ready during initialization
+        if (!this.sidebar) {
+          this.sidebar = document.querySelector('.sidebar');
+        }
+
+        if (!this.sidebar) {
+          console.error('Sidebar element not found');
+          return;
+        }
+
         const isOpen = this.sidebar.classList.contains('open');
-        
+        console.log('Sidebar is currently', isOpen ? 'open' : 'closed');
+
         if (isOpen) {
-          // Get saved scroll position
-          const scrollY = this.sidebar.dataset.scrollY || 0;
-          
           // Close sidebar
           this.sidebar.classList.remove('open');
-          
-          // Re-enable scrolling on body
-          document.body.style.overflow = '';
-          document.body.style.position = '';
-          document.body.style.top = '';
-          document.body.style.width = '';
-          document.body.style.left = '';
-          document.body.style.right = '';
-          
-          // Restore scroll position
-          window.scrollTo(0, parseInt(scrollY));
+          document.body.classList.remove('sidebar-open');
+          console.log('Closing sidebar');
         } else {
           // Close any open graph modals
           const globalGraphModal = document.getElementById('global-graph-modal');
@@ -3017,27 +3035,15 @@ class AdaptiveNavigation {
           if (localGraphModal && !localGraphModal.classList.contains('hidden')) {
             localGraphModal.classList.add('hidden');
           }
-          
-          // Save current scroll position
-          const scrollY = window.scrollY;
-          
+
           // Open sidebar
           this.sidebar.classList.add('open');
-          
-          // Prevent body scrolling and maintain scroll position
-          document.body.style.overflow = 'hidden';
-          document.body.style.position = 'fixed';
-          document.body.style.top = `-${scrollY}px`;
-          document.body.style.width = '100%';
-          document.body.style.left = '0';
-          document.body.style.right = '0';
-          
-          // No need to offset sidebar - it uses position: fixed (viewport-relative)
-          
-          // Store scroll position for restoration
-          this.sidebar.dataset.scrollY = scrollY;
+          document.body.classList.add('sidebar-open');
+          console.log('Opening sidebar');
         }
       });
+    } else {
+      console.warn('AdaptiveNav: Menu button (#nav-menu-btn) not found');
     }
   }
   

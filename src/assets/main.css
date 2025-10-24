@@ -1428,10 +1428,7 @@ mark {
     backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
     -webkit-backdrop-filter: blur(100px) saturate(300%) brightness(1.1);
     border: 0.5px solid rgba(255, 255, 255, 0.25);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-                0 1px 2px rgba(0, 0, 0, 0.2),
-                inset 0 1px 1px rgba(255, 255, 255, 0.15),
-                inset 0 -1px 1px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
     overflow-y: auto;
     gap: var(--space-md);
     z-index: 10051 !important;
@@ -1444,10 +1441,7 @@ mark {
     backdrop-filter: blur(100px) saturate(200%) brightness(1.2);
     -webkit-backdrop-filter: blur(100px) saturate(200%) brightness(1.2);
     border: 0.5px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
-                0 1px 2px rgba(0, 0, 0, 0.05),
-                inset 0 1px 1px rgba(255, 255, 255, 0.6),
-                inset 0 -1px 1px rgba(0, 0, 0, 0.05);
+    box-shadow: none;
   }
 
   /* Collapsed state for parameters panel */
@@ -4590,13 +4584,13 @@ mark {
     border: 0.5px solid rgba(255, 255, 255, 0.22);
     border-radius: var(--border-radius-lg);
     padding: var(--space-lg) var(--space-md);
-    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.18);
+    box-shadow: none;
   }
 
   [data-theme="light"] #folder-tree {
     background: rgba(255, 255, 255, 0.72);
     border: 0.5px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 18px 24px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+    box-shadow: none;
   }
 
   /* Hide main content when sidebar is open */

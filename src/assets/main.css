@@ -520,6 +520,9 @@ mark {
   padding: 0 var(--space-md) var(--space-xl); /* Smaller horizontal padding */
   overflow-y: auto;
   flex: 1;
+  /* Prevent scroll chaining on iPadOS Safari */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .toc-placeholder {

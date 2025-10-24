@@ -215,18 +215,29 @@ class TableOfContents {
   
   scrollToCActiveItem() {
     if (!this.activeItem || !this.container) return;
-    
+
     const containerRect = this.container.getBoundingClientRect();
     const itemRect = this.activeItem.getBoundingClientRect();
-    
+
     // Check if item is outside visible area
     const isAbove = itemRect.top < containerRect.top;
     const isBelow = itemRect.bottom > containerRect.bottom;
-    
+
     if (isAbove || isBelow) {
-      this.activeItem.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
+      // Calculate the scroll position needed to center the item
+      // Use manual scrolling to prevent page-level scroll on iPadOS
+      const containerScrollTop = this.container.scrollTop;
+      const itemOffsetTop = this.activeItem.offsetTop;
+      const containerHeight = this.container.clientHeight;
+      const itemHeight = this.activeItem.clientHeight;
+
+      // Center the item in the container
+      const targetScrollTop = itemOffsetTop - (containerHeight / 2) + (itemHeight / 2);
+
+      // Smooth scroll within the container only
+      this.container.scrollTo({
+        top: targetScrollTop,
+        behavior: 'smooth'
       });
     }
   }

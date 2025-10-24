@@ -968,17 +968,6 @@ class GraphView {
 
     const noteIdSet = new Set(depthMap.keys());
 
-    const ensureNoteDepth = (nodeId, depth) => {
-      if (!this.notes.has(nodeId)) return false;
-      const existingDepth = depthMap.get(nodeId);
-      if (existingDepth === undefined || existingDepth > depth) {
-        depthMap.set(nodeId, depth);
-        noteIdSet.add(nodeId);
-        return true;
-      }
-      return existingDepth !== undefined;
-    };
-
     const links = [];
     const linkKeySet = new Set();
     const tagNodes = new Map();
@@ -1011,45 +1000,41 @@ class GraphView {
     });
 
     if (settings.includeNeighbors) {
-      const baseIds = Array.from(noteIdSet);
-      baseIds.forEach(baseId => {
-        const baseDepth = depthMap.get(baseId) ?? 0;
-        if (baseDepth >= settings.depth) return;
+      const neighborEdgePairs = new Set();
 
-        const neighborDepth = baseDepth + 1;
-        if (neighborDepth > settings.depth) return;
+      const hasStructuralLink = (a, b) => {
+        return links.some(edge => edge.type !== 'neighbor' && edge.type !== 'tag' && (
+          (edge.source === a && edge.target === b) ||
+          (edge.source === b && edge.target === a)
+        ));
+      };
 
-        const neighborCandidates = new Set();
+      const registerNeighborEdge = (sourceId, targetId) => {
+        if (sourceId === targetId) return;
+        if (!noteIdSet.has(sourceId) || !noteIdSet.has(targetId)) return;
+        if (sourceId === currentNodeId || targetId === currentNodeId) return;
+        if (hasStructuralLink(sourceId, targetId)) return;
 
-        const outboundTargets = this.outboundMap.get(baseId);
-        outboundTargets?.forEach(targetId => {
-          const inboundSources = this.inboundMap.get(targetId);
-          inboundSources?.forEach(sourceId => {
-            if (sourceId !== baseId) {
-              neighborCandidates.add(sourceId);
-            }
+        const undirectedKey = [sourceId, targetId].sort().join('|');
+        if (neighborEdgePairs.has(undirectedKey)) return;
+        neighborEdgePairs.add(undirectedKey);
+        addLink(sourceId, targetId, 'neighbor', { undirected: true });
+      };
+
+      noteIdSet.forEach(sourceId => {
+        if (settings.includeOutgoing) {
+          const outgoingTargets = this.outboundMap.get(sourceId);
+          outgoingTargets?.forEach(targetId => {
+            registerNeighborEdge(sourceId, targetId);
           });
-        });
+        }
 
-        const inboundSources = this.inboundMap.get(baseId);
-        inboundSources?.forEach(sourceId => {
-          if (sourceId !== baseId) {
-            neighborCandidates.add(sourceId);
-          }
-          const sourceTargets = this.outboundMap.get(sourceId);
-          sourceTargets?.forEach(targetId => {
-            if (targetId !== baseId) {
-              neighborCandidates.add(targetId);
-            }
+        if (settings.includeIncoming) {
+          const incomingSources = this.inboundMap.get(sourceId);
+          incomingSources?.forEach(originId => {
+            registerNeighborEdge(sourceId, originId);
           });
-        });
-
-        neighborCandidates.forEach(candidateId => {
-          if (!this.notes.has(candidateId)) return;
-          if (neighborDepth > settings.depth) return;
-          ensureNoteDepth(candidateId, neighborDepth);
-          addLink(baseId, candidateId, 'neighbor', { undirected: true });
-        });
+        }
       });
     }
 

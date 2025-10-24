@@ -517,7 +517,7 @@ mark {
 }
 
 .table-of-contents {
-  padding: 0 var(--space-md) var(--space-xl); /* Smaller horizontal padding */
+  padding: 0 var(--space-md) var(--space-md); /* Smaller horizontal padding */
   overflow-y: auto;
   flex: 1;
   /* Prevent scroll chaining on iPadOS Safari */
@@ -1506,7 +1506,7 @@ mark {
 
 .note-content {
   flex: 1;
-  padding: var(--space-xl);
+  padding: var(--space-md);
   overflow-y: auto;
   overflow-x: hidden;
   background-color: var(--color-bg-primary);
@@ -4287,8 +4287,8 @@ mark {
   }
   
   .note-content {
-    padding-left: var(--space-lg) !important;
-    padding-right: var(--space-lg) !important;
+    padding-left: var(--space-md) !important;
+    padding-right: var(--space-md) !important;
   }
   
   /* Container with padding only on left for sidebar */

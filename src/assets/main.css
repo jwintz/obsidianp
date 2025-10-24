@@ -2645,7 +2645,7 @@ mark {
 }
 
 .properties-content {
-  padding: var(--space-sm);
+  padding: 0 var(--space-sm);
   max-height: 1000px;
   overflow: hidden;
   transition: max-height 0.3s ease, padding 0.3s ease;
@@ -2663,6 +2663,14 @@ mark {
   padding: var(--space-xs) 0;
   min-height: 24px;
   align-items: baseline;
+}
+
+.property-row:first-child {
+  padding-top: var(--space-sm);
+}
+
+.property-row:last-child {
+  padding-bottom: var(--space-sm);
 }
 
 .property-row:not(:last-child) {

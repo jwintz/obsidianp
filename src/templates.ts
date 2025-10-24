@@ -61,7 +61,7 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
 <html lang="en" data-base-path="${basePath}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
     <title>${pageTitle}</title>
     <link rel="stylesheet" href="${basePath}/assets/main.css">
     <link rel="stylesheet" href="${basePath}/assets/katex.min.css">
@@ -72,8 +72,6 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
     <a href="#note-content" class="skip-to-content">Skip to content</a>
     
     <div class="app-container">
-        <div class="sidebar-overlay" id="sidebar-overlay"></div>
-        
         <!-- Mobile header - outside sidebar for always visible -->
         <header class="mobile-header" id="mobile-header">
             <div class="mobile-header-content">
@@ -180,7 +178,7 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                 </div>
             </aside>
         </main>
-        
+
         <!-- Graph Modal Popups -->
         <div class="graph-modal hidden" id="global-graph-modal">
             <div class="graph-modal-overlay" id="global-graph-overlay"></div>
@@ -206,10 +204,15 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                     <div class="graph-parameter-panel graph-parameter-panel--global" aria-label="Graph display options (global view)">
                         <div class="graph-parameter-header">
                             <span class="graph-parameter-title">Display options</span>
-                            <button type="button" class="graph-parameter-reset" id="global-graph-reset" title="Reset to defaults">
-                                ${getLucideIcon('RotateCcw', 14)}
-                                <span>Reset</span>
-                            </button>
+                            <div class="graph-parameter-header-controls">
+                                <button type="button" class="graph-parameter-collapse icon-button" title="Collapse/Expand">
+                                    ${getLucideIcon('ChevronDown', 16)}
+                                </button>
+                                <button type="button" class="graph-parameter-reset" id="global-graph-reset" title="Reset to defaults">
+                                    ${getLucideIcon('RotateCcw', 14)}
+                                    <span>Reset</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="graph-parameter-section" aria-label="Filters">
                             <span class="graph-parameter-section-title">Filters</span>
@@ -312,10 +315,15 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                     <div class="graph-parameter-panel" id="local-graph-parameters" aria-label="Local graph display options">
                         <div class="graph-parameter-header">
                             <span class="graph-parameter-title">Display options</span>
-                            <button type="button" class="graph-parameter-reset" id="local-graph-reset" title="Reset to defaults">
-                                ${getLucideIcon('RotateCcw', 14)}
-                                <span>Reset</span>
-                            </button>
+                            <div class="graph-parameter-header-controls">
+                                <button type="button" class="graph-parameter-collapse icon-button" title="Collapse/Expand">
+                                    ${getLucideIcon('ChevronDown', 16)}
+                                </button>
+                                <button type="button" class="graph-parameter-reset" id="local-graph-reset" title="Reset to defaults">
+                                    ${getLucideIcon('RotateCcw', 14)}
+                                    <span>Reset</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="graph-parameter-section" aria-label="Traversal depth">
                             <span class="graph-parameter-section-title">Depth</span>
@@ -401,7 +409,7 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
             </div>
         </div>
     </div>
-    
+
     <script src="${basePath}/assets/abcjs-basic-min.js"></script>
     <script src="${basePath}/assets/mermaid.min.js"></script>
     <script>

@@ -223,22 +223,18 @@ class ObsidianSSGApp {
   
   closeMobileMenu() {
     const sidebar = document.querySelector('.sidebar');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-    
-    if (sidebar && sidebarOverlay) {
+
+    if (sidebar) {
       sidebar.classList.remove('open');
-      sidebarOverlay.classList.remove('visible');
       document.body.classList.remove('menu-open');
     }
   }
-  
+
   openMobileMenu() {
     const sidebar = document.querySelector('.sidebar');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-    
-    if (sidebar && sidebarOverlay) {
+
+    if (sidebar) {
       sidebar.classList.add('open');
-      sidebarOverlay.classList.add('visible');
       document.body.classList.add('menu-open');
     }
   }
@@ -376,7 +372,8 @@ class ObsidianSSGApp {
     
     // Mobile menu toggle button
     if (mobileMenuToggle) {
-      mobileMenuToggle.addEventListener('click', () => {
+      mobileMenuToggle.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent click-outside handler from firing
         const sidebar = document.querySelector('.sidebar');
         if (sidebar && sidebar.classList.contains('open')) {
           this.closeMobileMenu();
@@ -386,13 +383,21 @@ class ObsidianSSGApp {
       });
     }
     
-    // Close sidebar when clicking overlay
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-    if (sidebarOverlay) {
-      sidebarOverlay.addEventListener('click', () => {
-        this.closeMobileMenu();
-      });
-    }
+    // Close sidebar when clicking outside
+    document.addEventListener('click', (e) => {
+      const sidebar = document.querySelector('.sidebar');
+      const menuToggle = document.getElementById('mobile-menu-toggle');
+
+      if (sidebar && sidebar.classList.contains('open')) {
+        // Check if click is outside sidebar and not on toggle button (or its children)
+        const isClickOnToggle = menuToggle && (menuToggle.contains(e.target) || menuToggle === e.target);
+        const isClickOnSidebar = sidebar.contains(e.target);
+
+        if (!isClickOnSidebar && !isClickOnToggle) {
+          this.closeMobileMenu();
+        }
+      }
+    });
     
     // Graph expansion controls
     this.initializeGraphControls();
@@ -480,7 +485,29 @@ class ObsidianSSGApp {
         this.hideLocalGraphModal();
       });
     }
-    
+
+    // Setup collapse/expand buttons for parameter panels
+    const collapseButtons = document.querySelectorAll('.graph-parameter-collapse');
+    collapseButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const panel = btn.closest('.graph-parameter-panel');
+        if (panel) {
+          panel.classList.toggle('collapsed');
+
+          // Sync collapsed state to both panels
+          const isCollapsed = panel.classList.contains('collapsed');
+          const allPanels = document.querySelectorAll('.graph-parameter-panel');
+          allPanels.forEach(p => {
+            if (isCollapsed) {
+              p.classList.add('collapsed');
+            } else {
+              p.classList.remove('collapsed');
+            }
+          });
+        }
+      });
+    });
+
     // Close modal when clicking overlay
     const globalOverlay = document.getElementById('global-graph-overlay');
     if (globalOverlay) {
@@ -508,30 +535,28 @@ class ObsidianSSGApp {
   showGlobalGraphModal() {
     const modal = document.getElementById('global-graph-modal');
     const container = document.getElementById('global-graph-container');
-    
+
     if (modal && container && this.graph) {
       // Close sidebar if open (mobile)
       const sidebar = document.querySelector('.sidebar');
       if (sidebar && sidebar.classList.contains('open')) {
         sidebar.classList.remove('open');
       }
-      
+
       modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden'; // Prevent background scrolling
-      
+
       // Render global graph
       this.graph.renderGlobalGraph(container);
-      
+
       // Update toggle states
       this.updateGraphToggleStates('global');
     }
   }
-  
+
   hideGlobalGraphModal() {
     const modal = document.getElementById('global-graph-modal');
     if (modal) {
       modal.classList.add('hidden');
-      document.body.style.overflow = ''; // Restore scrolling
     }
   }
   
@@ -539,30 +564,28 @@ class ObsidianSSGApp {
     const modal = document.getElementById('local-graph-modal');
     const container = document.getElementById('local-graph-container');
     const targetNoteId = noteId || this.currentNote?.id;
-    
+
     if (modal && container && this.graph && targetNoteId) {
       // Close sidebar if open (mobile)
       const sidebar = document.querySelector('.sidebar');
       if (sidebar && sidebar.classList.contains('open')) {
         sidebar.classList.remove('open');
       }
-      
+
       modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden'; // Prevent background scrolling
-      
+
       // Render local graph - pass note ID, not note object
       this.graph.renderLocalGraph(container, targetNoteId);
-      
+
       // Update toggle states
       this.updateGraphToggleStates('local');
     }
   }
-  
+
   hideLocalGraphModal() {
     const modal = document.getElementById('local-graph-modal');
     if (modal) {
       modal.classList.add('hidden');
-      document.body.style.overflow = ''; // Restore scrolling
     }
   }
   
@@ -571,7 +594,7 @@ class ObsidianSSGApp {
     this.showGlobalGraphModal();
     this.updateGraphToggleStates('global');
   }
-  
+
   switchToLocalGraph() {
     this.hideGlobalGraphModal();
     // Use current note or fall back to last viewed note

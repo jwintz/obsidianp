@@ -10,7 +10,7 @@ category: architecture
 audience: developers
 difficulty: intermediate
 estimated_time: 20 minutes
-last_updated: 2025-10-17
+last_updated: 2025-10-24
 related_components:
   - VaultProcessor
   - MarkdownProcessor
@@ -27,10 +27,11 @@ Obsidian:P consists of several core components that work together to transform y
 graph TB
     A[Obsidian Vault] --> B[VaultProcessor]
     B --> C[MarkdownProcessor]
-    B --> D[GraphRenderer]
+    B --> D[Graph Data JSON]
     C --> E[SiteGenerator]
     D --> E
     E --> F[Static HTML Site]
+    F --> G[Client-Side Graph/D3.js]
 ```
 
 ## Component Relationships

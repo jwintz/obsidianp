@@ -11,9 +11,7 @@ category: features
 audience: all
 difficulty: beginner
 estimated_time: 15 minutes
-last_updated: 2025-10-17
-related_apis:
-  - GraphRenderer API
+last_updated: 2025-10-24
 ---
 
 # Interactive Graph Views
@@ -52,9 +50,9 @@ The local graph shows connections around a specific note.
 - **Center force** - Gravitational pull to center (0-1)
 - **Repel force** - Node-to-node repulsion (0-2)
 
-### Implementation
+## Graph Rendering Implementation
 
-See [[GraphRenderer API]] for implementation details.
+The graph visualization is implemented client-side in `src/assets/graph.js` using D3.js.
 
 ## Global Graph View
 

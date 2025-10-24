@@ -1058,26 +1058,32 @@ mark {
 }
 
 [data-theme="light"] .graph-parameter-toggle input[type="checkbox"] + span::after {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.75),
-              inset 0 -1px 1px rgba(0, 0, 0, 0.06);
+  background: rgba(240, 239, 247, 0.9);
+  border: 1px solid rgba(93, 63, 211, 0.2);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9),
+              inset 0 -1px 1px rgba(93, 63, 211, 0.12),
+              0 0 0 0 rgba(93, 63, 211, 0.2);
 }
 
 [data-theme="light"] .graph-parameter-toggle input[type="checkbox"] + span::before {
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(93, 63, 211, 0.25);
+  box-shadow: 0 2px 6px rgba(93, 63, 211, 0.18);
 }
 
 [data-theme="light"] .graph-parameter-toggle input[type="checkbox"]:checked + span::after {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(123, 97, 255, 0.18);
+  border-color: rgba(123, 97, 255, 0.55);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.85),
+              inset 0 -1px 2px rgba(93, 63, 211, 0.35),
+              0 0 0 2px rgba(123, 97, 255, 0.2);
 }
 
 [data-theme="light"] .graph-parameter-toggle input[type="checkbox"]:checked + span::before {
   background: rgba(255, 255, 255, 1);
-  border-color: rgba(0, 0, 0, 0.1);
+  border-color: rgba(93, 63, 211, 0.4);
+  box-shadow: 0 3px 8px rgba(93, 63, 211, 0.35),
+              0 0 0 1px rgba(109, 72, 238, 0.25);
 }
 
 .graph-parameter-toggle strong {

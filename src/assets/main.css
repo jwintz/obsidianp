@@ -2524,6 +2524,11 @@ mark {
   margin: var(--space-lg) 0;
 }
 
+/* Make plain pre blocks also have position relative for copy button */
+.note-body pre {
+  position: relative;
+}
+
 .code-block-language {
   position: absolute;
   top: var(--space-sm);
@@ -2543,7 +2548,59 @@ mark {
   background-color: var(--color-bg-secondary);
   border-radius: 4px;
   pointer-events: none;
-  min-height: 20px;
+  height: 28px;
+  box-sizing: border-box;
+}
+
+/* Copy button for code blocks */
+.code-copy-button {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-md);
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 4px 8px;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  color: var(--color-text-secondary);
+  box-sizing: border-box;
+}
+
+.code-copy-button:hover {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.code-copy-button:active {
+  background-color: var(--color-bg-primary);
+}
+
+.code-copy-button.copied {
+  color: var(--color-primary);
+}
+
+.code-block-wrapper:hover .code-copy-button,
+.note-body pre:hover .code-copy-button {
+  opacity: 1;
+}
+
+.code-copy-button svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Adjust language label position when copy button is visible */
+.code-block-wrapper:hover .code-block-language,
+.note-body pre:hover .code-block-language {
+  right: calc(var(--space-md) + 40px);
 }
 
 .code-block-wrapper .shiki-container {

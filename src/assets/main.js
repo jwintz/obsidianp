@@ -96,6 +96,12 @@ class ObsidianSSGApp {
         this.loadNote(noteId);
       }
     }
+    
+    // Initialize code copy buttons after initial content is loaded
+    // Use setTimeout to ensure content is fully rendered
+    setTimeout(() => {
+      this.initializeCodeCopyButtons();
+    }, 100);
   }
   
   async loadData() {
@@ -924,6 +930,9 @@ class ObsidianSSGApp {
       if (window.initializeMermaid) {
         window.initializeMermaid();
       }
+      
+      // Initialize copy buttons for code blocks
+      this.initializeCodeCopyButtons();
     }
     
     // Update backlinks
@@ -1010,6 +1019,9 @@ class ObsidianSSGApp {
       if (window.initializeMermaid) {
         window.initializeMermaid();
       }
+      
+      // Initialize copy buttons for code blocks
+      this.initializeCodeCopyButtons();
     }
     
     // Update active state in sidebar and expand hierarchy
@@ -2512,6 +2524,108 @@ class ObsidianSSGApp {
     if (currentItem) {
       currentItem.classList.add('active');
     }
+  }
+  
+  initializeCodeCopyButtons() {
+    // Find all code block wrappers and plain pre blocks
+    const codeBlockWrappers = document.querySelectorAll('.code-block-wrapper');
+    const prePlainBlocks = document.querySelectorAll('.note-body pre:not(.code-block-wrapper pre)');
+    
+    // Combine both NodeLists into one array
+    const allCodeBlocks = [...codeBlockWrappers, ...prePlainBlocks];
+    
+    allCodeBlocks.forEach(container => {
+      // Skip if already has a copy button
+      if (container.querySelector('.code-copy-button')) {
+        return;
+      }
+      
+      // Create copy button
+      const copyButton = document.createElement('button');
+      copyButton.className = 'code-copy-button';
+      copyButton.setAttribute('aria-label', 'Copy code to clipboard');
+      copyButton.setAttribute('title', 'Copy code');
+      
+      // Copy icon SVG
+      const copySvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>`;
+      
+      // Check icon SVG (for success state)
+      const checkSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>`;
+      
+      copyButton.innerHTML = copySvg;
+      
+      // Add click handler
+      copyButton.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Find the code element - handle both wrapper and plain pre cases
+        let codeElement;
+        if (container.classList.contains('code-block-wrapper')) {
+          codeElement = container.querySelector('pre code') || container.querySelector('code');
+        } else {
+          // Plain pre block
+          codeElement = container.querySelector('code') || container;
+        }
+        
+        if (!codeElement) return;
+        
+        // Get the text content
+        const code = codeElement.textContent || '';
+        
+        try {
+          // Copy to clipboard
+          await navigator.clipboard.writeText(code);
+          
+          // Show success state
+          copyButton.innerHTML = checkSvg;
+          copyButton.classList.add('copied');
+          copyButton.setAttribute('title', 'Copied!');
+          
+          // Reset after 2 seconds
+          setTimeout(() => {
+            copyButton.innerHTML = copySvg;
+            copyButton.classList.remove('copied');
+            copyButton.setAttribute('title', 'Copy code');
+          }, 2000);
+        } catch (err) {
+          console.error('Failed to copy code:', err);
+          
+          // Fallback for older browsers
+          try {
+            const textArea = document.createElement('textarea');
+            textArea.value = code;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            // Show success state
+            copyButton.innerHTML = checkSvg;
+            copyButton.classList.add('copied');
+            copyButton.setAttribute('title', 'Copied!');
+            
+            setTimeout(() => {
+              copyButton.innerHTML = copySvg;
+              copyButton.classList.remove('copied');
+              copyButton.setAttribute('title', 'Copy code');
+            }, 2000);
+          } catch (fallbackErr) {
+            console.error('Fallback copy also failed:', fallbackErr);
+          }
+        }
+      });
+      
+      // Add button to container
+      container.appendChild(copyButton);
+    });
   }
   
   extractNoteIdFromLink(link) {

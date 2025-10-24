@@ -903,12 +903,21 @@ mark {
   flex-direction: column;
   gap: var(--space-sm);
   padding: var(--space-md);
-  background: color-mix(in srgb, var(--color-bg-secondary) 80%, transparent);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--color-border);
+  background: rgba(28, 28, 30, 0.2);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: none;
   z-index: 10;
+}
+
+[data-theme="light"] .graph-parameter-panel {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: none;
 }
 
 .graph-parameter-header {
@@ -1469,9 +1478,9 @@ mark {
     max-height: var(--graph-sheet-height);
     border-radius: var(--border-radius-lg);
     padding: var(--space-lg);
-    background: rgba(28, 28, 30, 0.25);
-    backdrop-filter: blur(120px) saturate(320%) brightness(1.12);
-    -webkit-backdrop-filter: blur(120px) saturate(320%) brightness(1.12);
+    background: rgba(28, 28, 30, 0.2);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
     border: 0.5px solid rgba(255, 255, 255, 0.2);
     box-shadow: none;
     overflow-y: auto;
@@ -1482,10 +1491,10 @@ mark {
   }
 
   [data-theme="light"] .graph-parameter-panel {
-    background: rgba(255, 255, 255, 0.28);
-    backdrop-filter: blur(120px) saturate(220%) brightness(1.18);
-    -webkit-backdrop-filter: blur(120px) saturate(220%) brightness(1.18);
-    border: 0.5px solid rgba(255, 255, 255, 0.65);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid rgba(0, 0, 0, 0.15);
     box-shadow: none;
   }
 

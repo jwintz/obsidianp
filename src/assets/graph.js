@@ -1049,11 +1049,11 @@ class GraphView {
       .filter(Boolean);
 
     if (settings.includeTags) {
-      noteIds.forEach(noteId => {
-        const note = this.notes.get(noteId);
-        if (!note) return;
-        const noteTags = this.extractTags(note);
-        noteTags.forEach(tagName => {
+      // Only include tags from the current note (not from all notes in the graph)
+      const currentNote = this.notes.get(currentNodeId);
+      if (currentNote) {
+        const currentNoteTags = this.extractTags(currentNote);
+        currentNoteTags.forEach(tagName => {
           const tagId = `tag:${tagName}`;
           if (!tagNodes.has(tagId)) {
             const baseTagData = this.nodeDataById.has(tagId)
@@ -1066,9 +1066,9 @@ class GraphView {
                 };
             tagNodes.set(tagId, baseTagData);
           }
-          addLink(noteId, tagId, 'tag');
+          addLink(currentNodeId, tagId, 'tag');
         });
-      });
+      }
     }
 
     const tagNodeValues = Array.from(tagNodes.values());

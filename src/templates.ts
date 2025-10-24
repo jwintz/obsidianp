@@ -72,27 +72,6 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
     <a href="#note-content" class="skip-to-content">Skip to content</a>
     
     <div class="app-container">
-        <!-- Mobile header - outside sidebar for always visible -->
-        <header class="mobile-header" id="mobile-header">
-            <div class="mobile-header-content">
-                <button id="mobile-menu-toggle" class="mobile-menu-toggle" title="Toggle navigation">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="18" x2="21" y2="18"></line>
-                    </svg>
-                </button>
-                <a href="${basePath}/" class="vault-title-link">
-                    <h1 class="vault-title">${vaultTitle}</h1>
-                </a>
-                <div class="mobile-header-controls">
-                    <button id="theme-toggle" class="icon-button" title="Toggle theme">
-                        ${getLucideIcon('Sun', 16)}
-                    </button>
-                </div>
-            </div>
-        </header>
-        
         <!-- Adaptive Pill Navigation (Mobile/Tablet) -->
         <nav class="nav-pills-container" id="nav-pills-container" role="navigation" aria-label="Main navigation">
             <button id="nav-menu-btn" class="nav-pill-action icon-only" title="Open menu">

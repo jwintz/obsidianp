@@ -2154,10 +2154,6 @@ mark {
   }
 }
 
-.mobile-header {
-  display: none !important;
-}
-
 .sidebar-overlay {
   position: fixed;
   inset: 0;
@@ -2182,12 +2178,8 @@ mark {
   }
 }
 
-/* Hide mobile menu toggle and overlay on desktop */
+/* Hide sidebar overlay on desktop */
 @media (min-width: 769px) {
-  .mobile-menu-toggle {
-    display: none;
-  }
-  
   .sidebar-overlay {
     display: none;
   }
@@ -4294,12 +4286,7 @@ mark {
   .nav-pills-container {
     display: none !important;
   }
-  
-  /* Hide mobile header on tablet */
-  .mobile-header {
-    display: none !important;
-  }
-  
+
   /* Reset sidebar overlay from mobile */
   .sidebar-overlay {
     display: none !important;
@@ -4383,12 +4370,7 @@ mark {
   .nav-pills-container {
     display: none !important;
   }
-  
-  /* Hide mobile header on desktop */
-  .mobile-header {
-    display: none !important;
-  }
-  
+
   /* Reset sidebar overlay from mobile */
   .sidebar-overlay {
     display: none !important;

@@ -367,33 +367,19 @@ class ObsidianSSGApp {
   }
 
   initializeEventListeners() {
-    // Mobile menu toggle
-    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-    
-    // Mobile menu toggle button
-    if (mobileMenuToggle) {
-      mobileMenuToggle.addEventListener('click', (e) => {
-        e.stopPropagation(); // Prevent click-outside handler from firing
-        const sidebar = document.querySelector('.sidebar');
-        if (sidebar && sidebar.classList.contains('open')) {
-          this.closeMobileMenu();
-        } else {
-          this.openMobileMenu();
-        }
-      });
-    }
-    
-    // Close sidebar when clicking outside
+    // Close sidebar when clicking outside (mobile only)
     document.addEventListener('click', (e) => {
       const sidebar = document.querySelector('.sidebar');
-      const menuToggle = document.getElementById('mobile-menu-toggle');
+      const menuToggle = document.getElementById('nav-menu-btn');
+      const pillNav = document.querySelector('.nav-pills-container');
 
       if (sidebar && sidebar.classList.contains('open')) {
-        // Check if click is outside sidebar and not on toggle button (or its children)
+        // Check if click is outside sidebar and not on toggle button or pill navigation
         const isClickOnToggle = menuToggle && (menuToggle.contains(e.target) || menuToggle === e.target);
+        const isClickOnPillNav = pillNav && pillNav.contains(e.target);
         const isClickOnSidebar = sidebar.contains(e.target);
 
-        if (!isClickOnSidebar && !isClickOnToggle) {
+        if (!isClickOnSidebar && !isClickOnToggle && !isClickOnPillNav) {
           this.closeMobileMenu();
         }
       }

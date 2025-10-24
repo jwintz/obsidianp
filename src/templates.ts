@@ -415,45 +415,45 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                     // CRITICAL: Set dark mode flag
                     darkMode: true,
                     
-                    // Base colors - use dark backgrounds
-                    primaryColor: '#374151',
+                    // Base colors - use better contrast purple-ish theme
+                    primaryColor: '#7c3aed',
                     primaryTextColor: '#ffffff',
-                    primaryBorderColor: '#8b5cf6',
+                    primaryBorderColor: '#a78bfa',
                     
-                    secondaryColor: '#4b5563',
+                    secondaryColor: '#5b21b6',
                     secondaryTextColor: '#ffffff',
-                    secondaryBorderColor: '#8b5cf6',
+                    secondaryBorderColor: '#a78bfa',
                     
-                    tertiaryColor: '#1f2937',
+                    tertiaryColor: '#4c1d95',
                     tertiaryTextColor: '#ffffff',
-                    tertiaryBorderColor: '#6b7280',
+                    tertiaryBorderColor: '#8b5cf6',
                     
-                    // Critical: Main backgrounds
+                    // Critical: Main backgrounds - darker for better contrast
                     background: '#1e1e1e',
-                    mainBkg: '#374151',
-                    secondBkg: '#4b5563',
-                    tertiaryBkg: '#1f2937',
+                    mainBkg: '#7c3aed',
+                    secondBkg: '#6d28d9',
+                    tertiaryBkg: '#5b21b6',
                     
-                    // Lines and text
-                    lineColor: '#9ca3af',
+                    // Lines and text - lighter for visibility
+                    lineColor: '#d1d5db',
                     textColor: '#ffffff',
                     
-                    // Borders
-                    border1: '#6b7280',
-                    border2: '#9ca3af',
+                    // Borders - vibrant purple
+                    border1: '#a78bfa',
+                    border2: '#c4b5fd',
                     
                     // Arrows
-                    arrowheadColor: '#9ca3af',
+                    arrowheadColor: '#d1d5db',
                     
-                    // Flowchart
-                    nodeBkg: '#374151',
+                    // Flowchart - vibrant purple nodes
+                    nodeBkg: '#7c3aed',
                     nodeTextColor: '#ffffff',
-                    nodeBorder: '#8b5cf6',
-                    clusterBkg: '#1f2937',
-                    clusterBorder: '#6b7280',
-                    defaultLinkColor: '#9ca3af',
+                    nodeBorder: '#a78bfa',
+                    clusterBkg: '#2e1065',
+                    clusterBorder: '#8b5cf6',
+                    defaultLinkColor: '#d1d5db',
                     titleColor: '#ffffff',
-                    edgeLabelBackground: '#1e1e1e',
+                    edgeLabelBackground: '#1f2937',
                     
                     // Class diagram - CRITICAL
                     classText: '#ffffff',
@@ -461,22 +461,22 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                     // State diagram
                     labelColor: '#ffffff',
                     
-                    // Sequence diagram
-                    actorBkg: '#374151',
-                    actorBorder: '#8b5cf6',
+                    // Sequence diagram - better contrast
+                    actorBkg: '#7c3aed',
+                    actorBorder: '#a78bfa',
                     actorTextColor: '#ffffff',
-                    actorLineColor: '#6b7280',
-                    signalColor: '#9ca3af',
+                    actorLineColor: '#9ca3af',
+                    signalColor: '#d1d5db',
                     signalTextColor: '#ffffff',
-                    labelBoxBkgColor: '#1e1e1e',
-                    labelBoxBorderColor: '#6b7280',
+                    labelBoxBkgColor: '#1f2937',
+                    labelBoxBorderColor: '#8b5cf6',
                     labelTextColor: '#ffffff',
                     loopTextColor: '#ffffff',
-                    noteBkgColor: '#4b5563',
+                    noteBkgColor: '#6d28d9',
                     noteTextColor: '#ffffff',
-                    noteBorderColor: '#8b5cf6',
-                    activationBkgColor: '#8b5cf6',
-                    activationBorderColor: '#a78bfa',
+                    noteBorderColor: '#a78bfa',
+                    activationBkgColor: '#a78bfa',
+                    activationBorderColor: '#c4b5fd',
                     sequenceNumberColor: '#ffffff',
                     
                     // Gantt
@@ -653,6 +653,11 @@ function generateTemplate(pageTitle: string, vaultTitle: string, basePath: strin
                     gridLineStartPadding: 35,
                     fontSize: 14,
                     numberSectionStyles: 4,
+                    barHeight: 20,
+                    barGap: 4,
+                    topPadding: 50,
+                    rightPadding: 35,
+                    sectionFontSize: 14,
                 },
                 class: {
                     useMaxWidth: true,

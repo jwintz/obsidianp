@@ -2527,9 +2527,9 @@ class ObsidianSSGApp {
   }
   
   initializeCodeCopyButtons() {
-    // Find all code block wrappers and plain pre blocks
+    // Find all code block wrappers and plain pre blocks, but EXCLUDE mermaid blocks
     const codeBlockWrappers = document.querySelectorAll('.code-block-wrapper');
-    const prePlainBlocks = document.querySelectorAll('.note-body pre:not(.code-block-wrapper pre)');
+    const prePlainBlocks = document.querySelectorAll('.note-body pre:not(.code-block-wrapper pre):not(.mermaid)');
     
     // Combine both NodeLists into one array
     const allCodeBlocks = [...codeBlockWrappers, ...prePlainBlocks];
@@ -2537,6 +2537,11 @@ class ObsidianSSGApp {
     allCodeBlocks.forEach(container => {
       // Skip if already has a copy button
       if (container.querySelector('.code-copy-button')) {
+        return;
+      }
+      
+      // Skip mermaid blocks (double-check)
+      if (container.classList.contains('mermaid')) {
         return;
       }
       

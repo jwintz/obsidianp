@@ -3859,17 +3859,43 @@ mark {
   stroke-width: 2.5px !important;
 }
 
-/* Edge labels - ensure background contrast */
+/* Edge labels - hide background rectangles ONLY for flowcharts */
 .mermaid .edgeLabel {
-  background-color: var(--color-bg-secondary) !important;
-  padding: 6px 10px !important;
-  border-radius: 4px !important;
+  background-color: transparent !important;
+  padding: 2px 4px !important;
+  border-radius: 0 !important;
 }
 
-.mermaid .edgeLabel rect {
-  fill: var(--color-bg-secondary) !important;
-  stroke: var(--color-border) !important;
-  stroke-width: 1px !important;
+/* Only hide edge label rectangles in flowcharts, not other diagram types */
+.mermaid.flowchart .edgeLabel rect,
+svg[id^="mermaid-"] g.edgeLabel rect[class*="label"] {
+  display: none !important;
+}
+
+/* Make edge label text simple - just use foreground color, no decorations */
+.mermaid .edgeLabel span,
+.mermaid .edgeLabel p,
+.mermaid .edgeLabel div {
+  font-weight: 400 !important;
+  text-shadow: none !important;
+  background: none !important;
+  padding: 0 !important;
+}
+
+/* Remove Start/End terminal nodes ONLY in flowcharts */
+.mermaid g[id*="flowchart"] g[id*="Start"] rect,
+.mermaid g[id*="flowchart"] g[id*="End"] rect,
+.mermaid g.nodes g[id*="Start"] rect,
+.mermaid g.nodes g[id*="End"] rect {
+  display: none !important;
+}
+
+/* Also hide Start/End text labels ONLY in flowcharts */
+.mermaid g[id*="flowchart"] g[id*="Start"] text,
+.mermaid g[id*="flowchart"] g[id*="End"] text,
+.mermaid g.nodes g[id*="Start"] text,
+.mermaid g.nodes g[id*="End"] text {
+  display: none !important;
 }
 
 /* Class diagram - let Mermaid theme handle fills, only enforce text */

@@ -223,19 +223,31 @@ class ObsidianSSGApp {
   
   closeMobileMenu() {
     const sidebar = document.querySelector('.sidebar');
+    const menuBtn = document.getElementById('nav-menu-btn');
 
     if (sidebar) {
       sidebar.classList.remove('open');
       document.body.classList.remove('sidebar-open');
     }
+
+    // Update toggle button ARIA state (no visual styling change)
+    if (menuBtn) {
+      menuBtn.setAttribute('aria-expanded', 'false');
+    }
   }
 
   openMobileMenu() {
     const sidebar = document.querySelector('.sidebar');
+    const menuBtn = document.getElementById('nav-menu-btn');
 
     if (sidebar) {
       sidebar.classList.add('open');
       document.body.classList.add('sidebar-open');
+    }
+
+    // Update toggle button ARIA state (no visual styling change)
+    if (menuBtn) {
+      menuBtn.setAttribute('aria-expanded', 'true');
     }
   }
   
@@ -521,16 +533,18 @@ class ObsidianSSGApp {
   showGlobalGraphModal() {
     const modal = document.getElementById('global-graph-modal');
     const container = document.getElementById('global-graph-container');
+    const graphBtn = document.getElementById('nav-graph-btn');
 
     if (modal && container && this.graph) {
-      // Close sidebar if open (mobile)
-      const sidebar = document.querySelector('.sidebar');
-      if (sidebar && sidebar.classList.contains('open')) {
-        sidebar.classList.remove('open');
-        document.body.classList.remove('sidebar-open');
-      }
+      // Close sidebar if open (mobile) - mutual exclusivity
+      this.closeMobileMenu();
 
       modal.classList.remove('hidden');
+
+      // Update graph button ARIA state (no visual styling change)
+      if (graphBtn) {
+        graphBtn.setAttribute('aria-pressed', 'true');
+      }
 
       // Wait for layout to complete before rendering graph
       requestAnimationFrame(() => {
@@ -547,8 +561,15 @@ class ObsidianSSGApp {
 
   hideGlobalGraphModal() {
     const modal = document.getElementById('global-graph-modal');
+    const graphBtn = document.getElementById('nav-graph-btn');
+
     if (modal) {
       modal.classList.add('hidden');
+    }
+
+    // Update graph button ARIA state (no visual styling change)
+    if (graphBtn) {
+      graphBtn.setAttribute('aria-pressed', 'false');
     }
   }
   
@@ -556,16 +577,18 @@ class ObsidianSSGApp {
     const modal = document.getElementById('local-graph-modal');
     const container = document.getElementById('local-graph-container');
     const targetNoteId = noteId || this.currentNote?.id;
+    const graphBtn = document.getElementById('nav-graph-btn');
 
     if (modal && container && this.graph && targetNoteId) {
-      // Close sidebar if open (mobile)
-      const sidebar = document.querySelector('.sidebar');
-      if (sidebar && sidebar.classList.contains('open')) {
-        sidebar.classList.remove('open');
-        document.body.classList.remove('sidebar-open');
-      }
+      // Close sidebar if open (mobile) - mutual exclusivity
+      this.closeMobileMenu();
 
       modal.classList.remove('hidden');
+
+      // Update graph button ARIA state (no visual styling change)
+      if (graphBtn) {
+        graphBtn.setAttribute('aria-pressed', 'true');
+      }
 
       // Wait for layout to complete before rendering graph
       requestAnimationFrame(() => {
@@ -582,8 +605,15 @@ class ObsidianSSGApp {
 
   hideLocalGraphModal() {
     const modal = document.getElementById('local-graph-modal');
+    const graphBtn = document.getElementById('nav-graph-btn');
+
     if (modal) {
       modal.classList.add('hidden');
+    }
+
+    // Update graph button ARIA state (no visual styling change)
+    if (graphBtn) {
+      graphBtn.setAttribute('aria-pressed', 'false');
     }
   }
   
@@ -2937,10 +2967,11 @@ class AdaptiveNavigation {
         const anyModalVisible = localVisible || globalVisible;
 
         if (anyModalVisible) {
-          // Close ALL graph modals
-          if (localModal) localModal.classList.add('hidden');
-          if (globalModal) globalModal.classList.add('hidden');
-          document.body.style.overflow = '';
+          // Close ALL graph modals using proper methods to update button states
+          if (window.app) {
+            window.app.hideGlobalGraphModal();
+            window.app.hideLocalGraphModal();
+          }
         } else {
           // Open the appropriate modal - trigger the expand graph button
           const expandGraph = document.getElementById('expand-graph');
@@ -3007,25 +3038,23 @@ class AdaptiveNavigation {
         console.log('Sidebar is currently', isOpen ? 'open' : 'closed');
 
         if (isOpen) {
-          // Close sidebar
-          this.sidebar.classList.remove('open');
-          document.body.classList.remove('sidebar-open');
-          console.log('Closing sidebar');
-        } else {
-          // Close any open graph modals
-          const globalGraphModal = document.getElementById('global-graph-modal');
-          const localGraphModal = document.getElementById('local-graph-modal');
-          if (globalGraphModal && !globalGraphModal.classList.contains('hidden')) {
-            globalGraphModal.classList.add('hidden');
+          // Close sidebar using proper method to update button state
+          if (window.app) {
+            window.app.closeMobileMenu();
+            console.log('Closing sidebar');
           }
-          if (localGraphModal && !localGraphModal.classList.contains('hidden')) {
-            localGraphModal.classList.add('hidden');
+        } else {
+          // Close any open graph modals using proper methods to update button states
+          if (window.app) {
+            window.app.hideGlobalGraphModal();
+            window.app.hideLocalGraphModal();
           }
 
-          // Open sidebar
-          this.sidebar.classList.add('open');
-          document.body.classList.add('sidebar-open');
-          console.log('Opening sidebar');
+          // Open sidebar using proper method to update button state
+          if (window.app) {
+            window.app.openMobileMenu();
+            console.log('Opening sidebar');
+          }
         }
       });
     } else {

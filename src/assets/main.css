@@ -1249,22 +1249,9 @@ mark {
 }
 
 @media (max-width: 768px) {
-  /* Smooth transition for blur effect */
-  .main-content {
-    transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  }
-
-  /* Blur and darken content when graph modal is visible */
+  /* Hide main content when graph modal is visible */
   body:has(.graph-modal:not(.hidden)) .main-content {
-    filter: blur(30px) brightness(0.75) !important;
-    -webkit-filter: blur(30px) brightness(0.75) !important;
-  }
-
-  /* Shadow gradients when graph modal is open - reuse body::before/after with higher z-index */
-  body:has(.graph-modal:not(.hidden))::before,
-  body:has(.graph-modal:not(.hidden))::after {
-    opacity: 1;
-    z-index: 9998 !important; /* Just below modal (9999) but above content */
+    visibility: hidden !important;
   }
 
   /* Graph modal covers full screen edge-to-edge */
@@ -4522,8 +4509,8 @@ mark {
     flex: 1;
     /* Add top padding to account for floating navigation pills */
     padding-top: calc(env(safe-area-inset-top, 0px) + var(--nav-pill-height) + var(--space-lg)) !important;
-    /* Add bottom padding for safe area + extra for scroll */
-    padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 100px) !important;
+    /* Bottom padding only for safe area */
+    padding-bottom: env(safe-area-inset-bottom, 20px) !important;
     position: relative !important;
     width: 100%;
     background-color: var(--color-bg-primary) !important;
@@ -4598,42 +4585,10 @@ mark {
     border: 0.5px solid rgba(0, 0, 0, 0.08);
     box-shadow: 0 18px 24px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.9);
   }
-  
-  /* Blur main content when sidebar is open - smooth transition */
+
+  /* Hide main content when sidebar is open */
   body.sidebar-open .main-content {
-    filter: blur(30px) brightness(0.75) !important;
-    -webkit-filter: blur(30px) brightness(0.75) !important;
-    transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  }
-
-  /* Shadow gradients - applied to body to be OUTSIDE modals */
-  body::before,
-  body::after {
-    content: '';
-    position: fixed;
-    left: 0;
-    right: 0;
-    height: 200px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  body::before {
-    top: 0;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, transparent 100%);
-  }
-
-  body::after {
-    bottom: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
-  }
-
-  /* Show shadows when sidebar is open with appropriate z-index */
-  body.sidebar-open::before,
-  body.sidebar-open::after {
-    opacity: 1;
-    z-index: 10002 !important; /* Just below sidebar (10003) but above content and below nav pills (10100) */
+    visibility: hidden !important;
   }
 
   /* MOBILE: Show sidebar when open class is added */

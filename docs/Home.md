@@ -31,13 +31,13 @@ Obsidian:P is a TypeScript-based static site generator specifically designed for
 - **[[Features/Syntax Reference|Complete Syntax Support]]** - All Obsidian markdown features
 
 ### Obsidian Syntax Support
-- **Math Rendering** - LaTeX equations with KaTeX (inline `$...$` and block `$$...$$`)
+- **Math Rendering** - LaTeX equations with KaTeX
 - **Mermaid Diagrams** - Flow charts, sequence diagrams, gantt charts, and more
 - **ABC Music Notation** - Musical scores with ABCJS rendering
 - **Code Highlighting** - Syntax highlighting for 100+ languages with Shiki (dual theme support)
-- **Callouts** - Obsidian-style callouts (`> [!note]`, `> [!warning]`, etc.)
-- **Obsidian Databases** - Native database support with `.base` files for table and card views
-- **Embeds** - Image and note embeds (`![[image.png]]`, `![[note]]`, `![[note#view]]`)
+- **Callouts** - Obsidian-style callouts
+- **Obsidian Bases** - Native base support with `.base` files for table and card views
+- **Embeds** - Image and note embeds
 - **Tags** - Full tag support with `#` syntax
 
 ## Getting Started
@@ -50,8 +50,6 @@ Obsidian:P is a TypeScript-based static site generator specifically designed for
 ## Architecture
 
 - [[Architecture/Core Components|Core Components]] - Main system components
-- File structure and organization
-- Processing pipeline overview
 
 ## API Reference
 

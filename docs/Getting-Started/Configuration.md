@@ -47,7 +47,7 @@ Or create `obsidianp.config.jsonc` manually for a configuration with comments:
 ```jsonc
 {
   "title": "My Knowledge Base",
-  "basePath": "",  // For subfolder hosting (e.g., "/poseidon"), leave empty for root
+  "basePath": "",  // For subfolder hosting (e.g., "/folder"), leave empty for root
   "fonts": {
     "main": "Mona Sans, system-ui, sans-serif",
     "code": "Monaspace Krypton, monospace"
@@ -78,7 +78,7 @@ Or create `obsidianp.config.jsonc` manually for a configuration with comments:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `title` | string | "Vault" | Site title displayed in header |
-| `basePath` | string | "" | Base path for subfolder hosting (e.g., "/poseidon") |
+| `basePath` | string | "" | Base path for subfolder hosting (e.g., "/folder") |
 
 ### Fonts
 

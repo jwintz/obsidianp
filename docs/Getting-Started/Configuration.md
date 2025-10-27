@@ -185,4 +185,4 @@ const config: SiteConfig = {
 
 ---
 
-Read Next: [[Building Sites]]
+Read Next: [[Getting-Started/Building Sites|Building Sites]]

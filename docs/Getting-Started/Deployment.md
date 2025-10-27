@@ -301,10 +301,10 @@ Configure caching headers on your server for better performance.
 ## Generated Files
 
 The site generator creates:
-- **sitemap.xml** - Basic XML sitemap for search engines  
 - **.nojekyll** - Marker file for GitHub Pages (bypasses Jekyll processing)
 - **HTML files** - One per note and base file
-- **data/notes.json** - Search data
+- **data/notes.json** - Notes data and metadata
+- **data/search.json** - Search index
 - **assets/** - CSS, JavaScript, fonts, libraries
 
 ---

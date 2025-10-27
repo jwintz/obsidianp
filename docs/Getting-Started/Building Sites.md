@@ -64,73 +64,14 @@ obsidianp generate ./vault ./dist --config my-config.jsonc
 
 ## Build Process
 
-### 1. Vault Analysis
+The build process:
 
-The build process starts by analyzing your vault:
-
-```typescript
-// Scans all .md files
-// Extracts metadata and links
-// Builds internal graph structure
-```
-
-**Console Output:**
-```
-Scanning vault...
-Found 150 notes
-Found 45 folders
-Extracted 230 tags
-Built link graph with 450 connections
-```
-
-### 2. Content Processing
-
-Transforms markdown to HTML:
-
-```typescript
-// Processes wiki-links
-// Renders code blocks
-// Processes Mermaid diagrams
-// Renders ABC notation
-```
-
-**Console Output:**
-```
-Processing notes...
-[████████████████████] 150/150 Complete
-```
-
-### 3. Asset Generation
-
-Creates supporting files:
-
-```typescript
-// Generates search index
-// Creates graph data
-// Copies images and attachments
-// Bundles CSS and JavaScript
-```
-
-### 4. HTML Generation
-
-Creates final HTML pages:
-
-```typescript
-// Generates note pages
-// Creates index page
-// Builds navigation
-// Generates sitemap
-```
-
-**Console Output:**
-```
-Generating pages...
-Created 150 pages
-Generated search index
-Created sitemap.xml
-Build complete! ✓
-Output: ./dist
-```
+1. Scans all `.md` and `.base` files
+2. Extracts metadata and links
+3. Processes markdown to HTML
+4. Renders wiki-links, code blocks, diagrams
+5. Copies images and attachments
+6. Generates HTML pages and search index
 
 ### Serve Command
 
@@ -162,17 +103,8 @@ obsidianp serve ./vault --no-watch
 **Features:**
 - Automatic file watching and rebuilding
 - Live development server
-- Temporary output directory (no dist pollution)
-- Hot reload on changes
-
-**Console Output:**
-```
-🔮 Generating site...
-✅ Initial generation complete
-👀 Watching for file changes...
-🌐 Starting server on http://localhost:8000
-Press Ctrl+C to stop the server
-```
+- Temporary output directory
+- Watches vault and config files for changes
 
 ### Initialize Configuration
 
@@ -235,13 +167,19 @@ dist/
 ├── [note-name].html          # Note pages
 ├── assets/
 │   ├── main.css              # Styles
-│   ├── app.js                # Application logic
+│   ├── main.js               # Application logic
 │   ├── graph.js              # Graph rendering
 │   ├── search.js             # Search functionality
-│   └── search-index.json     # Search index
-├── attachments/
-│   └── [images, files]       # Vault attachments
-└── sitemap.xml               # SEO sitemap
+│   ├── d3.min.js             # D3.js library
+│   ├── mermaid.min.js        # Mermaid library
+│   ├── abcjs-basic-min.js    # ABCJS library
+│   ├── katex.min.css         # KaTeX styles
+│   └── fonts/                # Web fonts
+├── data/
+│   ├── notes.json            # Notes data and search index
+│   └── search.json           # Search index
+├── [images]                  # Images from vault
+└── .nojekyll                 # GitHub Pages marker
 ```
 
 ## Performance Tips
@@ -268,36 +206,22 @@ For vaults with many notes (500+):
 
 ### Build Fails
 
+Check vault path exists:
 ```bash
-# Check vault path
 ls vault/
-
-# Check permissions
-chmod -R 755 vault/
-
-# Clear cache
-rm -rf .obsidianp-cache
 ```
 
-### Missing Links
-
+Ensure vault contains markdown files:
 ```bash
-# Enable verbose output
-node dist/cli.js build --verbose
-
-# Check for broken links
-node dist/cli.js build --check-links
+find vault -name "*.md"
 ```
 
-### Performance Issues
+### Missing Content
 
-```bash
-# Profile build
-node dist/cli.js build --profile
-
-# Disable expensive features
-node dist/cli.js build --no-graph --no-search
-```
+Verify files are being processed:
+- Check that markdown files have `.md` extension
+- Ensure files are not in hidden directories (starting with `.`)
+- Verify images are in supported formats (PNG, JPG, SVG, WebP)
 
 ## Advanced Usage
 
@@ -347,4 +271,4 @@ rsync -avz ./dist/ user@server:/var/www/
 
 ---
 
-Read Next: [[Deployment]]
+Read Next: [[Getting-Started/Deployment|Deployment]]

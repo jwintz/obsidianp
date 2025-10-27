@@ -137,4 +137,6 @@ Graph rendering is optimized for large vaults:
 
 **Note:** Graph rendering is implemented client-side. For server-side data processing, see [[../API-Reference/VaultProcessor API|VaultProcessor API]]
 
-Read Next: [[Search System]]
+---
+
+Read Next: [[Features/Search System|Search System]]

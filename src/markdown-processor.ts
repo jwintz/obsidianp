@@ -622,8 +622,17 @@ export class MarkdownProcessor {
           <img src="${imagePath}" alt="${imageAlt}" />
         </div>`;
       } else {
+        // Resolve relative paths for note/base embeds
+        let resolvedLink = link;
+        if ((link.includes('../') || link.includes('./')) && noteFolderPath) {
+          // Resolve relative path based on current note's folder
+          const resolvedPath = path.normalize(path.join(noteFolderPath, link));
+          // Normalize to forward slashes for cross-platform compatibility
+          resolvedLink = resolvedPath.replace(/\\/g, '/');
+        }
+        
         // Create placeholder that will be resolved later with actual content
-        return `<div class="embed-placeholder" data-embed-target="${link}" data-embed-view="${viewName || ''}" data-embed-display="${displayText || ''}"></div>`;
+        return `<div class="embed-placeholder" data-embed-target="${resolvedLink}" data-embed-view="${viewName || ''}" data-embed-display="${displayText || ''}"></div>`;
       }
     });
 
@@ -634,16 +643,25 @@ export class MarkdownProcessor {
       const actualLink = parts[0].trim();
       const displayText = parts.length > 1 ? parts[1].trim() : actualLink;
 
+      // Resolve relative paths if the link contains ../ or ./
+      let resolvedLink = actualLink;
+      if ((actualLink.includes('../') || actualLink.includes('./')) && noteFolderPath) {
+        // Resolve relative path based on current note's folder
+        const resolvedPath = path.normalize(path.join(noteFolderPath, actualLink));
+        // Normalize to forward slashes for cross-platform compatibility
+        resolvedLink = resolvedPath.replace(/\\/g, '/');
+      }
+
       // Try to find the actual note to get the correct path
-      let fullPath = actualLink;
+      let fullPath = resolvedLink;
       if (allNotes) {
-        // Strategy 1: Direct lookup by generated ID
-        const directId = this.generateNoteId(actualLink);
+        // Strategy 1: Direct lookup by generated ID from resolved path
+        const directId = this.generateNoteId(resolvedLink);
         let targetNote = allNotes.get(directId);
 
         // Strategy 2: Search by filename if direct path fails
         if (!targetNote) {
-          const fileName = actualLink.includes('/') ? actualLink.split('/').pop() || actualLink : actualLink;
+          const fileName = resolvedLink.includes('/') ? resolvedLink.split('/').pop() || resolvedLink : resolvedLink;
           for (const note of allNotes.values()) {
             const noteFileName = path.basename(note.path, '.md');
             if (noteFileName === fileName || note.title === fileName) {
@@ -653,10 +671,11 @@ export class MarkdownProcessor {
           }
         }
 
-        // Strategy 3: Search by title
+        // Strategy 3: Search by title (use original actualLink for title matching)
         if (!targetNote) {
+          const titleToMatch = resolvedLink.includes('/') ? resolvedLink.split('/').pop() || resolvedLink : resolvedLink;
           for (const note of allNotes.values()) {
-            if (note.title === actualLink) {
+            if (note.title === titleToMatch) {
               targetNote = note;
               break;
             }
@@ -666,13 +685,16 @@ export class MarkdownProcessor {
         // If we found the note, use its ID for the link
         if (targetNote) {
           fullPath = targetNote.id;
+        } else {
+          // If not found, generate ID from resolved link
+          fullPath = this.generateNoteId(resolvedLink);
         }
+      } else {
+        // If no allNotes map provided, generate ID from resolved link
+        fullPath = this.generateNoteId(resolvedLink);
       }
 
-      // Generate final link ID
-      const linkId = fullPath.includes('/') ? fullPath : this.generateNoteId(actualLink);
-
-      return `<a href="/${linkId}" class="internal-link" data-note="${actualLink}">${displayText}</a>`;
+      return `<a href="/${fullPath}" class="internal-link" data-note="${actualLink}">${displayText}</a>`;
     });
 
     return processed;

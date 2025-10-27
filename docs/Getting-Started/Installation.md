@@ -124,8 +124,8 @@ obsidianp generate ./test-vault ./test-output
 
 ## Next Steps
 
-- [[Configuration]] - Set up your configuration file
-- [[Building Sites]] - Generate your first site
+- [[Getting-Started/Configuration|Configuration]] - Set up your configuration file
+- [[Getting-Started/Building Sites|Building Sites]] - Generate your first site
 
 ## Troubleshooting
 
@@ -147,4 +147,4 @@ npm run build
 
 ---
 
-Read Next: [[Configuration]]
+Read Next: [[Getting-Started/Configuration|Configuration]]
